@@ -37,6 +37,22 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
   // Handle keyboard input
   useInput((input, key) => {
+    // Handle Ctrl+C (raw mode captures it as character, not SIGINT)
+    if (input === '\x03') {
+      if (isConfirmingExit) {
+        // Second Ctrl+C - exit immediately
+        exit();
+      } else {
+        // First Ctrl+C - show confirmation
+        setConfirmingExit(true);
+        // Auto-dismiss after 2 seconds
+        setTimeout(() => {
+          useAppStore.getState().setConfirmingExit(false);
+        }, 2000);
+      }
+      return;
+    }
+
     // If confirming exit, handle y/n
     if (isConfirmingExit) {
       if (input === 'y' || input === 'Y') {

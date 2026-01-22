@@ -1,11 +1,19 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Box, Text } from 'ink';
 import figures from 'figures';
 import { useAppStore } from '../stores/appStore.js';
+import { useInterval } from '../hooks/useInterval.js';
 import { formatRelativeTime } from '../utils/time.js';
 
 export function Footer(): React.ReactElement {
   const lastRefresh = useAppStore((state) => state.lastRefresh);
+
+  // Local ticker to force re-render every second for time display
+  const [, setTick] = useState(0);
+  useInterval(() => {
+    setTick((t) => t + 1);
+  }, 1000);
+
   const timeAgo = formatRelativeTime(lastRefresh);
 
   return (
