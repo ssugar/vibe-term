@@ -5,34 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 2 - Session Detection
+**Current focus:** Phase 3 - Status Detection (next)
 
 ## Current Position
 
-Phase: 2 of 6 (Session Detection)
-Plan: 2 of 3 in phase 2 complete
-Status: In progress
-Last activity: 2026-01-22 - Completed 02-02-PLAN.md
+Phase: 2 of 6 (Session Detection) - COMPLETE
+Plan: 3 of 3 in phase 2 complete
+Status: Phase 2 complete, ready for Phase 3
+Last activity: 2026-01-22 - Completed 02-03-PLAN.md
 
-Progress: [######....] 67%
+Progress: [####......] 43% (6/14 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 6 min
-- Total execution time: 0.5 hours
+- Total plans completed: 6
+- Average duration: 7 min
+- Total execution time: ~42 min
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 24 min | 8 min |
-| 02-session-detection | 2 | 6 min | 3 min |
+| 02-session-detection | 3 | 14 min | ~5 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02 (3 min), 01-03 (15 min), 02-01 (3 min), 02-02 (3 min)
-- Trend: Fast execution (02-02 straightforward service layer)
+- Last 5 plans: 01-03 (15 min), 02-01 (3 min), 02-02 (3 min), 02-03 (~8 min)
+- Trend: Consistent execution, UI integration plan with human verify slightly longer
 
 *Updated after each plan completion*
 
@@ -57,6 +57,8 @@ Recent decisions affecting current work:
 - Use claude-${pid} as stable session ID for correlation
 - Disambiguate duplicate folder names with parent/folder format
 - Stable session ordering: existing maintain position, new added at end by age
+- 24-char max project name width with ellipsis truncation (SessionRow layout)
+- Cyan bold index numbers to suggest hotkeys
 
 ### Pending Todos
 
@@ -68,6 +70,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-22T23:35:44Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-01-22T23:55:19Z
+Stopped at: Completed 02-03-PLAN.md (Phase 2 complete)
 Resume file: None
