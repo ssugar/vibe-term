@@ -1,12 +1,16 @@
-// Session represents a Claude Code instance (used in later phases)
+// Session represents a Claude Code instance
 export interface Session {
-  id: string;
-  projectPath: string;
-  status: 'working' | 'idle' | 'blocked';
-  contextUsage: number; // 0-100 percentage
+  id: string;                    // `claude-${pid}` for stability
+  pid: number;                   // Process ID for detection
+  projectPath: string;           // Full path to project
+  projectName: string;           // Display name (folder or parent/folder)
+  status: 'working' | 'idle' | 'blocked' | 'ended';  // 'ended' for fade-out
+  contextUsage: number;          // 0-100 percentage (Phase 4)
   model: 'sonnet' | 'opus' | 'haiku';
   startedAt: Date;
   lastActivity: Date;
+  inTmux: boolean;               // Whether running in tmux
+  tmuxTarget?: string;           // e.g., "session:1.2" for navigation
 }
 
 // Application state
