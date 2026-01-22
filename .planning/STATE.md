@@ -10,17 +10,17 @@ See: .planning/PROJECT.md (updated 2026-01-22)
 ## Current Position
 
 Phase: 2 of 6 (Session Detection)
-Plan: 1 of 3 in phase 2 complete
+Plan: 2 of 3 in phase 2 complete
 Status: In progress
-Last activity: 2026-01-22 - Completed 02-01-PLAN.md
+Last activity: 2026-01-22 - Completed 02-02-PLAN.md
 
 Progress: [######....] 67%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 7 min
+- Total plans completed: 5
+- Average duration: 6 min
 - Total execution time: 0.5 hours
 
 **By Phase:**
@@ -28,11 +28,11 @@ Progress: [######....] 67%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 24 min | 8 min |
-| 02-session-detection | 1 | 3 min | 3 min |
+| 02-session-detection | 2 | 6 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01 (6 min), 01-02 (3 min), 01-03 (15 min), 02-01 (3 min)
-- Trend: Improving (02-01 straightforward service implementation)
+- Last 5 plans: 01-02 (3 min), 01-03 (15 min), 02-01 (3 min), 02-02 (3 min)
+- Trend: Fast execution (02-02 straightforward service layer)
 
 *Updated after each plan completion*
 
@@ -54,6 +54,9 @@ Recent decisions affecting current work:
 - Shell commands over npm packages for process detection (ps, readlink, lsof, tmux)
 - Graceful degradation: return empty arrays on command failure
 - Parent PID matching for tmux correlation
+- Use claude-${pid} as stable session ID for correlation
+- Disambiguate duplicate folder names with parent/folder format
+- Stable session ordering: existing maintain position, new added at end by age
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-22T23:29:00Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-01-22T23:35:44Z
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
