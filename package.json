@@ -1,0 +1,48 @@
+{
+  "name": "cc-tui-hud",
+  "version": "1.0.0",
+  "description": "Claude Code TUI HUD - Monitor multiple Claude Code instances",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "cc-tui-hud": "dist/cli.js"
+  },
+  "scripts": {
+    "dev": "tsx src/cli.tsx",
+    "build": "tsup src/cli.tsx --format esm --dts",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssugar/cc-tui-hud.git"
+  },
+  "keywords": [
+    "claude",
+    "cli",
+    "tui",
+    "terminal",
+    "hud"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ssugar/cc-tui-hud/issues"
+  },
+  "homepage": "https://github.com/ssugar/cc-tui-hud#readme",
+  "dependencies": {
+    "figures": "^6.1.0",
+    "ink": "^6.6.0",
+    "meow": "^14.0.0",
+    "react": "^19.2.3",
+    "zustand": "^5.0.10"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.9",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
