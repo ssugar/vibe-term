@@ -30,12 +30,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. HUD runs without errors on Linux, macOS, and WSL2
   3. HUD exits cleanly with Ctrl+C (no orphan processes, no memory leak warnings)
   4. TypeScript compilation succeeds with strict mode
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 01-01: TBD
-- [ ] 01-02: TBD
-- [ ] 01-03: TBD
+- [ ] 01-01-PLAN.md — Project scaffolding, TypeScript config, Zustand store
+- [ ] 01-02-PLAN.md — UI components (Header, Footer, EmptyState, SessionList)
+- [ ] 01-03-PLAN.md — CLI entry point, graceful shutdown, integration verification
 
 ### Phase 2: Session Detection
 **Goal**: Users see all running Claude Code instances with project identification and session duration
@@ -123,7 +123,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 0/3 | Not started | - |
+| 1. Foundation | 0/3 | Planned | - |
 | 2. Session Detection | 0/3 | Not started | - |
 | 3. Status Detection | 0/3 | Not started | - |
 | 4. Context Window | 0/1 | Not started | - |
