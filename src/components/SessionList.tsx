@@ -2,6 +2,7 @@ import React from 'react';
 import { Box } from 'ink';
 import { useAppStore } from '../stores/appStore.js';
 import { EmptyState } from './EmptyState.js';
+import { SessionRow } from './SessionRow.js';
 
 export function SessionList(): React.ReactElement {
   const sessions = useAppStore((state) => state.sessions);
@@ -10,10 +11,11 @@ export function SessionList(): React.ReactElement {
     return <EmptyState />;
   }
 
-  // Phase 2 will implement actual session rendering
   return (
     <Box flexDirection="column">
-      {/* Session rows will go here */}
+      {sessions.map((session, idx) => (
+        <SessionRow key={session.id} session={session} index={idx + 1} />
+      ))}
     </Box>
   );
 }

@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { useAppStore } from './stores/appStore.js';
 import { useInterval } from './hooks/useInterval.js';
+import { useSessions } from './hooks/useSessions.js';
 import { Header } from './components/Header.js';
 import { Footer } from './components/Footer.js';
 import { SessionList } from './components/SessionList.js';
@@ -13,6 +14,9 @@ interface AppProps {
 export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const { exit } = useApp();
   const initializedRef = useRef(false);
+
+  // Session detection polling hook
+  useSessions();
 
   // Store state (selective subscriptions to prevent unnecessary re-renders)
   const isConfirmingExit = useAppStore((state) => state.isConfirmingExit);
@@ -33,9 +37,9 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   }, [refreshInterval]);
 
   // Polling interval - updates lastRefresh every tick
+  // Note: Session detection is handled by useSessions hook
   useInterval(() => {
     useAppStore.getState().setLastRefresh(new Date());
-    // Phase 2 will add session detection logic here
   }, refreshInterval);
 
   // Handle keyboard input
