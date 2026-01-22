@@ -96,37 +96,37 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SESS-01 | TBD | Pending |
-| SESS-02 | TBD | Pending |
-| SESS-03 | TBD | Pending |
-| SESS-04 | TBD | Pending |
-| STAT-01 | TBD | Pending |
-| STAT-02 | TBD | Pending |
-| STAT-03 | TBD | Pending |
-| STAT-04 | TBD | Pending |
-| STAT-05 | TBD | Pending |
-| STAT-06 | TBD | Pending |
-| CTXT-01 | TBD | Pending |
-| CTXT-02 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| NAV-04 | TBD | Pending |
-| NAV-05 | TBD | Pending |
-| TERM-01 | TBD | Pending |
-| TERM-02 | TBD | Pending |
-| TERM-03 | TBD | Pending |
-| TERM-04 | TBD | Pending |
-| TERM-05 | TBD | Pending |
-| PLAT-01 | TBD | Pending |
-| PLAT-02 | TBD | Pending |
-| PLAT-03 | TBD | Pending |
+| PLAT-01 | Phase 1: Foundation | Pending |
+| PLAT-02 | Phase 1: Foundation | Pending |
+| PLAT-03 | Phase 1: Foundation | Pending |
+| SESS-01 | Phase 2: Session Detection | Pending |
+| SESS-02 | Phase 2: Session Detection | Pending |
+| SESS-03 | Phase 2: Session Detection | Pending |
+| SESS-04 | Phase 2: Session Detection | Pending |
+| TERM-01 | Phase 2: Session Detection | Pending |
+| TERM-02 | Phase 2: Session Detection | Pending |
+| TERM-04 | Phase 2: Session Detection | Pending |
+| STAT-01 | Phase 3: Status Detection | Pending |
+| STAT-02 | Phase 3: Status Detection | Pending |
+| STAT-03 | Phase 3: Status Detection | Pending |
+| STAT-04 | Phase 3: Status Detection | Pending |
+| STAT-05 | Phase 3: Status Detection | Pending |
+| STAT-06 | Phase 3: Status Detection | Pending |
+| CTXT-01 | Phase 4: Context Window | Pending |
+| CTXT-02 | Phase 4: Context Window | Pending |
+| NAV-01 | Phase 5: Navigation | Pending |
+| NAV-02 | Phase 5: Navigation | Pending |
+| NAV-03 | Phase 5: Navigation | Pending |
+| NAV-04 | Phase 5: Navigation | Pending |
+| NAV-05 | Phase 5: Navigation | Pending |
+| TERM-03 | Phase 6: Terminal Integration | Pending |
+| TERM-05 | Phase 6: Terminal Integration | Pending |
 
 **Coverage:**
 - v1 requirements: 25 total
-- Mapped to phases: 0
-- Unmapped: 25
+- Mapped to phases: 25
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-22*
-*Last updated: 2026-01-22 after initial definition*
+*Last updated: 2026-01-22 after roadmap creation*
