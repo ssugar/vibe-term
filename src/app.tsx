@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
 import { useAppStore } from './stores/appStore.js';
 import { useInterval } from './hooks/useInterval.js';
@@ -12,33 +12,36 @@ interface AppProps {
 
 export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const { exit } = useApp();
+  const initializedRef = useRef(false);
 
   // Store state (selective subscriptions to prevent unnecessary re-renders)
   const isConfirmingExit = useAppStore((state) => state.isConfirmingExit);
   const showHelp = useAppStore((state) => state.showHelp);
   const error = useAppStore((state) => state.error);
 
-  // Store actions
+  // Store actions - get directly from store to avoid dependency issues
   const setConfirmingExit = useAppStore((state) => state.setConfirmingExit);
   const setShowHelp = useAppStore((state) => state.setShowHelp);
-  const setLastRefresh = useAppStore((state) => state.setLastRefresh);
-  const setRefreshInterval = useAppStore((state) => state.setRefreshInterval);
 
-  // Set refresh interval from CLI flag
-  React.useEffect(() => {
-    setRefreshInterval(refreshInterval);
-  }, [refreshInterval, setRefreshInterval]);
+  // Initialize on mount - only once
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      useAppStore.getState().setRefreshInterval(refreshInterval);
+      useAppStore.getState().setLastRefresh(new Date());
+    }
+  }, [refreshInterval]);
 
   // Polling interval - updates lastRefresh every tick
   useInterval(() => {
-    setLastRefresh(new Date());
+    useAppStore.getState().setLastRefresh(new Date());
     // Phase 2 will add session detection logic here
   }, refreshInterval);
 
   // Handle keyboard input
   useInput((input, key) => {
-    // Handle Ctrl+C (raw mode captures it as character, not SIGINT)
-    if (input === '\x03') {
+    // Handle Ctrl+C (check both key.ctrl and raw character)
+    if ((key.ctrl && input === 'c') || input === '\x03') {
       if (isConfirmingExit) {
         // Second Ctrl+C - exit immediately
         exit();
