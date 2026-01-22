@@ -47,12 +47,12 @@ Plans:
   3. Each session shows how long it has been running
   4. Session list auto-refreshes every 1-2 seconds without manual action
   5. tmux sessions correctly correlate with their Claude processes
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 02-01: TBD
-- [ ] 02-02: TBD
-- [ ] 02-03: TBD
+- [ ] 02-01-PLAN.md — Platform abstraction, process detection, tmux services
+- [ ] 02-02-PLAN.md — Session type extension, session builder, useSessions hook
+- [ ] 02-03-PLAN.md — SessionRow component, SessionList update, human verification
 
 ### Phase 3: Status Detection
 **Goal**: Users see accurate Working/Idle/Blocked status for each session with visual indicators
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-22 |
-| 2. Session Detection | 0/3 | Not started | - |
+| 2. Session Detection | 0/3 | Planned | - |
 | 3. Status Detection | 0/3 | Not started | - |
 | 4. Context Window | 0/1 | Not started | - |
 | 5. Navigation | 0/2 | Not started | - |
