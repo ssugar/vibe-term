@@ -30,12 +30,14 @@ if [ "$HOOK_EVENT" = "SessionEnd" ]; then
   exit 0
 fi
 
-# Read existing state if it exists (for subagent count preservation)
+# Read existing state if it exists (for subagent count and mainModel preservation)
 SUBAGENT_COUNT=0
 EXISTING_MODEL=""
+MAIN_MODEL=""
 if [ -f "$STATE_FILE" ]; then
   SUBAGENT_COUNT=$(jq -r '.subagentCount // 0' "$STATE_FILE" 2>/dev/null || echo "0")
   EXISTING_MODEL=$(jq -r '.model // empty' "$STATE_FILE" 2>/dev/null || echo "")
+  MAIN_MODEL=$(jq -r '.mainModel // empty' "$STATE_FILE" 2>/dev/null || echo "")
 fi
 
 # Determine status and subagent count changes based on hook event
@@ -87,23 +89,38 @@ if [ -z "$STATUS" ]; then
 fi
 
 # Extract model from transcript if available (best effort)
-MODEL=""
+TRANSCRIPT_MODEL=""
 if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
   # Get model from last assistant message that has one
-  MODEL=$(tail -100 "$TRANSCRIPT_PATH" 2>/dev/null | grep -o '"model":"[^"]*"' | tail -1 | sed 's/"model":"//;s/"$//' || true)
+  TRANSCRIPT_MODEL=$(tail -100 "$TRANSCRIPT_PATH" 2>/dev/null | grep -o '"model":"[^"]*"' | tail -1 | sed 's/"model":"//;s/"$//' || true)
   # Simplify model name
-  if echo "$MODEL" | grep -qi "opus"; then
-    MODEL="opus"
-  elif echo "$MODEL" | grep -qi "haiku"; then
-    MODEL="haiku"
-  elif echo "$MODEL" | grep -qi "sonnet"; then
-    MODEL="sonnet"
+  if echo "$TRANSCRIPT_MODEL" | grep -qi "opus"; then
+    TRANSCRIPT_MODEL="opus"
+  elif echo "$TRANSCRIPT_MODEL" | grep -qi "haiku"; then
+    TRANSCRIPT_MODEL="haiku"
+  elif echo "$TRANSCRIPT_MODEL" | grep -qi "sonnet"; then
+    TRANSCRIPT_MODEL="sonnet"
   else
-    MODEL=""
+    TRANSCRIPT_MODEL=""
   fi
 fi
 
-# Use existing model if we couldn't extract one
+# Main model handling:
+# - Only update mainModel on UserPromptSubmit (when user is definitely in main session)
+# - This prevents subagent models from overwriting the main session's model
+if [ "$HOOK_EVENT" = "UserPromptSubmit" ] && [ -n "$TRANSCRIPT_MODEL" ]; then
+  MAIN_MODEL="$TRANSCRIPT_MODEL"
+fi
+
+# If mainModel not set yet, use transcript model as initial value
+if [ -z "$MAIN_MODEL" ] && [ -n "$TRANSCRIPT_MODEL" ]; then
+  MAIN_MODEL="$TRANSCRIPT_MODEL"
+fi
+
+# For display, use mainModel (the user's main session model)
+MODEL="$MAIN_MODEL"
+
+# Fall back to existing model if we still don't have one
 if [ -z "$MODEL" ] && [ -n "$EXISTING_MODEL" ]; then
   MODEL="$EXISTING_MODEL"
 fi
@@ -115,6 +132,7 @@ cat > "$TEMP_FILE" << EOF
 {
   "status": "$STATUS",
   "model": "$MODEL",
+  "mainModel": "$MAIN_MODEL",
   "cwd": "$CWD",
   "sessionId": "$SESSION_ID",
   "subagentCount": $SUBAGENT_COUNT,
