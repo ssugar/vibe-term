@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Local/personal settings
+.claude/settings.local.json
+
+# GSD framework (shared tooling, not project-specific)
+.claude/agents/
+.claude/commands/
+.claude/get-shit-done/
+.claude/hooks/
+
+# Generated codebase analysis
+.planning/codebase/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
