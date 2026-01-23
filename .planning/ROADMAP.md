@@ -59,9 +59,9 @@ Plans:
 **Depends on**: Phase 2
 **Requirements**: STAT-01, STAT-02, STAT-03, STAT-04, STAT-05, STAT-06
 **Success Criteria** (what must be TRUE):
-  1. Working sessions display amber indicator and "Working" label
-  2. Idle sessions display green indicator and "Idle" label
-  3. Blocked sessions display red indicator, "Blocked" label, and bold/highlighted styling
+  1. Working sessions display hourglass emoji indicator
+  2. Idle sessions display green checkmark emoji indicator
+  3. Blocked sessions display red stop sign emoji indicator with bold text and red row background
   4. Model type (sonnet/opus/haiku) displays for each session
   5. Status accurately reflects actual Claude state (validated by comparing HUD to actual session)
 **Plans**: 3 plans in 3 waves
