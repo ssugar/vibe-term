@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 3 - Status Detection (next)
+**Current focus:** Phase 3 - Status Detection (in progress)
 
 ## Current Position
 
-Phase: 2 of 6 (Session Detection) - COMPLETE
-Plan: 3 of 3 in phase 2 complete
-Status: Phase 2 complete, ready for Phase 3
-Last activity: 2026-01-22 - Completed 02-03-PLAN.md
+Phase: 3 of 6 (Status Detection)
+Plan: 1 of 3 in phase 3 complete
+Status: In progress
+Last activity: 2026-01-23 - Completed 03-01-PLAN.md
 
-Progress: [####......] 43% (6/14 plans)
+Progress: [####......] 50% (7/14 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
-- Average duration: 7 min
-- Total execution time: ~42 min
+- Total plans completed: 7
+- Average duration: 6 min
+- Total execution time: ~44 min
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [####......] 43% (6/14 plans)
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 24 min | 8 min |
 | 02-session-detection | 3 | 14 min | ~5 min |
+| 03-status-detection | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03 (15 min), 02-01 (3 min), 02-02 (3 min), 02-03 (~8 min)
-- Trend: Consistent execution, UI integration plan with human verify slightly longer
+- Last 5 plans: 02-01 (3 min), 02-02 (3 min), 02-03 (~8 min), 03-01 (2 min)
+- Trend: Fast execution for service-only plans
 
 *Updated after each plan completion*
 
@@ -59,6 +60,9 @@ Recent decisions affecting current work:
 - Stable session ordering: existing maintain position, new added at end by age
 - 24-char max project name width with ellipsis truncation (SessionRow layout)
 - Cyan bold index numbers to suggest hotkeys
+- Return null for unknown models (allows UI to show 'unknown')
+- 5-second threshold before declaring tool_use as blocked
+- Try last 3 lines on parse failure (handles race conditions)
 
 ### Pending Todos
 
@@ -70,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-01-22T23:55:19Z
-Stopped at: Completed 02-03-PLAN.md (Phase 2 complete)
+Last session: 2026-01-23T01:07:16Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
