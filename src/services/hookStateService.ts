@@ -33,7 +33,38 @@ export function readSessionState(sessionId: string): HookSessionState | null {
 }
 
 /**
- * Find state by CWD (for sessions we detect by process but don't have hook session ID)
+ * Check if two paths refer to the same project (one is a parent/child of the other).
+ * Handles the case where hook CWD is a subdirectory (e.g., /project/infra)
+ * but process CWD is the project root (e.g., /project).
+ */
+function pathsMatch(processCwd: string, stateCwd: string): boolean {
+  // Normalize paths: remove trailing slashes for consistent comparison
+  const normProcess = processCwd.replace(/\/+$/, '');
+  const normState = stateCwd.replace(/\/+$/, '');
+
+  // Exact match
+  if (normProcess === normState) {
+    return true;
+  }
+
+  // Process CWD is parent of state CWD (hook ran in subdirectory)
+  // e.g., process=/project, state=/project/infra
+  if (normState.startsWith(normProcess + '/')) {
+    return true;
+  }
+
+  // State CWD is parent of process CWD (less common but handle it)
+  // e.g., state=/project, process=/project/subdir
+  if (normProcess.startsWith(normState + '/')) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Find state by CWD (for sessions we detect by process but don't have hook session ID).
+ * Uses prefix matching to handle subdirectory CWDs from subagents/tools.
  */
 export function findStateByPath(cwd: string): HookSessionState | null {
   try {
@@ -46,8 +77,8 @@ export function findStateByPath(cwd: string): HookSessionState | null {
       try {
         const content = fs.readFileSync(path.join(STATE_DIR, file), 'utf-8');
         const state = JSON.parse(content) as HookSessionState;
-        // Match by cwd
-        if (state.cwd === cwd) {
+        // Match by cwd using prefix matching
+        if (pathsMatch(cwd, state.cwd)) {
           return state;
         }
       } catch {
