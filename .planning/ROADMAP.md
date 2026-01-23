@@ -81,10 +81,11 @@ Plans:
   2. Context meter shows green when usage is below 30%
   3. Context meter shows yellow when usage is 30-70%
   4. Context meter shows red when usage exceeds 70%
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01: TBD
+- [ ] 04-01-PLAN.md — Context service for JSONL parsing and percentage calculation
+- [ ] 04-02-PLAN.md — ContextMeter UI component and SessionRow integration
 
 ### Phase 5: Navigation
 **Goal**: Users can navigate the session list and access help using keyboard shortcuts
@@ -127,7 +128,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation | 3/3 | Complete | 2026-01-22 |
 | 2. Session Detection | 3/3 | Complete | 2026-01-22 |
 | 3. Status Detection | 4/4 | Complete | 2026-01-23 |
-| 4. Context Window | 0/1 | Not started | - |
+| 4. Context Window | 0/2 | Not started | - |
 | 5. Navigation | 0/2 | Not started | - |
 | 6. Terminal Integration | 0/2 | Not started | - |
 
