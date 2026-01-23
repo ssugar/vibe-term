@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Project scaffolding, types, basic Ink setup, Zustand stores
 - [x] **Phase 2: Session Detection** - Detect running Claude instances and display session list
-- [ ] **Phase 3: Status Detection** - Parse JSONL logs for Working/Idle/Blocked states
+- [x] **Phase 3: Status Detection** - Hooks-based Working/Idle/Blocked status with visual indicators
 - [ ] **Phase 4: Context Window** - Display context window usage with stoplight colors
 - [ ] **Phase 5: Navigation** - Keyboard navigation and session selection
 - [ ] **Phase 6: Terminal Integration** - Jump to selected session in tmux or terminal
@@ -64,12 +64,13 @@ Plans:
   3. Blocked sessions display red stop sign emoji indicator with bold text and red row background
   4. Model type (sonnet/opus/haiku) displays for each session
   5. Status accurately reflects actual Claude state (validated by comparing HUD to actual session)
-**Plans**: 3 plans in 3 waves
+**Plans**: 4 plans in 4 waves
 
 Plans:
-- [ ] 03-01-PLAN.md — Log path service and status detector service
-- [ ] 03-02-PLAN.md — Session builder integration with blocked-first sorting
-- [ ] 03-03-PLAN.md — SessionRow UI update with status emoji, model, blocked highlighting
+- [x] 03-01-PLAN.md — Log path service and status detector service (DEPRECATED: JSONL approach unreliable)
+- [x] 03-02-PLAN.md — Session builder integration with blocked-first sorting (DEPRECATED: uses 03-01)
+- [x] 03-03-PLAN.md — SessionRow UI update with status emoji, model, blocked highlighting
+- [x] 03-04-PLAN.md — Hooks-based status detection (replaces JSONL approach)
 
 ### Phase 4: Context Window
 **Goal**: Users see context window usage at a glance with stoplight color coding
@@ -125,11 +126,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/3 | Complete | 2026-01-22 |
 | 2. Session Detection | 3/3 | Complete | 2026-01-22 |
-| 3. Status Detection | 0/3 | Planned | - |
+| 3. Status Detection | 4/4 | Complete | 2026-01-23 |
 | 4. Context Window | 0/1 | Not started | - |
 | 5. Navigation | 0/2 | Not started | - |
 | 6. Terminal Integration | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-22*
-*Last updated: 2026-01-22*
+*Last updated: 2026-01-23*

@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 3 - Status Detection (in progress)
+**Current focus:** Phase 4 - Context Window (next)
 
 ## Current Position
 
-Phase: 3 of 6 (Status Detection)
-Plan: 2 of 3 in phase 3 complete
-Status: In progress
-Last activity: 2026-01-23 - Completed 03-02-PLAN.md
+Phase: 3 of 6 (Status Detection) - COMPLETE
+Plan: 4 of 4 in phase 3 complete
+Status: Phase 3 complete, ready for Phase 4
+Last activity: 2026-01-23 - Completed 03-04-PLAN.md
 
-Progress: [#####.....] 57% (8/14 plans)
+Progress: [######....] 64% (10/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
-- Average duration: 6 min
-- Total execution time: ~46 min
+- Total plans completed: 10
+- Average duration: ~8 min
+- Total execution time: ~80 min
 
 **By Phase:**
 
@@ -29,11 +29,11 @@ Progress: [#####.....] 57% (8/14 plans)
 |-------|-------|-------|----------|
 | 01-foundation | 3 | 24 min | 8 min |
 | 02-session-detection | 3 | 14 min | ~5 min |
-| 03-status-detection | 2 | 4 min | 2 min |
+| 03-status-detection | 4 | ~42 min | ~10 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-02 (3 min), 02-03 (~8 min), 03-01 (2 min), 03-02 (2 min)
-- Trend: Fast execution for service-only plans
+- Last 5 plans: 03-01 (2 min), 03-02 (2 min), 03-03 (5 min), 03-04 (~30 min)
+- Trend: Phase 3 required iteration and debugging (JSONL→hooks pivot)
 
 *Updated after each plan completion*
 
@@ -60,22 +60,22 @@ Recent decisions affecting current work:
 - Stable session ordering: existing maintain position, new added at end by age
 - 24-char max project name width with ellipsis truncation (SessionRow layout)
 - Cyan bold index numbers to suggest hotkeys
-- Return null for unknown models (allows UI to show 'unknown')
-- 5-second threshold before declaring tool_use as blocked
-- Try last 3 lines on parse failure (handles race conditions)
-- Default to 'sonnet' model when unknown (null handling for type compatibility)
-- Oldest blocked sessions appear first (most urgent prioritization)
+- **PIVOTED:** Hooks over JSONL parsing (JSONL format unreliable, hooks authoritative)
+- Global hooks in ~/.claude/settings.json for cross-project tracking
+- mainModel preservation (only update on UserPromptSubmit to avoid subagent overwrite)
+- SubagentStart/Stop tracking with count display (+N indicator)
+- SessionEnd cleanup removes stale state files
 
 ### Pending Todos
 
-None yet.
+- Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
 
 ### Blockers/Concerns
 
-None yet.
+None.
 
 ## Session Continuity
 
-Last session: 2026-01-23T01:11:21Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-01-23
+Stopped at: Completed Phase 3 (Status Detection)
 Resume file: None
