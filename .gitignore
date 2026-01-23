@@ -16,6 +16,9 @@ dist/
 # Generated codebase analysis
 .planning/codebase/
 
+# Debug session files (may contain sensitive project names)
+.planning/debug/
+
 # OS files
 .DS_Store
 Thumbs.db
