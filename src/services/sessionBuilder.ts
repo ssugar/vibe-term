@@ -1,7 +1,7 @@
 import type { ClaudeProcess } from './processDetector.js';
 import { getProcessCwd } from './platform.js';
 import { isProcessInTmux, type TmuxPane } from './tmuxService.js';
-import { getSessionStatus } from './statusDetector.js';
+import { getHookBasedStatus } from './hookStateService.js';
 import type { Session } from '../stores/types.js';
 
 /**
@@ -149,8 +149,8 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
-    // Get status and model from JSONL logs
-    const { status, model } = getSessionStatus(cwd);
+    // Get status and model from hook state files
+    const { status, model } = getHookBasedStatus(cwd);
 
     return {
       id: `claude-${process.pid}`,
