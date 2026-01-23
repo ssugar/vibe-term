@@ -12,8 +12,9 @@ export interface ClaudeProcess {
 
 /**
  * Find all running Claude processes.
- * Uses ps command with grep to find processes with "claude " in their args.
- * The [c] trick in grep prevents grep from matching itself.
+ * Uses ps command with grep to find processes starting with "claude" followed by
+ * a space (has args) or end of line (no args). The [c] trick prevents grep from
+ * matching itself.
  *
  * Returns empty array if no processes found or command fails.
  */
@@ -26,7 +27,7 @@ export async function findClaudeProcesses(): Promise<ClaudeProcess[]> {
     //   args: full command line
     // The [c] in "[c]laude" prevents grep from matching itself
     const { stdout } = await execAsync(
-      'ps -eo pid,ppid,etimes,args | grep -E "[c]laude "'
+      'ps -eo pid,ppid,etimes,args | grep -E "[c]laude( |$)"'
     );
 
     return stdout
