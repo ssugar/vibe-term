@@ -22,6 +22,7 @@ Display context window usage for each Claude session with stoplight color coding
 
 ### Data source
 - Claude's discretion on how to obtain context usage (hooks, JSONL, or other available data)
+- **PreCompact hook available** — fires before context compaction, signals context pressure
 - Show 'N/A' or dash when context data unavailable for a session
 - Use model-specific context limits (opus/sonnet/haiku have different windows)
 - Percentage calculated against each model's actual context window size

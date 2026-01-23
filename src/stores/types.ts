@@ -4,10 +4,11 @@ export interface Session {
   pid: number;                   // Process ID for detection
   projectPath: string;           // Full path to project
   projectName: string;           // Display name (folder or parent/folder)
-  status: 'working' | 'idle' | 'blocked' | 'ended';  // 'ended' for fade-out
+  status: 'working' | 'idle' | 'blocked' | 'tool' | 'ended';  // 'tool' for active tool execution
   contextUsage: number;          // 0-100 percentage (Phase 4)
   model: 'sonnet' | 'opus' | 'haiku';
   subagentCount: number;         // Number of active subagents
+  notification: string | null;   // Active notification from Claude (cleared on next prompt)
   startedAt: Date;
   lastActivity: Date;
   inTmux: boolean;               // Whether running in tmux

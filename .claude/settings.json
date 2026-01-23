@@ -8,6 +8,14 @@
             "command": "node .claude/hooks/gsd-check-update.js"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/src/hooks/status-hook.sh"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -83,6 +91,27 @@
       }
     ],
     "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/src/hooks/status-hook.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR\"/src/hooks/status-hook.sh"
+          }
+        ]
+      }
+    ],
+    "Notification": [
       {
         "hooks": [
           {

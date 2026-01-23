@@ -30,21 +30,32 @@ if [ "$HOOK_EVENT" = "SessionEnd" ]; then
   exit 0
 fi
 
-# Read existing state if it exists (for subagent count and mainModel preservation)
+# Read existing state if it exists (for subagent count, mainModel, notification preservation)
 SUBAGENT_COUNT=0
 EXISTING_MODEL=""
 MAIN_MODEL=""
+EXISTING_NOTIFICATION=""
 if [ -f "$STATE_FILE" ]; then
   SUBAGENT_COUNT=$(jq -r '.subagentCount // 0' "$STATE_FILE" 2>/dev/null || echo "0")
   EXISTING_MODEL=$(jq -r '.model // empty' "$STATE_FILE" 2>/dev/null || echo "")
   MAIN_MODEL=$(jq -r '.mainModel // empty' "$STATE_FILE" 2>/dev/null || echo "")
+  EXISTING_NOTIFICATION=$(jq -r '.notification // empty' "$STATE_FILE" 2>/dev/null || echo "")
 fi
 
 # Determine status and subagent count changes based on hook event
 STATUS=""
+NOTIFICATION=""
 case "$HOOK_EVENT" in
+  SessionStart)
+    # Initialize state file on session start for faster detection
+    STATUS="idle"
+    ;;
   UserPromptSubmit)
     STATUS="working"
+    ;;
+  PreToolUse)
+    # Tool is about to execute - show tool status
+    STATUS="tool"
     ;;
   PermissionRequest)
     STATUS="blocked"
@@ -71,6 +82,12 @@ case "$HOOK_EVENT" in
     if [ "$SUBAGENT_COUNT" -gt 0 ]; then
       STATUS="working"
     fi
+    ;;
+  Notification)
+    # Claude sent a notification - store for HUD display
+    # Extract message from input if available
+    NOTIFICATION=$(echo "$INPUT" | jq -r '.message // empty')
+    # Don't change status, just record notification
     ;;
   *)
     # Unknown event, don't update
@@ -125,6 +142,18 @@ if [ -z "$MODEL" ] && [ -n "$EXISTING_MODEL" ]; then
   MODEL="$EXISTING_MODEL"
 fi
 
+# Notification handling:
+# - New notification: use it
+# - UserPromptSubmit: clear old notification (user acknowledged)
+# - Otherwise: preserve existing notification
+if [ -n "$NOTIFICATION" ]; then
+  : # Use new notification
+elif [ "$HOOK_EVENT" = "UserPromptSubmit" ]; then
+  NOTIFICATION=""  # Clear on new prompt
+else
+  NOTIFICATION="$EXISTING_NOTIFICATION"  # Preserve existing
+fi
+
 # Write state file (atomic write via temp file)
 TEMP_FILE="$STATE_FILE.tmp.$$"
 
@@ -136,6 +165,7 @@ cat > "$TEMP_FILE" << EOF
   "cwd": "$CWD",
   "sessionId": "$SESSION_ID",
   "subagentCount": $SUBAGENT_COUNT,
+  "notification": "$NOTIFICATION",
   "lastUpdate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF

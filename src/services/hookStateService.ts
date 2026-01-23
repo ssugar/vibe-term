@@ -9,6 +9,7 @@ export interface HookSessionState {
   cwd: string;
   sessionId: string;
   subagentCount: number;
+  notification: string | null;
   lastUpdate: string;
 }
 
@@ -60,18 +61,19 @@ export function findStateByPath(cwd: string): HookSessionState | null {
 }
 
 /**
- * Get status, model, and subagent count from hook state, falling back to defaults
+ * Get status, model, subagent count, and notification from hook state, falling back to defaults
  */
 export function getHookBasedStatus(cwd: string): {
   status: Session['status'];
   model: 'sonnet' | 'opus' | 'haiku';
   subagentCount: number;
+  notification: string | null;
 } {
   const state = findStateByPath(cwd);
 
   if (!state) {
     // No hook data yet - default to idle/sonnet/0
-    return { status: 'idle', model: 'sonnet', subagentCount: 0 };
+    return { status: 'idle', model: 'sonnet', subagentCount: 0, notification: null };
   }
 
   // Check if state is stale (older than 5 minutes = probably dead session)
@@ -82,12 +84,13 @@ export function getHookBasedStatus(cwd: string): {
 
   if (ageMs > STALE_THRESHOLD_MS) {
     // Stale data, default to idle
-    return { status: 'idle', model: state.model || 'sonnet', subagentCount: 0 };
+    return { status: 'idle', model: state.model || 'sonnet', subagentCount: 0, notification: null };
   }
 
   return {
     status: state.status || 'idle',
     model: state.model || 'sonnet',
-    subagentCount: state.subagentCount || 0
+    subagentCount: state.subagentCount || 0,
+    notification: state.notification || null
   };
 }

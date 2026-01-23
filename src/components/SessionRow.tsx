@@ -8,10 +8,11 @@ import { formatDurationSince } from '../utils/duration.js';
  * Uses Unicode characters that render correctly in terminal.
  */
 const STATUS_EMOJI: Record<Session['status'], string> = {
-  idle: '\u2705',      // Green checkmark
-  working: '\u23F3',   // Hourglass
-  blocked: '\u{1F6D1}', // Stop sign
-  ended: '\u274C',     // X mark
+  idle: '\u2705',      // Green checkmark ✅
+  working: '\u23F3',   // Hourglass ⏳
+  tool: '\u{1F527}',   // Wrench 🔧 - tool executing
+  blocked: '\u{1F6D1}', // Stop sign 🛑
+  ended: '\u274C',     // X mark ❌
 };
 
 interface SessionRowProps {
