@@ -3,14 +3,27 @@ import { Box, Text } from 'ink';
 import type { Session } from '../stores/types.js';
 import { formatDurationSince } from '../utils/duration.js';
 
+/**
+ * Status emoji mapping for visual feedback.
+ * Uses Unicode characters that render correctly in terminal.
+ */
+const STATUS_EMOJI: Record<Session['status'], string> = {
+  idle: '\u2705',      // Green checkmark
+  working: '\u23F3',   // Hourglass
+  blocked: '\u{1F6D1}', // Stop sign
+  ended: '\u274C',     // X mark
+};
+
 interface SessionRowProps {
   session: Session;
   index: number; // 1-based display index
 }
 
 /**
- * Renders a single session row with index, project name, duration, and tmux indicator.
- * Layout: [1] cc-tui-hud            45 min     [T]
+ * Renders a single session row with status, project name, duration, and model.
+ * Layout: [1] [status] project-name         45 min     sonnet
+ *
+ * Blocked sessions have red background with bold white text for emphasis.
  */
 export function SessionRow({ session, index }: SessionRowProps): React.ReactElement {
   // Truncate project name if too long (max 24 chars, show 23 + ellipsis)
@@ -30,6 +43,34 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
   const durationWidth = 12;
   const paddedDuration = duration.padStart(durationWidth, ' ');
 
+  // Model display (defensive fallback to 'unknown' if falsy)
+  const modelDisplay = session.model || 'unknown';
+
+  // Check if session is blocked for visual emphasis
+  const isBlocked = session.status === 'blocked';
+
+  // Status emoji for current state
+  const statusEmoji = STATUS_EMOJI[session.status];
+
+  if (isBlocked) {
+    // Blocked row: red background, white bold text, entire row
+    return (
+      <Box flexDirection="row">
+        <Text bold backgroundColor="red" color="white">
+          [{index}] {statusEmoji} {paddedName} {paddedDuration} {modelDisplay}
+        </Text>
+        {/* tmux indicator after colored section */}
+        {session.inTmux && (
+          <>
+            <Text> </Text>
+            <Text dimColor color="cyan">[T]</Text>
+          </>
+        )}
+      </Box>
+    );
+  }
+
+  // Normal row: standard colors
   return (
     <Box flexDirection="row">
       {/* Index - bold cyan to suggest hotkey */}
@@ -38,12 +79,19 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
       </Text>
       <Text> </Text>
 
+      {/* Status emoji */}
+      <Text>{statusEmoji} </Text>
+
       {/* Project name - fixed width */}
       <Text>{paddedName}</Text>
       <Text> </Text>
 
       {/* Duration - dimmed, right-aligned */}
       <Text dimColor>{paddedDuration}</Text>
+      <Text> </Text>
+
+      {/* Model - dimmed */}
+      <Text dimColor>{modelDisplay}</Text>
       <Text> </Text>
 
       {/* tmux indicator - show [T] if in tmux */}
