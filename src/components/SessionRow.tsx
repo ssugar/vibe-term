@@ -46,6 +46,9 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
   // Model display (defensive fallback to 'unknown' if falsy)
   const modelDisplay = session.model || 'unknown';
 
+  // Subagent indicator (e.g., "+2" if 2 subagents running)
+  const subagentDisplay = session.subagentCount > 0 ? `+${session.subagentCount}` : '';
+
   // Check if session is blocked for visual emphasis
   const isBlocked = session.status === 'blocked';
 
@@ -59,6 +62,13 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
         <Text bold backgroundColor="red" color="white">
           [{index}] {statusEmoji} {paddedName} {paddedDuration} {modelDisplay}
         </Text>
+        {/* Subagent indicator after colored section */}
+        {subagentDisplay && (
+          <>
+            <Text> </Text>
+            <Text color="yellow" bold>{subagentDisplay}</Text>
+          </>
+        )}
         {/* tmux indicator after colored section */}
         {session.inTmux && (
           <>
@@ -92,6 +102,14 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
 
       {/* Model - dimmed */}
       <Text dimColor>{modelDisplay}</Text>
+      <Text> </Text>
+
+      {/* Subagent indicator - yellow if active */}
+      {subagentDisplay ? (
+        <Text color="yellow" bold>{subagentDisplay}</Text>
+      ) : (
+        <Text>  </Text>
+      )}
       <Text> </Text>
 
       {/* tmux indicator - show [T] if in tmux */}

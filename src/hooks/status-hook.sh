@@ -2,7 +2,8 @@
 # Claude Code hook for HUD status tracking
 # Writes status updates to ~/.claude-hud/sessions/
 
-set -e
+# Don't use set -e, we want graceful degradation
+# set -e
 
 # Read hook input from stdin
 INPUT=$(cat)
@@ -18,7 +19,27 @@ if [ -z "$SESSION_ID" ] || [ -z "$HOOK_EVENT" ]; then
   exit 0  # Silent exit, don't break Claude
 fi
 
-# Determine status based on hook event
+# State directory and file
+STATE_DIR="$HOME/.claude-hud/sessions"
+STATE_FILE="$STATE_DIR/${SESSION_ID}.json"
+mkdir -p "$STATE_DIR"
+
+# Handle SessionEnd - clean up state file
+if [ "$HOOK_EVENT" = "SessionEnd" ]; then
+  rm -f "$STATE_FILE"
+  exit 0
+fi
+
+# Read existing state if it exists (for subagent count preservation)
+SUBAGENT_COUNT=0
+EXISTING_MODEL=""
+if [ -f "$STATE_FILE" ]; then
+  SUBAGENT_COUNT=$(jq -r '.subagentCount // 0' "$STATE_FILE" 2>/dev/null || echo "0")
+  EXISTING_MODEL=$(jq -r '.model // empty' "$STATE_FILE" 2>/dev/null || echo "")
+fi
+
+# Determine status and subagent count changes based on hook event
+STATUS=""
 case "$HOOK_EVENT" in
   UserPromptSubmit)
     STATUS="working"
@@ -29,8 +50,25 @@ case "$HOOK_EVENT" in
   PostToolUse)
     STATUS="working"
     ;;
+  PostToolUseFailure)
+    STATUS="working"
+    ;;
   Stop)
     STATUS="idle"
+    ;;
+  SubagentStart)
+    STATUS="working"
+    SUBAGENT_COUNT=$((SUBAGENT_COUNT + 1))
+    ;;
+  SubagentStop)
+    SUBAGENT_COUNT=$((SUBAGENT_COUNT - 1))
+    if [ "$SUBAGENT_COUNT" -lt 0 ]; then
+      SUBAGENT_COUNT=0
+    fi
+    # Keep existing status or default to working if subagents still running
+    if [ "$SUBAGENT_COUNT" -gt 0 ]; then
+      STATUS="working"
+    fi
     ;;
   *)
     # Unknown event, don't update
@@ -38,9 +76,15 @@ case "$HOOK_EVENT" in
     ;;
 esac
 
-# Create state directory
-STATE_DIR="$HOME/.claude-hud/sessions"
-mkdir -p "$STATE_DIR"
+# If no status change determined (e.g., SubagentStop with no remaining subagents),
+# read existing status
+if [ -z "$STATUS" ] && [ -f "$STATE_FILE" ]; then
+  STATUS=$(jq -r '.status // "idle"' "$STATE_FILE" 2>/dev/null || echo "idle")
+fi
+# Default to idle if still no status
+if [ -z "$STATUS" ]; then
+  STATUS="idle"
+fi
 
 # Extract model from transcript if available (best effort)
 MODEL=""
@@ -59,8 +103,12 @@ if [ -n "$TRANSCRIPT_PATH" ] && [ -f "$TRANSCRIPT_PATH" ]; then
   fi
 fi
 
+# Use existing model if we couldn't extract one
+if [ -z "$MODEL" ] && [ -n "$EXISTING_MODEL" ]; then
+  MODEL="$EXISTING_MODEL"
+fi
+
 # Write state file (atomic write via temp file)
-STATE_FILE="$STATE_DIR/${SESSION_ID}.json"
 TEMP_FILE="$STATE_FILE.tmp.$$"
 
 cat > "$TEMP_FILE" << EOF
@@ -69,6 +117,7 @@ cat > "$TEMP_FILE" << EOF
   "model": "$MODEL",
   "cwd": "$CWD",
   "sessionId": "$SESSION_ID",
+  "subagentCount": $SUBAGENT_COUNT,
   "lastUpdate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF

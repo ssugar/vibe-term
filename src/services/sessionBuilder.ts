@@ -149,8 +149,8 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
-    // Get status and model from hook state files
-    const { status, model } = getHookBasedStatus(cwd);
+    // Get status, model, and subagent count from hook state files
+    const { status, model, subagentCount } = getHookBasedStatus(cwd);
 
     return {
       id: `claude-${process.pid}`,
@@ -160,6 +160,7 @@ export async function buildSessions(
       status,
       contextUsage: 0,                 // Phase 4 will detect
       model: model ?? 'sonnet',        // Default to sonnet if unknown
+      subagentCount,
       startedAt,
       lastActivity: new Date(),
       inTmux: tmuxInfo.inTmux,

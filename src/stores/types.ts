@@ -7,6 +7,7 @@ export interface Session {
   status: 'working' | 'idle' | 'blocked' | 'ended';  // 'ended' for fade-out
   contextUsage: number;          // 0-100 percentage (Phase 4)
   model: 'sonnet' | 'opus' | 'haiku';
+  subagentCount: number;         // Number of active subagents
   startedAt: Date;
   lastActivity: Date;
   inTmux: boolean;               // Whether running in tmux
