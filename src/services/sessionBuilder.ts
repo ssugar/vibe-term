@@ -1,6 +1,7 @@
 import type { ClaudeProcess } from './processDetector.js';
 import { getProcessCwd } from './platform.js';
 import { isProcessInTmux, type TmuxPane } from './tmuxService.js';
+import { getSessionStatus } from './statusDetector.js';
 import type { Session } from '../stores/types.js';
 
 /**
@@ -114,14 +115,17 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
+    // Get status and model from JSONL logs
+    const { status, model } = getSessionStatus(cwd);
+
     return {
       id: `claude-${process.pid}`,
       pid: process.pid,
       projectPath: cwd,
       projectName: extractProjectName(cwd, allPaths),
-      status: 'idle' as const,        // Phase 3 will detect actual status
+      status,
       contextUsage: 0,                 // Phase 4 will detect
-      model: 'sonnet' as const,        // Phase 3 will detect
+      model: model ?? 'sonnet',        // Default to sonnet if unknown
       startedAt,
       lastActivity: new Date(),
       inTmux: tmuxInfo.inTmux,
