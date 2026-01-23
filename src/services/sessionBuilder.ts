@@ -78,6 +78,40 @@ export function sortSessions(
 }
 
 /**
+ * Sort sessions with blocked at top, then stable ordering for rest.
+ * - Blocked sessions sorted by startedAt (oldest first = most urgent)
+ * - Non-blocked sessions maintain stable ordering from previous cycle
+ *
+ * @param sessions - Sessions to sort
+ * @param previousOrder - Array of session IDs from previous cycle
+ * @returns Sorted sessions array with blocked at top
+ */
+export function sortSessionsWithBlocked(
+  sessions: Session[],
+  previousOrder: string[]
+): Session[] {
+  // Separate into blocked and non-blocked
+  const blocked: Session[] = [];
+  const nonBlocked: Session[] = [];
+
+  for (const session of sessions) {
+    if (session.status === 'blocked') {
+      blocked.push(session);
+    } else {
+      nonBlocked.push(session);
+    }
+  }
+
+  // Sort blocked by startedAt ascending (oldest blocked first = most urgent)
+  blocked.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
+
+  // Sort non-blocked using existing stable ordering logic
+  const sortedNonBlocked = sortSessions(nonBlocked, previousOrder);
+
+  return [...blocked, ...sortedNonBlocked];
+}
+
+/**
  * Build Session objects from detected Claude processes.
  * Enriches raw process data with project names, tmux context, and duration.
  *
@@ -133,6 +167,6 @@ export async function buildSessions(
     };
   });
 
-  // Sort with stable ordering
-  return sortSessions(sessions, previousOrder);
+  // Sort with blocked at top, then stable ordering for rest
+  return sortSessionsWithBlocked(sessions, previousOrder);
 }
