@@ -96,16 +96,16 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PLAT-01 | Phase 1: Foundation | Pending |
-| PLAT-02 | Phase 1: Foundation | Pending |
-| PLAT-03 | Phase 1: Foundation | Pending |
-| SESS-01 | Phase 2: Session Detection | Pending |
-| SESS-02 | Phase 2: Session Detection | Pending |
-| SESS-03 | Phase 2: Session Detection | Pending |
-| SESS-04 | Phase 2: Session Detection | Pending |
-| TERM-01 | Phase 2: Session Detection | Pending |
-| TERM-02 | Phase 2: Session Detection | Pending |
-| TERM-04 | Phase 2: Session Detection | Pending |
+| PLAT-01 | Phase 1: Foundation | Complete |
+| PLAT-02 | Phase 1: Foundation | Complete |
+| PLAT-03 | Phase 1: Foundation | Complete |
+| SESS-01 | Phase 2: Session Detection | Complete |
+| SESS-02 | Phase 2: Session Detection | Complete |
+| SESS-03 | Phase 2: Session Detection | Complete |
+| SESS-04 | Phase 2: Session Detection | Complete |
+| TERM-01 | Phase 2: Session Detection | Complete |
+| TERM-02 | Phase 2: Session Detection | Complete |
+| TERM-04 | Phase 2: Session Detection | Complete |
 | STAT-01 | Phase 3: Status Detection | Pending |
 | STAT-02 | Phase 3: Status Detection | Pending |
 | STAT-03 | Phase 3: Status Detection | Pending |
