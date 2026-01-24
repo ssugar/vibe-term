@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 4 - Context Window (next)
+**Current focus:** Phase 4 - Context Window (in progress)
 
 ## Current Position
 
-Phase: 3 of 6 (Status Detection) - COMPLETE
-Plan: 4 of 4 in phase 3 complete
-Status: Phase 3 complete, ready for Phase 4
-Last activity: 2026-01-23 - Completed 03-04-PLAN.md
+Phase: 4 of 6 (Context Window)
+Plan: 1 of 2 in phase 4 complete
+Status: In progress
+Last activity: 2026-01-24 - Completed 04-01-PLAN.md
 
-Progress: [######....] 64% (10/15 plans)
+Progress: [######....] 71% (11/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
+- Total plans completed: 11
 - Average duration: ~8 min
-- Total execution time: ~80 min
+- Total execution time: ~86 min
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [######....] 64% (10/15 plans)
 | 01-foundation | 3 | 24 min | 8 min |
 | 02-session-detection | 3 | 14 min | ~5 min |
 | 03-status-detection | 4 | ~42 min | ~10 min |
+| 04-context-window | 1 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-01 (2 min), 03-02 (2 min), 03-03 (5 min), 03-04 (~30 min)
-- Trend: Phase 3 required iteration and debugging (JSONL→hooks pivot)
+- Last 5 plans: 03-02 (2 min), 03-03 (5 min), 03-04 (~30 min), 04-01 (6 min)
+- Trend: Context window plan executed quickly, one bug fix for JSONL format
 
 *Updated after each plan completion*
 
@@ -65,6 +66,9 @@ Recent decisions affecting current work:
 - mainModel preservation (only update on UserPromptSubmit to avoid subagent overwrite)
 - SubagentStart/Stop tracking with count display (+N indicator)
 - SessionEnd cleanup removes stale state files
+- **NEW:** 200K context window standard for all Claude 4.x models
+- **NEW:** JSONL format is nested: data.message.type='assistant', data.message.message.usage
+- **NEW:** Tail-read optimization (last 50KB) and mtime caching for JSONL parsing
 
 ### Pending Todos
 
@@ -76,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-23
-Stopped at: Completed Phase 3 (Status Detection)
+Last session: 2026-01-24
+Stopped at: Completed 04-01-PLAN.md (Context service for JSONL parsing)
 Resume file: None
