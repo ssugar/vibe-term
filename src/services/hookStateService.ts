@@ -10,6 +10,7 @@ export interface HookSessionState {
   sessionId: string;
   subagentCount: number;
   notification: string | null;
+  transcriptPath: string | null;
   lastUpdate: string;
 }
 
@@ -92,19 +93,20 @@ export function findStateByPath(cwd: string): HookSessionState | null {
 }
 
 /**
- * Get status, model, subagent count, and notification from hook state, falling back to defaults
+ * Get status, model, subagent count, notification, and transcript path from hook state, falling back to defaults
  */
 export function getHookBasedStatus(cwd: string): {
   status: Session['status'];
   model: 'sonnet' | 'opus' | 'haiku';
   subagentCount: number;
   notification: string | null;
+  transcriptPath: string | null;
 } {
   const state = findStateByPath(cwd);
 
   if (!state) {
     // No hook data yet - default to idle/sonnet/0
-    return { status: 'idle', model: 'sonnet', subagentCount: 0, notification: null };
+    return { status: 'idle', model: 'sonnet', subagentCount: 0, notification: null, transcriptPath: null };
   }
 
   // No staleness timeout - trust the hook state. Sessions clean up via SessionEnd hook,
@@ -114,6 +116,7 @@ export function getHookBasedStatus(cwd: string): {
     status: state.status || 'idle',
     model: state.model || 'sonnet',
     subagentCount: state.subagentCount || 0,
-    notification: state.notification || null
+    notification: state.notification || null,
+    transcriptPath: state.transcriptPath || null
   };
 }

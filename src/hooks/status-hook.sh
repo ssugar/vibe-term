@@ -171,6 +171,7 @@ cat > "$TEMP_FILE" << EOF
   "sessionId": "$SESSION_ID",
   "subagentCount": $SUBAGENT_COUNT,
   "notification": "$NOTIFICATION",
+  "transcriptPath": "$TRANSCRIPT_PATH",
   "lastUpdate": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 }
 EOF
