@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, Text } from 'ink';
 import type { Session } from '../stores/types.js';
 import { formatDurationSince } from '../utils/duration.js';
+import { ContextMeter } from './ContextMeter.js';
 
 /**
  * Status emoji mapping for visual feedback.
@@ -21,8 +22,8 @@ interface SessionRowProps {
 }
 
 /**
- * Renders a single session row with status, project name, duration, and model.
- * Layout: [1] [status] project-name         45 min     sonnet
+ * Renders a single session row with status, project name, duration, model, and context meter.
+ * Layout: [1] [status] project-name         45 min     sonnet +N ████░░░░░░░░  25% [T]
  *
  * Blocked sessions have red background with bold white text for emphasis.
  */
@@ -70,7 +71,10 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
             <Text color="yellow" bold>{subagentDisplay}</Text>
           </>
         )}
-        {/* tmux indicator after colored section */}
+        {/* Context meter - always visible */}
+        <Text> </Text>
+        <ContextMeter percent={session.contextUsage ?? 0} width={12} />
+        {/* tmux indicator after context meter */}
         {session.inTmux && (
           <>
             <Text> </Text>
@@ -111,6 +115,10 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
       ) : (
         <Text>  </Text>
       )}
+      <Text> </Text>
+
+      {/* Context meter */}
+      <ContextMeter percent={session.contextUsage ?? 0} width={12} />
       <Text> </Text>
 
       {/* tmux indicator - show [T] if in tmux */}
