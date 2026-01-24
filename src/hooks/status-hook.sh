@@ -55,23 +55,7 @@ case "$HOOK_EVENT" in
     ;;
   PreToolUse)
     # Tool is about to execute - show tool status
-    # BUT: Don't overwrite "blocked" status - permission request takes priority
-    # This handles the race condition where PreToolUse fires after PermissionRequest
-    #
-    # Check BOTH status AND notification field - if notification indicates pending
-    # permission, keep status as "blocked" regardless of what the file says
-    if [ -f "$STATE_FILE" ]; then
-      CURRENT_STATUS=$(jq -r '.status // empty' "$STATE_FILE" 2>/dev/null || echo "")
-      CURRENT_NOTIFICATION=$(jq -r '.notification // empty' "$STATE_FILE" 2>/dev/null || echo "")
-      # Check if blocked OR if notification indicates pending permission
-      if [ "$CURRENT_STATUS" = "blocked" ] || echo "$CURRENT_NOTIFICATION" | grep -qi "permission"; then
-        STATUS="blocked"  # Preserve blocked status
-      else
-        STATUS="tool"
-      fi
-    else
-      STATUS="tool"
-    fi
+    STATUS="tool"
     ;;
   PermissionRequest)
     STATUS="blocked"
@@ -161,19 +145,11 @@ fi
 # Notification handling:
 # - New notification: use it
 # - UserPromptSubmit: clear old notification (user acknowledged)
-# - PostToolUse/PostToolUseFailure: clear permission notification (tool executed after approval)
 # - Otherwise: preserve existing notification
 if [ -n "$NOTIFICATION" ]; then
   : # Use new notification
 elif [ "$HOOK_EVENT" = "UserPromptSubmit" ]; then
   NOTIFICATION=""  # Clear on new prompt
-elif [ "$HOOK_EVENT" = "PostToolUse" ] || [ "$HOOK_EVENT" = "PostToolUseFailure" ]; then
-  # Tool executed (approved) - clear any permission notification
-  if echo "$EXISTING_NOTIFICATION" | grep -qi "permission"; then
-    NOTIFICATION=""  # Clear permission notification
-  else
-    NOTIFICATION="$EXISTING_NOTIFICATION"  # Preserve non-permission notifications
-  fi
 else
   NOTIFICATION="$EXISTING_NOTIFICATION"  # Preserve existing
 fi

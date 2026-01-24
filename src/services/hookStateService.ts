@@ -118,16 +118,8 @@ export function getHookBasedStatus(cwd: string): {
     return { status: 'idle', model: state.model || 'sonnet', subagentCount: 0, notification: null };
   }
 
-  // Derive blocked status from notification
-  // If notification contains "permission", Claude is waiting for permission approval
-  // This handles the race condition where PreToolUse overwrites blocked status
-  let derivedStatus = state.status || 'idle';
-  if (state.notification && state.notification.toLowerCase().includes('permission')) {
-    derivedStatus = 'blocked';
-  }
-
   return {
-    status: derivedStatus,
+    status: state.status || 'idle',
     model: state.model || 'sonnet',
     subagentCount: state.subagentCount || 0,
     notification: state.notification || null
