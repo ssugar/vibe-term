@@ -54,8 +54,13 @@ case "$HOOK_EVENT" in
     STATUS="working"
     ;;
   PreToolUse)
-    # Tool is about to execute - show tool status
+    # Tool is about to execute - this means any prior permission request was resolved
+    # (either approved, rejected, or Claude moved on). Clear blocked state.
     STATUS="tool"
+    # Clear any permission-related notification since the permission flow is done
+    if echo "$EXISTING_NOTIFICATION" | grep -qi "permission"; then
+      NOTIFICATION=""
+    fi
     ;;
   PermissionRequest)
     STATUS="blocked"

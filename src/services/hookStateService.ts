@@ -107,16 +107,8 @@ export function getHookBasedStatus(cwd: string): {
     return { status: 'idle', model: 'sonnet', subagentCount: 0, notification: null };
   }
 
-  // Check if state is stale (older than 5 minutes = probably dead session)
-  const lastUpdate = new Date(state.lastUpdate);
-  const now = new Date();
-  const ageMs = now.getTime() - lastUpdate.getTime();
-  const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
-
-  if (ageMs > STALE_THRESHOLD_MS) {
-    // Stale data, default to idle
-    return { status: 'idle', model: state.model || 'sonnet', subagentCount: 0, notification: null };
-  }
+  // No staleness timeout - trust the hook state. Sessions clean up via SessionEnd hook,
+  // and users may legitimately wait a long time on permission prompts.
 
   return {
     status: state.status || 'idle',
