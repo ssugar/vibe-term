@@ -2,6 +2,7 @@ import type { ClaudeProcess } from './processDetector.js';
 import { getProcessCwd } from './platform.js';
 import { isProcessInTmux, type TmuxPane } from './tmuxService.js';
 import { getHookBasedStatus } from './hookStateService.js';
+import { getContextUsage } from './contextService.js';
 import type { Session } from '../stores/types.js';
 
 /**
@@ -149,8 +150,11 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
-    // Get status, model, subagent count, and notification from hook state files
-    const { status, model, subagentCount, notification } = getHookBasedStatus(cwd);
+    // Get status, model, subagent count, notification, and transcript path from hook state files
+    const { status, model, subagentCount, notification, transcriptPath } = getHookBasedStatus(cwd);
+
+    // Get context usage from JSONL transcript
+    const contextUsage = getContextUsage(transcriptPath) ?? 0;
 
     return {
       id: `claude-${process.pid}`,
@@ -158,7 +162,7 @@ export async function buildSessions(
       projectPath: cwd,
       projectName: extractProjectName(cwd, allPaths),
       status,
-      contextUsage: 0,                 // Phase 4 will detect
+      contextUsage,
       model: model ?? 'sonnet',        // Default to sonnet if unknown
       subagentCount,
       notification,
