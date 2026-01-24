@@ -14,52 +14,58 @@ interface CacheEntry {
 const cache = new Map<string, CacheEntry>();
 
 /**
- * JSONL assistant entry structure (from Claude Code transcripts)
+ * Usage data from Claude API response
  */
-interface AssistantEntry {
-  type: 'assistant';
-  isSidechain?: boolean;
-  isApiErrorMessage?: boolean;
-  message?: {
-    usage?: {
-      input_tokens: number;
-      cache_creation_input_tokens: number;
-      cache_read_input_tokens: number;
-      output_tokens: number;
-    };
-  };
-  timestamp?: string;
+interface Usage {
+  input_tokens: number;
+  cache_creation_input_tokens: number;
+  cache_read_input_tokens: number;
+  output_tokens: number;
 }
 
 /**
- * Check if an entry is a valid assistant entry with usage data
+ * JSONL entry structure (from Claude Code transcripts)
+ *
+ * Actual format is nested:
+ * - Top level: type: "progress", isSidechain: boolean
+ * - Nested: data.message.type: "assistant", data.message.message.usage: {...}
  */
-function isValidAssistantEntry(entry: unknown): entry is AssistantEntry {
-  if (typeof entry !== 'object' || entry === null) return false;
+interface JsonlEntry {
+  type: string;  // "progress", "user", etc at top level
+  isSidechain?: boolean;
+  data?: {
+    message?: {
+      type?: string;  // "assistant", "user", etc
+      message?: {
+        usage?: Usage;
+      };
+    };
+  };
+}
 
-  const e = entry as Record<string, unknown>;
+/**
+ * Extract usage data from a JSONL entry if it's a valid assistant entry
+ */
+function extractUsage(entry: unknown): Usage | null {
+  if (typeof entry !== 'object' || entry === null) return null;
 
-  // Must be assistant type
-  if (e.type !== 'assistant') return false;
+  const e = entry as JsonlEntry;
 
   // Must not be sidechain (subagent context is separate)
-  if (e.isSidechain === true) return false;
+  if (e.isSidechain === true) return null;
 
-  // Must not be API error message
-  if (e.isApiErrorMessage === true) return false;
+  // Navigate to nested assistant message with usage
+  const nestedMessage = e.data?.message;
+  if (!nestedMessage) return null;
 
-  // Must have message.usage object
-  if (typeof e.message !== 'object' || e.message === null) return false;
+  // Must be assistant type at nested level
+  if (nestedMessage.type !== 'assistant') return null;
 
-  const msg = e.message as Record<string, unknown>;
-  if (typeof msg.usage !== 'object' || msg.usage === null) return false;
+  // Get usage from nested message.message.usage
+  const usage = nestedMessage.message?.usage;
+  if (!usage || typeof usage.input_tokens !== 'number') return null;
 
-  const usage = msg.usage as Record<string, unknown>;
-
-  // Must have input_tokens at minimum
-  if (typeof usage.input_tokens !== 'number') return false;
-
-  return true;
+  return usage;
 }
 
 /**
@@ -111,16 +117,17 @@ export function getContextUsage(transcriptPath: string | null): number | null {
     const lines = content.split('\n').filter(line => line.trim());
 
     // Find last valid assistant entry with usage (parse in reverse order)
-    let lastValidEntry: AssistantEntry | null = null;
+    let usage: Usage | null = null;
 
     for (let i = lines.length - 1; i >= 0; i--) {
       const line = lines[i];
 
       try {
         const entry = JSON.parse(line);
+        const extractedUsage = extractUsage(entry);
 
-        if (isValidAssistantEntry(entry)) {
-          lastValidEntry = entry;
+        if (extractedUsage) {
+          usage = extractedUsage;
           break; // Found most recent valid entry
         }
       } catch {
@@ -130,11 +137,9 @@ export function getContextUsage(transcriptPath: string | null): number | null {
     }
 
     // No valid entry found
-    if (!lastValidEntry || !lastValidEntry.message?.usage) {
+    if (!usage) {
       return null;
     }
-
-    const usage = lastValidEntry.message.usage;
 
     // Calculate total tokens for context:
     // input_tokens + cache_creation_input_tokens + cache_read_input_tokens
