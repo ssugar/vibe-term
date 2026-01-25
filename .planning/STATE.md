@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 5 complete - Ready for Phase 6 (Terminal Integration)
+**Current focus:** Phase 6 complete - All planned phases finished!
 
 ## Current Position
 
-Phase: 5 of 6 (Navigation)
-Plan: 2 of 2 in phase 5 complete
-Status: Phase complete
-Last activity: 2026-01-25 - Completed quick task 002: model name/subagent alignment
+Phase: 6 of 6 (Terminal Integration)
+Plan: 1 of 1 in phase 6 complete
+Status: Project complete
+Last activity: 2026-01-25 - Completed 06-01-PLAN.md (Window Focus Service)
 
-Progress: [#########░] 93% (14/15 plans)
+Progress: [##########] 100% (15/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: ~7.6 min
-- Total execution time: ~107 min
+- Total plans completed: 15
+- Average duration: ~7.3 min
+- Total execution time: ~109 min
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [#########░] 93% (14/15 plans)
 | 03-status-detection | 4 | ~42 min | ~10 min |
 | 04-context-window | 2 | 14 min | 7 min |
 | 05-navigation | 2 | 13 min | 6.5 min |
+| 06-terminal-integration | 1 | 2 min | 2 min |
 
 **Recent Trend:**
-- Last 5 plans: 04-01 (6 min), 04-02 (8 min), 05-01 (5 min), 05-02 (8 min)
-- Trend: Phase 5 complete. Navigation fully implemented.
+- Last 5 plans: 04-02 (8 min), 05-01 (5 min), 05-02 (8 min), 06-01 (2 min)
+- Trend: All phases complete!
 
 *Updated after each plan completion*
 
@@ -70,14 +71,18 @@ Recent decisions affecting current work:
 - 200K context window standard for all Claude 4.x models
 - JSONL format is nested: data.message.type='assistant', data.message.message.usage
 - Tail-read optimization (last 50KB) and mtime caching for JSONL parsing
-- **NEW:** Inverse colors for selection highlighting (terminal-theme agnostic)
-- **NEW:** Context meter and tmux indicator preserve colors when row selected
+- Inverse colors for selection highlighting (terminal-theme agnostic)
+- Context meter and tmux indicator preserve colors when row selected
+- **NEW:** xdotool for Linux X11 window focus (PID-based, title fallback)
+- **NEW:** osascript for macOS Terminal.app activation
+- **NEW:** PowerShell SetForegroundWindow for WSL2 Windows Terminal
+- **NEW:** Wayland detection with helpful error message
 
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
-- Future: Non-tmux session jumping (terminal container concept)
 - Future: Return to HUD after jumping (tmux keybinding or embedded approach)
+- Future: Specific tab focus for macOS/WSL2 (currently app-level only)
 
 ### Blockers/Concerns
 
@@ -93,5 +98,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 05-02-PLAN.md (Session jumping with Enter key)
+Stopped at: Completed 06-01-PLAN.md (Window Focus Service)
 Resume file: None
