@@ -405,3 +405,284 @@ Based on stack choices:
 - [Chalk GitHub](https://github.com/chalk/chalk)
 - [node-tmux GitHub](https://github.com/StarlaneStudios/node-tmux)
 - [ink-ui GitHub](https://github.com/vadimdemedes/ink-ui)
+
+---
+---
+
+# v2.0 Stack Additions: tmux-Integrated Architecture
+
+**Researched:** 2026-01-25
+**Scope:** Stack additions for tmux-integrated Claude Terminal
+**Confidence:** HIGH (tmux CLI patterns are stable, no new dependencies needed)
+
+## Executive Summary
+
+The v2.0 tmux-integrated architecture requires **no new npm dependencies**. The existing stack (Ink 6.x, Zustand, React 19) combined with tmux CLI commands via `execAsync()` provides everything needed. This is the correct approach because:
+
+1. **tmux CLI is the standard** - No Node.js library fully wraps tmux's pane management APIs
+2. **Pattern already established** - v1.0 uses `execAsync()` for tmux operations successfully
+3. **Complexity avoided** - Libraries like `node-tmux` lack split-window/pane operations; `stmux` is a tmux replacement, not integration
+
+## New Dependencies
+
+**None required.**
+
+| Package | Status | Rationale |
+|---------|--------|-----------|
+| node-tmux | NOT ADDING | Only supports session-level operations (create/kill/list). Missing: split-window, send-keys, select-pane, resize-pane. Would need CLI fallback anyway. |
+| stmux | NOT ADDING | Replaces tmux entirely using node-pty + xterm.js. Contradicts v2.0 goal of native tmux integration. |
+| tmuxn | NOT ADDING | Session manager (tmuxinator-style) for YAML configs. Not programmatic pane control. |
+| node-pty | NOT ADDING | Embedded terminal approach explicitly out of scope per PROJECT.md. tmux splits are proven reliable. |
+
+## Integration Points
+
+### tmux CLI Commands (via execAsync)
+
+The v2.0 architecture uses these tmux commands, all executed through the existing `execAsync()` pattern in `platform.ts`:
+
+| Command | Purpose | v2.0 Usage |
+|---------|---------|------------|
+| `tmux new-session -d -s name` | Create detached session | HUD startup: create managed session |
+| `tmux split-window -v -l 2` | Horizontal split (top pane) | Create 2-line HUD strip at top |
+| `tmux split-window -f -b -l 2` | Full-width split above | Alternative: split above existing content |
+| `tmux send-keys -t target 'cmd' C-m` | Run command in pane | Spawn Claude in bottom pane |
+| `tmux select-pane -t %id` | Focus specific pane | Switch active pane (bottom sessions) |
+| `tmux resize-pane -t %id -y 2` | Resize pane height | Lock HUD strip to 2 lines |
+| `tmux display-message -p '#{pane_id}'` | Get current pane ID | Track HUD pane vs session panes |
+| `tmux list-panes -F '#{pane_id} #{pane_pid}'` | List panes with PIDs | Map sessions to panes |
+| `tmux swap-pane -s %src -t %tgt` | Swap two panes | Instant session switching |
+| `tmux respawn-pane -t %id -k 'cmd'` | Kill and restart pane | Replace session in pane |
+
+### Existing Stack Integration
+
+```
+src/services/
+  platform.ts          # execAsync() - already present, no changes needed
+  tmuxService.ts       # Extend with pane management functions
+
+src/components/
+  Header.tsx           # Refactor into HudStrip.tsx (horizontal tabs)
+  SessionRow.tsx       # Extract compact tab format from row logic
+
+src/stores/
+  appStore.ts          # Add: hudPaneId, activePaneId, paneSessionMap
+```
+
+### Key Integration Pattern
+
+```typescript
+// Extended tmuxService.ts pattern for v2.0
+export async function createHudLayout(): Promise<{
+  hudPaneId: string;
+  sessionPaneId: string;
+}> {
+  // Split window: HUD at top (2 lines), session below
+  // -b creates pane above, -l 2 sets height to 2 lines
+  // -P -F prints the new pane ID
+  const { stdout: hudPane } = await execAsync(
+    `tmux split-window -b -l 2 -P -F '#{pane_id}'`
+  );
+
+  // Get the bottom pane ID (original pane, where sessions run)
+  const { stdout: sessionPane } = await execAsync(
+    `tmux display-message -p '#{pane_id}'`
+  );
+
+  return {
+    hudPaneId: hudPane.trim(),
+    sessionPaneId: sessionPane.trim(),
+  };
+}
+
+export async function spawnInPane(paneId: string, command: string): Promise<void> {
+  // Escape single quotes in command
+  const escaped = command.replace(/'/g, "'\\''");
+  await execAsync(`tmux send-keys -t ${paneId} '${escaped}' C-m`);
+}
+
+export async function focusPane(paneId: string): Promise<void> {
+  await execAsync(`tmux select-pane -t ${paneId}`);
+}
+
+export async function swapPanes(source: string, target: string): Promise<void> {
+  await execAsync(`tmux swap-pane -s ${source} -t ${target}`);
+}
+```
+
+## Ink Component Patterns for HUD Strip
+
+The existing Ink Box component supports fixed-height horizontal layouts:
+
+```typescript
+// HUD strip pattern (1-2 lines, horizontal tabs)
+<Box height={2} flexDirection="row" width="100%">
+  {sessions.map((session, i) => (
+    <SessionTab
+      key={session.pid}
+      session={session}
+      isSelected={i === selectedIndex}
+      index={i + 1}
+    />
+  ))}
+</Box>
+
+// Compact tab format per PROJECT.md requirements
+// [1:project-name status 25%] [2:other-proj status 67%]
+function SessionTab({ session, isSelected, index }: SessionTabProps) {
+  const statusChar = STATUS_CHARS[session.status]; // W/B/I/T
+  const percent = session.contextUsage ?? 0;
+  const name = session.projectName.slice(0, 12);
+
+  return (
+    <Box marginRight={1}>
+      <Text inverse={isSelected} color={isSelected ? 'cyan' : undefined}>
+        [{index}:{name} {statusChar} {percent}%]
+      </Text>
+    </Box>
+  );
+}
+```
+
+## Alternatives Considered
+
+### node-tmux Library
+
+**Repository:** [StarlaneStudios/node-tmux](https://github.com/StarlaneStudios/node-tmux)
+**Why rejected:**
+- Only 8 GitHub stars, minimal adoption
+- API limited to: `newSession`, `listSessions`, `hasSession`, `killSession`, `renameSession`, `writeInput`
+- Missing critical operations: `split-window`, `send-keys -t`, `select-pane`, `resize-pane`, `swap-pane`
+- Would require falling back to CLI for all pane operations anyway
+- Adds dependency without value
+
+### stmux (Simple Terminal Multiplexer)
+
+**Repository:** [rse/stmux](https://github.com/rse/stmux)
+**Why rejected:**
+- Replaces tmux entirely (uses node-pty + xterm.js internally)
+- Contradicts PROJECT.md: "tmux splits over embedded terminal - Native reliability, less complexity"
+- Loses tmux's robust session persistence and recovery
+- Different mental model than native tmux (users can't use tmux keybindings)
+
+### tmux Control Mode (-CC)
+
+**What it is:** tmux's machine-readable protocol for GUI integration (used by iTerm2)
+**Why not used:**
+- Designed for deep GUI integration (terminal emulator building)
+- Requires parsing streaming protocol (complex state machine)
+- No Node.js library implements the parser
+- CLI commands achieve same goals with far less complexity
+- Overkill for our needs (we're not building a tmux GUI replacement)
+
+### node-pty (Embedded Terminal)
+
+**Why explicitly out of scope:**
+- PROJECT.md: "Embedded terminal (node-pty) -- Using tmux splits instead, proven reliability"
+- v1.0 decision: tmux native operations are more reliable than embedding
+- Adds complexity: terminal emulation, resize handling, escape sequences
+- tmux already does terminal management perfectly
+
+## Critical Constraints
+
+### 1. HUD Must Run Inside tmux
+
+The HUD process itself must be inside the tmux session it manages. This enables:
+- `tmux split-window` from HUD to create session pane
+- `tmux select-pane` to switch which pane is active
+- Shared tmux keybindings (Ctrl+B prefix still works)
+- Detection via `process.env.TMUX` already implemented in v1.0
+
+### 2. Pane Size Constraints
+
+The HUD strip should be 2 lines (1 for tabs, 1 for help/status):
+```bash
+tmux resize-pane -t %hud_pane_id -y 2
+```
+
+Session pane gets remaining space. Must handle terminal resize gracefully. Consider `tmux set-hook -g after-resize-pane` for responsive behavior.
+
+### 3. Session Pane Lifecycle
+
+When switching sessions in the bottom pane:
+- **Option A:** Single pane, kill/respawn Claude process (simpler, slower switch)
+- **Option B:** Hidden panes for each session, swap which is visible (faster switch, more resources)
+
+**Recommendation:** Option B with `swap-pane` for instant switching:
+```bash
+# Create hidden pane for each session
+tmux split-window -d -P -F '#{pane_id}' 'claude --project /path'
+
+# Swap visible session
+tmux swap-pane -s %hidden_pane -t %visible_pane
+```
+
+### 4. Startup Flow
+
+v2.0 startup differs from v1.0:
+
+```
+v1.0: HUD is standalone process, detects external sessions
+v2.0: HUD creates/joins tmux session, manages panes directly
+
+Startup sequence:
+1. Check if already in tmux (TMUX env var)
+2. If not: create new tmux session, exec HUD inside it
+3. If yes: split current window for HUD strip
+4. Run HUD Ink app in top pane (2 lines)
+5. Bottom pane ready for Claude sessions
+6. Detect any pre-existing Claude sessions (external or prior HUD-managed)
+```
+
+### 5. External Session Detection
+
+v2.0 still needs to detect externally-created tmux sessions (not spawned by HUD):
+- Existing `getTmuxPanes()` continues working unchanged
+- Integrate external sessions into tab bar alongside HUD-managed sessions
+- Mark with indicator to distinguish from HUD-spawned sessions
+
+## Version Verification
+
+| Package | Current | Required | Notes |
+|---------|---------|----------|-------|
+| ink | 6.6.0 | 6.6.0 | No change - supports height prop on Box |
+| react | 19.2.3 | >=19.0.0 | No change - already upgraded in v1.0 |
+| zustand | 5.0.10 | 5.x | No change - state management |
+| tmux | (system) | 3.0+ | Required on host; split-window -l % requires 2.9+ |
+
+**Note:** The v1.0 STACK.md mentioned React 18.x requirement, but the actual package.json shows React 19.2.3. Ink 6.6.0 peer dependencies show `"react": ">=19.0.0"` - the React 19 compatibility issue appears to have been resolved.
+
+## Installation
+
+**No new npm packages.** Ensure tmux is available:
+
+```bash
+# Verify tmux version (need 3.0+ for all features)
+tmux -V
+
+# Debian/Ubuntu
+apt install tmux
+
+# macOS
+brew install tmux
+
+# Already satisfied in existing dev environment
+```
+
+## Sources
+
+### Primary (HIGH confidence)
+- [tmux man page](https://man7.org/linux/man-pages/man1/tmux.1.html) - Official command reference
+- [Super Guide to split-window](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) - Comprehensive split-window patterns
+- [tmux Advanced Use Wiki](https://github.com/tmux/tmux/wiki/Advanced-Use) - Scripting patterns, pane targeting with IDs
+- [Tao of Tmux - Scripting](https://tao-of-tmux.readthedocs.io/en/latest/manuscript/10-scripting.html) - Shell scripting patterns
+- [Tao of Tmux - Panes](https://tao-of-tmux.readthedocs.io/en/latest/manuscript/07-pane.html) - Pane targeting tokens
+
+### Secondary (MEDIUM confidence)
+- [node-tmux GitHub](https://github.com/StarlaneStudios/node-tmux) - Evaluated and rejected (8 stars, missing pane operations)
+- [stmux GitHub](https://github.com/rse/stmux) - Evaluated and rejected (replaces tmux)
+- [Ink GitHub](https://github.com/vadimdemedes/ink) - Box height prop confirmation
+
+---
+
+*v2.0 Stack research: 2026-01-25*
+*Valid until: 2026-03-25 (60 days - stable domain)*

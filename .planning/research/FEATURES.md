@@ -1,242 +1,367 @@
-# Feature Landscape: Claude Code TUI HUD
+# Features Research: v2.0 Integrated Terminal
 
-**Domain:** TUI process monitoring / multi-session dashboard for Claude Code instances
-**Researched:** 2026-01-22
-**Confidence:** HIGH (based on official Claude Code docs, community tools, and established TUI patterns)
+**Domain:** tmux-integrated terminal managers
+**Researched:** 2026-01-25
+**Confidence:** HIGH (patterns well-established across multiple tools)
+
+## Executive Summary
+
+Research into tmux session managers (tmuxinator, tmux-sessionx, t-smart-tmux-session-manager, tmux-sessionist) reveals consistent UX patterns for integrated terminal management. The v2.0 HUD strip architecture aligns well with established conventions, with number-key switching being a natural extension of tmux's built-in window navigation.
+
+Key insight: Users expect session managers to work *with* tmux conventions, not replace them. The HUD should feel like a tmux enhancement, not a separate application.
 
 ## Table Stakes
 
-Features users expect in any TUI monitor. Missing = product feels incomplete or unusable.
+Features users expect from any tmux-integrated terminal manager. Missing these = product feels incomplete.
 
-| Feature | Why Expected | Complexity | Notes |
-|---------|--------------|------------|-------|
-| **Session list with status** | Core function - must see all sessions at glance | Low | Every monitor (htop, k9s, lazydocker) shows list of managed items |
-| **Status indicators (working/idle/blocked)** | Without this, no value over alt-tabbing | Medium | Requires parsing session state; notification hooks help here |
-| **Keyboard navigation (j/k or arrows)** | TUI users expect vim-style or arrow key nav | Low | Standard pattern in all successful TUIs (k9s, lazydocker, btop) |
-| **Jump to session (Enter/select)** | Must be able to act on selected session | Low | Primary interaction pattern |
-| **Auto-refresh/polling** | Static display useless for monitoring | Low | Standard 1-30 second intervals; manual refresh with `r` key |
-| **Visual hierarchy/layout** | Information must be scannable | Low | Clear columns, proper alignment, consistent spacing |
-| **Color-coded status** | RAG (Red/Amber/Green) is universal | Low | Blocked=Red, Working=Green, Idle=Yellow/Amber |
-| **Session identification** | Must know which project/directory each session is | Low | Show project path or session name |
-| **Quit command (q)** | Standard TUI exit pattern | Low | Universal expectation |
-| **Help/keybinding display** | Users need to discover commands | Low | Footer bar or `?` key for help |
+### Session List Display
 
-### Status Detection Requirements
+| Feature | Why Expected | Complexity | Existing v1.0? |
+|---------|--------------|------------|----------------|
+| List all sessions | Core function of any manager | Low | Yes |
+| Session name/project visible | Identity at a glance | Low | Yes |
+| Status indicator (working/idle/blocked) | Know what needs attention | Medium | Yes |
+| Current selection highlight | Know where you are | Low | Yes |
 
-Based on [GitHub Issue #2654](https://github.com/anthropics/claude-code/issues/2654), the core problem is detecting session state:
+**Sources:** [tmux-sessionx](https://github.com/omerxx/tmux-sessionx), [tmuxinator](https://github.com/tmuxinator/tmuxinator)
 
-**Working:** Claude is actively processing (API calls, tool execution)
-**Idle:** Claude completed response, waiting for next user input (normal state)
-**Blocked:** Claude is waiting for user input via:
-- Permission prompts (tool approval)
-- AskUserQuestion (interactive questions)
-- Interrupts
+### Navigation
 
-Data sources for detection:
-1. **Notification hooks** (v1.0.38+) - Most reliable for blocked state
-2. **Session JSONL logs** - `~/.claude/projects/<dir>/<session>.jsonl`
-3. **OpenTelemetry events** - `claude_code.tool_decision`, `claude_code.user_prompt`
-4. **Process monitoring** - Active/inactive process state
+| Feature | Why Expected | Complexity | Existing v1.0? |
+|---------|--------------|------------|----------------|
+| j/k or arrow navigation | Universal vim/tmux convention | Low | Yes |
+| Number keys 1-9 for quick select | tmux convention (`C-b 0-9`) | Low | Yes |
+| Enter to switch/jump | Universal action key | Low | Yes |
+| Quit with q | Universal convention | Low | Yes |
+
+**Sources:** [tmux shortcuts cheatsheet](https://gist.github.com/MohamedAlaa/2961058), [tmux cheatsheet](https://tmuxcheatsheet.com/)
+
+### Session Switching
+
+| Feature | Why Expected | Complexity | Existing v1.0? |
+|---------|--------------|------------|----------------|
+| Switch to tmux session | Core value proposition | Low | Yes (partial) |
+| HUD continues running after switch | Don't lose overview | Medium | No |
+| Return to HUD easily | Get back to overview | Medium | No |
+| Graceful error on missing session | Sessions can die | Low | Yes |
+
+**Sources:** [t-smart-tmux-session-manager](https://github.com/joshmedeski/t-smart-tmux-session-manager), [tmux-sessionist](https://github.com/tmux-plugins/tmux-sessionist)
+
+### tmux Integration Conventions
+
+| Feature | Why Expected | Complexity | Existing v1.0? |
+|---------|--------------|------------|----------------|
+| Works inside tmux | Users run in tmux | Low | Yes |
+| `switch-client` for in-tmux switching | Standard tmux pattern | Low | Yes |
+| Respect tmux's `detach-on-destroy` setting | Don't surprise users | Low | No |
+
+**Note on `detach-on-destroy`:** t-smart-tmux-session-manager recommends `set -g detach-on-destroy off` so closing a session doesn't exit tmux. The HUD should respect this behavior.
 
 ## Differentiators
 
-Features that would set this HUD apart. Not expected, but solve the unique multi-session problem.
+Features that set this product apart. Not expected, but highly valued for Claude workflow.
+
+### Claude-Specific Status
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| **Context window usage meter** | See token consumption at a glance; know when compaction coming | Medium | Stoplight colors: Green (<50%), Yellow (50-80%), Red (>80%); Claude shows compaction ~80% |
-| **"Blocked" session highlighting** | Immediately see which sessions need attention | Low | The core pain point - flashing/bold/color for blocked sessions |
-| **Quick-jump hotkeys (1-9)** | Jump to session by number without navigating | Low | Power user feature; saves j/k repetition |
-| **Session preview pane** | See last message/question without switching | Medium | Split-pane showing current state of selected session |
-| **Notification aggregation** | Single place for all "needs attention" events | Medium | Replaces multiple terminal_bell notifications |
-| **tmux/terminal integration** | Auto-detect and navigate to actual terminal window | High | Deep integration with tmux panes/windows; complex but high value |
-| **Session age/duration** | See how long session has been running/blocked | Low | Useful for identifying stale sessions |
-| **Cost tracking per session** | Show cumulative cost ($) for each session | Medium | Uses OpenTelemetry `claude_code.cost.usage` metric |
-| **Token usage breakdown** | Input/output/cache tokens per session | Medium | Via OpenTelemetry `claude_code.token.usage` metric |
-| **Model indicator** | Show which model each session uses | Low | sonnet/opus/haiku visible at glance |
-| **Project grouping** | Group sessions by project directory | Low | Useful when running multiple sessions per project |
-| **Filter/search sessions** | Find session by name/project with `/` | Low | Standard pattern (k9s, lazydocker use `/` for filter) |
-| **Alerts for long-blocked sessions** | Visual/audio alert if session blocked > N minutes | Medium | Configurable threshold; helps ADHD users per [Issue #13922](https://github.com/anthropics/claude-code/issues/13922) |
-| **Session history/timeline** | Mini-graph showing activity over time | High | btop-style sparkline of activity |
+| Working/Idle/Blocked status | Know when Claude needs attention | Medium | v1.0 has this |
+| Context window meter | Know when to start new conversation | Medium | v1.0 has this |
+| Blocked sessions highlighted | Can't miss what needs attention | Low | v1.0 has this |
+| Blocked-first sorting | Most important sessions at top | Low | v1.0 has this |
 
-### Claude Code-Specific Value Adds
+**Why differentiating:** Generic tmux managers show sessions exist. This HUD shows Claude workflow state. No other tool tracks AI assistant status.
 
-These leverage Claude Code's unique characteristics:
+### Horizontal HUD Strip
 
-1. **Context Window Stoplight**
-   - Green: 0-50% usage - plenty of room
-   - Yellow: 50-80% usage - approaching compaction
-   - Red: 80%+ usage - compaction imminent
-   - Source: `/context` command data or token metrics
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| 1-2 line HUD at top | Maximize space for active Claude | Medium | New in v2.0 |
+| Tab-style session display | Horizontal space efficient | Medium | New in v2.0 |
+| Always-visible strip | See all sessions while working | Low | New in v2.0 |
 
-2. **Blocked Reason Display**
-   - "Waiting for permission" (tool approval)
-   - "Asked a question" (AskUserQuestion)
-   - "Interrupted" (user ESC/Ctrl+C)
-   - Source: Notification hooks with `interrupt_reason` per [Issue #11189](https://github.com/anthropics/claude-code/issues/11189)
+**Why differentiating:** Most session managers are modal (popup or full-screen list). The HUD strip is always visible, like a browser tab bar.
 
-3. **Smart Attention Priority**
-   - Sort/highlight sessions by urgency
-   - Questions > Permissions > Long idle > Recently active
-   - Solves the "which tab needs me" problem
+### Session Spawning from HUD
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| `n` key to spawn new Claude session | Don't leave HUD to start work | Medium | New in v2.0 |
+| Detect externally-created sessions | Works with manual tmux workflow | Low | v1.0 has this |
+
+**Why differentiating:** tmuxinator requires pre-defined configs. t-smart-tmux-session-manager creates generic sessions. This HUD spawns Claude-ready sessions.
+
+### Return-to-HUD
+
+| Feature | Value Proposition | Complexity | Notes |
+|---------|-------------------|------------|-------|
+| `b` key returns to HUD | Quick toggle between work and overview | Medium | Partial in v1.0 |
+| Preserve HUD context on return | Don't reset selection | Low | New requirement |
+
+**Why differentiating:** Most managers require restarting to see the list again. The HUD maintains persistent overview.
 
 ## Anti-Features
 
-Things to deliberately NOT build. Common mistakes in this domain.
+Features to explicitly NOT build. Common mistakes in this domain.
+
+### Don't Build: Session Preview Pane
 
 | Anti-Feature | Why Avoid | What to Do Instead |
 |--------------|-----------|-------------------|
-| **Full session output display** | HUD becomes cluttered; not the goal | Show only status summary; link to actual terminal for details |
-| **Input/command capability** | Scope creep; becomes a terminal emulator | Focus on monitoring; jump to real session for interaction |
-| **Session management (start/stop/kill)** | Out of scope; existing tools handle this | Read-only monitoring; let user manage sessions in their terminals |
-| **Log viewing/scrollback** | Already exists: `claude-code-log`, `clog`, etc. | Link to or recommend existing tools for deep log analysis |
-| **Configuration editing** | Complex, error-prone, not core value | Direct users to `claude config` command |
-| **Multi-machine monitoring** | Massive complexity increase | Single-machine focus initially; consider later |
-| **Chat/response display** | UI becomes too complex | Show last message as preview only, not full conversation |
-| **Mouse-only interface** | TUI users expect keyboard-first | Support mouse as secondary, not required |
-| **Heavy animations** | Performance overhead; distracting | Subtle updates only; respect `NO_COLOR` and reduced motion |
-| **Plugin/extension system** | Premature abstraction | Build core well first; plugins add maintenance burden |
-| **Custom themes (initially)** | Scope creep | Use sensible defaults; consider themes post-MVP |
-| **WebSocket/network features** | Complexity; security concerns | Local-only monitoring |
+| Live preview of session content | Complexity explosion, dubious value | Trust the status indicators |
 
-### Complexity Traps to Avoid
+**Rationale:** tmux-sessionx has preview, but it's for identifying sessions you don't remember. Claude sessions are identified by project name. Preview adds complexity without solving the core problem (knowing when Claude needs attention).
 
-1. **Don't try to "fix" Claude Code notifications** - The notification hook system exists; HUD aggregates, doesn't replace
-2. **Don't duplicate OpenTelemetry infrastructure** - If user has OTel setup, don't rebuild; just visualize
-3. **Don't handle session persistence** - Claude Code handles this; HUD is stateless viewer
-4. **Don't become a terminal multiplexer** - tmux/screen exist; HUD complements, doesn't compete
+**Sources:** User decision: "Session preview pane - Defer to v3"
+
+### Don't Build: Fuzzy Finder
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| fzf-style fuzzy search | Overkill for 5-10 sessions | Number keys 1-9 are faster |
+
+**Rationale:** tmux-sessionx and t-smart use fuzzy finding because users have many sessions they don't remember. Claude users have 5-10 sessions they actively manage. Fuzzy finding adds latency without value.
+
+### Don't Build: Session Configuration Files
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| YAML/JSON session configs like tmuxinator | Over-engineering for Claude use case | Spawn sessions with sensible defaults |
+
+**Rationale:** tmuxinator's value is recreating complex multi-window layouts. Claude sessions are single-process. Don't add config overhead.
+
+### Don't Build: Plugin System
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Extensible plugin architecture | Scope creep, maintenance burden | Build the features users need directly |
+
+**Rationale:** Many tmux tools have plugin systems that add complexity. This HUD has a specific purpose (Claude management). Plugins dilute focus.
+
+### Don't Build: Custom Keybinding Configuration
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| User-configurable keybindings | Complexity for edge cases | Use standard conventions everyone knows |
+
+**Rationale:** tmux users already know `j/k`, `1-9`, `q`. Adding configuration adds onboarding friction without meaningful benefit.
+
+### Don't Build: Session Renaming UI
+
+| Anti-Feature | Why Avoid | What to Do Instead |
+|--------------|-----------|-------------------|
+| Inline rename from HUD | Complexity for rare operation | Use tmux's built-in rename (`prefix + $`) |
+
+**Rationale:** tmux already has session renaming. Don't duplicate functionality that's rarely needed.
+
+## Reference Tools
+
+What we learned from existing tmux management tools.
+
+### tmuxinator
+
+**What it is:** Ruby gem for creating tmux sessions from YAML configs.
+
+**Key patterns:**
+- Project-based session management (each config = a workspace)
+- Single command to launch (`mux start project_name`)
+- Configs stored in `~/.config/tmuxinator/`
+
+**What to adopt:**
+- Project-centric naming (session = project directory)
+- Simple spawn command pattern
+
+**What to skip:**
+- YAML configuration files (overkill for Claude)
+- Multi-window/pane layouts in config (Claude is single pane)
+
+**Source:** [tmuxinator GitHub](https://github.com/tmuxinator/tmuxinator), [tmuxinator docs](https://tmuxinator.com/)
+
+### tmux-sessionx
+
+**What it is:** tmux plugin with fuzzy finder, preview, and session management.
+
+**Key patterns:**
+- fzf-tmux popup for session selection
+- Preview pane showing session content
+- Keybindings: `ctrl-w` (windows), `ctrl-r` (rename), `ctrl-x` (config)
+
+**What to adopt:**
+- Quick session switching as primary action
+- Keyboard-first interaction
+
+**What to skip:**
+- Preview pane (identified by project name, not content)
+- Fuzzy finding (5-10 sessions, not hundreds)
+- fzf dependency (keep HUD self-contained)
+
+**Source:** [tmux-sessionx GitHub](https://github.com/omerxx/tmux-sessionx)
+
+### t-smart-tmux-session-manager
+
+**What it is:** Zoxide-integrated session manager with smart create-or-attach.
+
+**Key patterns:**
+- `new-session -A` pattern: attach if exists, create if not
+- `detach-on-destroy off` recommendation
+- Bound to `prefix + T`
+
+**What to adopt:**
+- Smart session creation (idempotent spawn)
+- Respect `detach-on-destroy` setting
+
+**What to skip:**
+- Zoxide integration (not relevant for Claude spawning)
+
+**Source:** [t-smart-tmux-session-manager GitHub](https://github.com/joshmedeski/t-smart-tmux-session-manager)
+
+### tmux-sessionist
+
+**What it is:** Lightweight plugin for common session operations.
+
+**Key patterns:**
+- `prefix + C` to create session (prompts for name)
+- `prefix + X` to kill session without detaching
+- `prefix + g` for quick session switching
+
+**What to adopt:**
+- Session creation without leaving tmux
+- Graceful session kill (don't exit tmux)
+
+**What to skip:**
+- Prefix-based keybindings (HUD has its own input context)
+
+**Source:** [tmux-sessionist GitHub](https://github.com/tmux-plugins/tmux-sessionist)
+
+### tmux Built-in Conventions
+
+**Standard keybindings that users expect:**
+
+| Key | Action | Adopt? |
+|-----|--------|--------|
+| `C-b 0-9` | Switch to window 0-9 | Yes (1-9 quick select) |
+| `C-b c` | Create new window | Yes (`n` for new session) |
+| `C-b d` | Detach | N/A (HUD handles this differently) |
+| `C-b (` / `)` | Previous/next session | Yes (implicit via j/k) |
+| `C-b s` | Choose session from list | Yes (this is what HUD is) |
+
+**Source:** [tmux cheatsheet](https://tmuxcheatsheet.com/), [tmux man page](https://man7.org/linux/man-pages/man1/tmux.1.html)
 
 ## Feature Dependencies
 
 ```
-                    Session Detection
-                          |
-            +-------------+-------------+
-            |             |             |
-       JSONL Parser   Hook Listener   OTel Reader
-            |             |             |
-            +-------------+-------------+
-                          |
-                    Session State
-                          |
-            +-------------+-------------+
-            |             |             |
-      Session List    Status Colors   Context Meter
-            |             |             |
-            +------+------+-------------+
-                   |
-              Main Display
-                   |
-        +----------+----------+
-        |          |          |
-    Keyboard    Preview    Jump-to
-    Navigation   Pane      Session
++-----------------------------------------------------------+
+|                 v1.0 EXISTING FEATURES                    |
+|  - Session detection (processDetector, tmuxService)       |
+|  - Status detection (hooks, hookStateService)             |
+|  - Context meters (contextService)                        |
+|  - Navigation (j/k, 1-9, Enter)                           |
+|  - Jump service (tmux switch-client)                      |
+|  - Window focus (windowFocusService)                      |
++-----------------------------------------------------------+
+                            |
+                            v
++-----------------------------------------------------------+
+|                 v2.0 NEW FEATURES                         |
+|                                                           |
+|  +-------------------+     +-------------------+          |
+|  | Horizontal HUD    |     | tmux Split        |          |
+|  | Strip Component   |---->| Architecture      |          |
+|  +-------------------+     +-------------------+          |
+|           |                       |                       |
+|           v                       v                       |
+|  +-------------------+     +-------------------+          |
+|  | Session Tabs      |     | Pane Management   |          |
+|  | (minimal format)  |     | (HUD + active)    |          |
+|  +-------------------+     +-------------------+          |
+|           |                       |                       |
+|           +-----------+-----------+                       |
+|                       v                                   |
+|              +-------------------+                        |
+|              | Spawn New         |                        |
+|              | Sessions (n key)  |                        |
+|              +-------------------+                        |
+|                       |                                   |
+|                       v                                   |
+|              +-------------------+                        |
+|              | Return to HUD     |                        |
+|              | (b key refined)   |                        |
+|              +-------------------+                        |
++-----------------------------------------------------------+
 ```
 
-### Dependency Chain
-
-1. **Foundation Layer** (must build first)
-   - Session detection (JSONL parsing, file watching)
-   - Basic TUI framework setup
-   - Keyboard event handling
-
-2. **Core Display** (builds on foundation)
-   - Session list widget
-   - Status indicator logic
-   - Color/styling system
-
-3. **Enhanced Features** (builds on core)
-   - Context window meter
-   - Preview pane
-   - Filtering/search
-
-4. **Integration** (optional, builds on all above)
-   - tmux integration
-   - Notification aggregation
-   - Cost tracking
-
-## Complexity Assessment
-
-### Low Complexity (1-2 days each)
-- Session list display
-- Keyboard navigation (j/k, arrows, Enter)
-- Status color coding
-- Auto-refresh polling
-- Quick-jump hotkeys (1-9)
-- Session age display
-- Model indicator
-- Help display
-- Quit handling
-
-### Medium Complexity (3-5 days each)
-- Session state detection from JSONL
-- Context window usage meter
-- Session preview pane
-- Cost tracking (requires OTel setup)
-- Token breakdown display
-- Notification hook integration
-- Long-blocked alerts
-- Filter/search
-
-### High Complexity (1-2 weeks each)
-- tmux pane/window integration
-- Activity timeline/sparklines
-- Multi-terminal navigation (VSCode terminals, iTerm, etc.)
+**Dependency notes:**
+- Horizontal HUD strip requires refactoring SessionList component
+- tmux split architecture requires tmux pane management layer
+- Session spawning requires directory selection UX
+- Return-to-HUD builds on existing windowFocusService
 
 ## MVP Recommendation
 
-For MVP, prioritize solving the core pain point: **"Which Claude session needs my attention?"**
+For v2.0 MVP, prioritize in this order:
 
-### Phase 1: Minimum Viable HUD
-1. Session list with project paths
-2. Status indicators (Working/Idle/Blocked) - via JSONL watching
-3. Color coding (Green/Yellow/Red)
-4. Keyboard navigation (j/k/Enter)
-5. Auto-refresh (5-second default)
-6. Jump to session (open terminal/tmux pane)
+### Must Have (Table Stakes)
+1. **Horizontal HUD strip** - Core UI change
+2. **tmux split architecture** - HUD top, active session bottom
+3. **Session switching via native tmux** - Reliability over v1.0
+4. **Return to HUD with `b`** - Quick toggle
 
-### Phase 2: Context Awareness
-1. Context window usage meter
-2. Blocked reason display
-3. Quick-jump hotkeys (1-9)
-4. Session preview pane
+### Should Have (Key Differentiators)
+5. **Spawn new sessions with `n`** - Complete workflow in HUD
+6. **Detect externally-created sessions** - Works with existing workflow
+7. **Preserve selection on return** - Polish
 
-### Phase 3: Power Features
-1. Cost tracking
-2. Token breakdown
-3. Long-blocked alerts
-4. Activity timeline
-
-### Defer to Post-MVP
+### Defer to v3
+- Session preview pane
+- Cost/token tracking
 - Multi-machine monitoring
-- Custom themes
-- Plugin system
-- Deep terminal emulator integrations beyond tmux
+- Session persistence across restarts
+
+## Keybinding Summary
+
+**v2.0 Keybinding Map:**
+
+| Key | Action | Convention Source |
+|-----|--------|-------------------|
+| `j` / `k` | Navigate down/up | vim, tmux |
+| `1-9` | Quick select session | tmux window switching |
+| `Enter` | Jump to selected session | Universal |
+| `n` | Spawn new Claude session | tmux-sessionist pattern |
+| `b` | Return to HUD | Custom (back) |
+| `q` | Quit HUD | Universal |
+| `?` | Toggle help | Universal |
+
+**Not adding:**
+- `d` for detach (tmux handles this)
+- `x` for kill session (too dangerous, use tmux)
+- `r` for rename (use tmux's `prefix + $`)
 
 ## Sources
 
-### Official Documentation
-- [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference)
-- [Claude Code Monitoring](https://code.claude.com/docs/en/monitoring-usage)
-- [Claude Context Windows](https://docs.claude.com/en/docs/build-with-claude/context-windows)
+### Primary (HIGH confidence)
+- [tmux-sessionx GitHub](https://github.com/omerxx/tmux-sessionx) - Modern session manager patterns
+- [tmuxinator GitHub](https://github.com/tmuxinator/tmuxinator) - Project-based session management
+- [t-smart-tmux-session-manager GitHub](https://github.com/joshmedeski/t-smart-tmux-session-manager) - Smart create-or-attach pattern
+- [tmux-sessionist GitHub](https://github.com/tmux-plugins/tmux-sessionist) - Lightweight session operations
+- [tmux cheatsheet](https://tmuxcheatsheet.com/) - Standard keybinding conventions
+- [tmux Getting Started Wiki](https://github.com/tmux/tmux/wiki/Getting-Started) - Official patterns
 
-### GitHub Issues (Claude Code)
-- [Issue #2654: Monitor multiple sessions](https://github.com/anthropics/claude-code/issues/2654) - Core feature request
-- [Issue #12048: Notification matcher for waiting input](https://github.com/anthropics/claude-code/issues/12048)
-- [Issue #11189: Interrupt/reason context to hooks](https://github.com/anthropics/claude-code/issues/11189)
-- [Issue #13922: Configurable idle_prompt timeout](https://github.com/anthropics/claude-code/issues/13922)
+### Secondary (MEDIUM confidence)
+- [tmux status bar customization](https://www.baeldung.com/linux/tmux-status-bar-customization) - Status line patterns
+- [Ham Vocke tmux guide](https://hamvocke.com/blog/a-guide-to-customizing-your-tmux-conf/) - Best practices
+- [Decker HUD](https://github.com/swordsmanluke/decker) - Terminal HUD design patterns
 
-### TUI Reference Tools
-- [btop++](https://github.com/aristocratos/btop) - Modern system monitor
-- [lazydocker](https://lazydocker.com/) - Docker TUI with keyboard navigation
-- [k9s](https://k9scli.io/) - Kubernetes TUI patterns
-- [tmuxwatch](https://github.com/steipete/tmuxwatch) - tmux session monitoring TUI
+### Tertiary (LOW confidence)
+- WebSearch results on tmux UX patterns - Community consensus
+- [C.H.U.D. GitHub](https://github.com/realjbmangum/chud) - Claude-specific HUD inspiration
 
-### Community Tools
-- [clog](https://github.com/HillviewCap/clog) - Claude Code log viewer with real-time monitoring
-- [claude-code-viewer](https://github.com/d-kimuson/claude-code-viewer) - Web-based session viewer
+## Metadata
 
-### Design Patterns
-- [awesome-tuis](https://github.com/rothgar/awesome-tuis) - TUI project list
-- [Bubble Tea tips](https://leg100.github.io/en/posts/building-bubbletea-programs/) - Go TUI patterns
-- [RAG Status Best Practices](https://www.clearpointstrategy.com/blog/establish-rag-statuses-for-kpis) - Traffic light status patterns
+**Confidence breakdown:**
+- Table stakes features: HIGH - Well-established patterns across multiple tools
+- Differentiators: HIGH - Clear value proposition for Claude workflow
+- Anti-features: MEDIUM - Based on user scope decisions, may revisit in v3
+- Keybindings: HIGH - Based on universal conventions
+
+**Research date:** 2026-01-25
+**Valid until:** 2026-02-25 (30 days - stable domain)

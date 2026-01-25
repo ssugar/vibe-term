@@ -1,535 +1,310 @@
-# Research Summary
+# Research Summary: v2.0 Integrated Claude Terminal
 
-**Project:** Claude Code TUI HUD
-**Date:** 2026-01-22
+**Project:** Claude Code TUI HUD v2.0
+**Domain:** tmux-integrated terminal manager for Claude Code sessions
+**Researched:** 2026-01-25
 **Overall Confidence:** HIGH
-
-This research consolidates findings from stack selection, feature landscape analysis, architectural patterns, and known pitfalls to inform roadmap planning for a TUI-based heads-up display (HUD) that monitors multiple Claude Code instances.
-
----
 
 ## Executive Summary
 
-Building a TUI to monitor multiple Claude Code instances requires solving a specific problem: **developers running multiple Claude Code sessions lose track of which ones are blocked and need attention.** The solution is a keyboard-driven dashboard that shows session status at a glance and enables quick navigation to blocked sessions.
+The v2.0 architecture represents a fundamental shift from standalone monitoring to tmux-integrated session management. Research across tmux session managers (tmuxinator, tmux-sessionx, t-smart-tmux-session-manager) reveals a clear pattern: successful terminal managers work *with* tmux conventions, not against them. The HUD strip (1-2 line always-visible status bar) combined with native tmux pane management provides the optimal architecture for Claude workflow monitoring.
 
-The recommended approach uses **Ink (React for CLIs)** as the framework, leveraging its proven track record (Claude Code itself is built with Ink). Process detection combines **ps-list** for cross-platform process enumeration with **JSONL log parsing** (`~/.claude/projects/`) as the source of truth for session state. State management uses **Zustand** for its simplicity and ability to work outside React components. Terminal integration via **tmux** provides session navigation, with direct **execa** commands as fallback rather than relying on the unmaintained node-tmux library.
+The recommended approach uses **no new npm dependencies** beyond the existing v1.0 stack (Ink 6.x, Zustand, React 19). All tmux integration happens through CLI commands via the existing `execAsync()` pattern. This is the correct decision because: (1) no Node.js library fully wraps tmux's pane management APIs, (2) the pattern is already proven in v1.0 for session operations, and (3) it avoids the complexity of libraries like `node-tmux` (missing critical pane operations) or `stmux` (replaces tmux entirely, contradicting design goals).
 
-Key risks center on **performance** (polling intervals must balance responsiveness with CPU usage), **cross-platform compatibility** (Windows/WSL2 have different process detection capabilities), and **tmux integration fragility** (output parsing can break with version changes). Mitigation strategies include using established libraries (ps-list, cross-spawn), designing with graceful fallbacks, and validating on all target platforms early.
+The primary risks are tmux-specific edge cases: pane resizing breaking layout, input routing to wrong pane after focus switch, and nested tmux detection. These are all manageable with proper defensive coding patterns documented in PITFALLS.md. The architecture is sound and well-precedented in the tmux ecosystem.
 
----
+## Key Findings
 
-## Stack Recommendation
+### Stack Additions (from STACK.md)
 
-### Core Technologies
+**No new dependencies required.** The v2.0 tmux-integrated architecture is accomplished entirely with:
 
-| Component | Choice | Version | Rationale |
-|-----------|--------|---------|-----------|
-| **Framework** | Ink | 6.6.0 | React mental model, proven in Claude Code, built-in focus management |
-| **Runtime** | Node.js | >= 20 | Required by ps-list 9.x and Ink 6.x |
-| **React** | React | 18.x | Ink 6.x incompatible with React 19 |
-| **Module System** | ESM | Required | All core dependencies are ESM-only |
-| **UI Components** | @inkjs/ui | Latest | Official Ink companion library with Spinner, Badge, ProgressBar |
-| **State Management** | Zustand | 5.x | Works outside React, minimal boilerplate, subscribable |
-| **Process Detection** | ps-list | 9.0.0 | Cross-platform, by Sindre Sorhus, no native deps |
-| **Command Execution** | execa | Latest (9.x) | Promise-based, cross-platform shell execution |
-| **Platform Detection** | is-wsl | Latest | Detects WSL1/WSL2 for platform-specific logic |
-| **Colors** | Chalk | 5.6.2 | Industry standard, but Ink has built-in colors (use sparingly) |
-| **TypeScript** | typescript | 5.x | Full Ink support, better DX for complex state |
-| **Dev Execution** | tsx | Latest | Run TypeScript directly during development |
+**Core technologies (unchanged from v1.0):**
+- **Ink 6.6.0**: React TUI framework — provides `<Box height={2}>` for HUD strip rendering
+- **React 19.2.3**: UI layer — note v1.0 already resolved React 19 compatibility
+- **Zustand 5.0.10**: State management — will add hudPaneId, sessionPaneTarget to store
+- **ps-list 9.0.0**: Process detection — continues to work for external session discovery
+- **execa latest**: Command execution — proven pattern for tmux CLI operations
 
-### Package Installation
+**tmux integration:**
+- All pane operations via tmux CLI commands: `split-window`, `send-keys`, `select-pane`, `resize-pane`, `swap-pane`
+- Existing `execAsync()` in `platform.ts` handles all tmux interaction
+- No wrapper libraries needed or recommended
 
-```bash
-# Core dependencies
-npm install ink@6 react@18 @inkjs/ui zustand ps-list execa is-wsl chalk
+**Rejected alternatives:**
+- `node-tmux`: Missing split-window/pane operations, would require CLI fallback anyway
+- `stmux`: Replaces tmux entirely, contradicts native tmux integration goal
+- `node-pty`: Embedded terminal out of scope per PROJECT.md constraints
 
-# Dev dependencies
-npm install -D typescript @types/react tsx
+### Feature Landscape (from FEATURES.md)
+
+**Must have (table stakes):**
+- Session list display with status indicators — v1.0 has this, refactor to horizontal
+- Keyboard navigation (j/k, 1-9) — v1.0 has this, unchanged
+- Session switching via tmux — v1.0 partial, v2.0 improves reliability
+- HUD persists after session switch — new requirement, core v2.0 value
+- Graceful external session detection — v1.0 has this via process detection
+
+**Should have (competitive differentiators):**
+- Horizontal HUD strip (1-2 lines) — maximizes space for active Claude
+- Always-visible status bar — like browser tabs, not modal popup
+- Claude-specific status (working/idle/blocked) — v1.0 has this, preserve
+- Context window meters — v1.0 has this, condense to percentage
+- Spawn new sessions with `n` key — complete workflow without leaving HUD
+- Return to HUD with `b` key — quick toggle between work and overview
+
+**Defer (v3+):**
+- Session preview pane — complexity without solving core problem
+- Fuzzy finder — overkill for 5-10 sessions
+- Session configuration files — over-engineering for Claude use case
+- Custom keybinding configuration — standard conventions are sufficient
+
+**Keybinding map:**
+- `j/k` or arrows: navigate sessions (vim/tmux convention)
+- `1-9`: quick select session (tmux window switching pattern)
+- `Enter`: jump to selected session
+- `n`: spawn new Claude session (tmux-sessionist pattern)
+- `b`: return to HUD (custom, mnemonic for "back")
+- `q`: quit HUD
+- `?`: toggle help (minimal, space is precious)
+
+### Architecture Approach (from ARCHITECTURE.md)
+
+**Integration pattern:** tmux becomes the container, HUD becomes a status layer. This inverts the v1.0 relationship where HUD was standalone and sessions were external.
+
+**Target layout:**
+```
+tmux session: claude-hud
++----------------------------------------------------------------+
+| [1:proj-a ⏳ 45%] [2:proj-b ✓ 12%] [3:proj-c 🛑 78%]            | <- HUD pane (2 lines, Ink)
++----------------------------------------------------------------+
+|                                                                 |
+|  Active Claude session pane (shell running Claude)              |
+|                                                                 |
++----------------------------------------------------------------+
 ```
 
-### Critical Stack Constraints
-
-1. **ESM-only project** - All dependencies require ES modules
-2. **Node.js 20+ locked** - ps-list 9.x minimum requirement
-3. **React 18.x locked** - Cannot use React 19 until Ink supports it
-4. **Avoid node-tmux** - No releases, limited activity; use execa with tmux CLI directly
-
----
-
-## Table Stakes Features
-
-These features are expected in any TUI process monitor. Users will consider the product incomplete without them.
-
-| Feature | Priority | Complexity |
-|---------|----------|------------|
-| **Session list with status** | Must-have | Low |
-| **Status indicators** (Working/Idle/Blocked) | Must-have | Medium |
-| **Keyboard navigation** (j/k or arrows) | Must-have | Low |
-| **Jump to session** (Enter key) | Must-have | Low |
-| **Auto-refresh/polling** | Must-have | Low |
-| **Visual hierarchy/layout** | Must-have | Low |
-| **Color-coded status** (RAG: Red/Amber/Green) | Must-have | Low |
-| **Session identification** (project path or name) | Must-have | Low |
-| **Quit command** (q key) | Must-have | Low |
-| **Help/keybinding display** | Must-have | Low |
-
-### Status Detection Requirements
-
-Based on GitHub Issue #2654, the core problem is detecting three states:
-
-- **Working:** Claude is actively processing (API calls, tool execution)
-- **Idle:** Claude completed response, waiting for next user input (normal state)
-- **Blocked:** Claude is waiting for user input (permission prompts, AskUserQuestion, interrupts)
-
-**Data sources:**
-1. **Session JSONL logs** - `~/.claude/projects/<dir>/<session>.jsonl` (Primary)
-2. **Notification hooks** (v1.0.38+) - Most reliable for blocked state
-3. **OpenTelemetry events** - `claude_code.tool_decision`, `claude_code.user_prompt`
-4. **Process monitoring** - Active/inactive process state (Fallback)
-
----
-
-## Differentiating Features
-
-These features solve the unique multi-session problem and set this HUD apart.
-
-| Feature | Value | Complexity | Priority |
-|---------|-------|------------|----------|
-| **Context window usage meter** | See token consumption at glance; stoplight colors (Green <50%, Yellow 50-80%, Red >80%) | Medium | Phase 2 |
-| **"Blocked" session highlighting** | Immediately identify sessions needing attention (flashing/bold/color) | Low | Phase 1 |
-| **Quick-jump hotkeys** (1-9) | Jump to session by number without navigating | Low | Phase 2 |
-| **Session preview pane** | See last message/question without switching | Medium | Phase 2 |
-| **Notification aggregation** | Single place for all "needs attention" events | Medium | Phase 3 |
-| **tmux/terminal integration** | Auto-detect and navigate to actual terminal window | High | Phase 1 |
-| **Session age/duration** | See how long session running/blocked | Low | Phase 2 |
-| **Cost tracking per session** | Show cumulative cost ($) via OpenTelemetry | Medium | Phase 3 |
-| **Token usage breakdown** | Input/output/cache tokens per session | Medium | Phase 3 |
-| **Model indicator** | Show which model each session uses (sonnet/opus/haiku) | Low | Phase 2 |
-| **Project grouping** | Group sessions by project directory | Low | Phase 2 |
-| **Filter/search sessions** | Find session by name/project with `/` | Low | Phase 2 |
-| **Alerts for long-blocked sessions** | Visual/audio alert if blocked > N minutes | Medium | Phase 3 |
-
-### Features to Explicitly Avoid
-
-- **Full session output display** - Clutters HUD; link to actual terminal instead
-- **Input/command capability** - Scope creep; focus on monitoring, not terminal emulation
-- **Session management** (start/stop/kill) - Existing tools handle this
-- **Log viewing/scrollback** - `claude-code-log`, `clog` already exist
-- **Configuration editing** - Direct users to `claude config` command
-- **Multi-machine monitoring** - Massive complexity for MVP
-- **Mouse-only interface** - TUI users expect keyboard-first
-- **Heavy animations** - Performance overhead
-- **Plugin/extension system** - Premature abstraction
-
----
-
-## Architecture Approach
-
-### Four-Layer Architecture
-
-**Layer 1: Data Collection**
-- **ProcessDetector** - Find Claude Code processes via ps-list
-- **TmuxScanner** - Enumerate tmux sessions and correlate with processes
-- **StatusParser** - Parse JSONL logs for session state (Working/Idle/Blocked)
-- **ContextWindowParser** - Extract token usage for stoplight indicators
-
-**Layer 2: State Management**
-- **Zustand stores** - InstanceStore (sessions), SelectionStore (UI state), ConfigStore (preferences)
-- **PollingManager** - Coordinate refresh intervals
-- Stores accessible from both React components and data collection layer
-
-**Layer 3: UI Component Layer**
-- **Functional React components** with Ink hooks
-- **useFocus/useFocusManager** for keyboard navigation
-- **useInput** for keyboard handling
-- **Box-based flexbox layout** for responsive terminal sizing
-- Components: App, Header, Footer, InstanceList, InstanceRow, StatusIndicator, ContextMeter
-
-**Layer 4: Infrastructure**
-- **ProcessSpawner** - Safe child_process wrappers with timeouts
-- **TmuxClient** - Execute tmux CLI commands via execa
-- **TerminalJumper** - Navigate to specific tmux session
-- **Logger** - Debug logging (not to stdout, would corrupt TUI)
-
-### Data Flow Pattern
-
-Unidirectional flow following React/Flux:
-
-```
-Polling Trigger (interval)
-    |
-    v
-[ProcessDetector | TmuxScanner | StatusParser]
-    |
-    v
-Data Aggregator (combines all sources)
-    |
-    v
-Zustand Store (setInstances)
-    |
-    v
-React Components (subscribe to store slices)
-    |
-    v
-Ink Renderer (diff and render to TTY)
-```
-
-### Directory Structure
-
-```
-src/
-  cli.tsx               # Entry point, argument parsing
-  app.tsx               # Root component, layout
-  components/           # UI components (Header, Footer, InstanceList, etc.)
-  hooks/                # Custom React hooks (usePolling, useInstances, etc.)
-  stores/               # Zustand stores (instanceStore, selectionStore, configStore)
-  services/             # Data collection (processDetector, tmuxScanner, statusParser)
-  infra/                # Platform abstractions (processSpawner, tmuxClient, terminalJumper)
-  types/                # TypeScript interfaces
-```
-
-### Key Architectural Decisions
-
-1. **Zustand over Context/Redux** - Works outside React, minimal boilerplate, selective subscriptions
-2. **Polling-based, not event-driven** - Simpler, more reliable across platforms
-3. **JSONL logs as primary source** - More reliable than process detection alone
-4. **execa for tmux, not node-tmux** - Active maintenance, direct CLI control
-5. **Focus management via Ink built-ins** - useFocus and useFocusManager handle navigation
-6. **ESM-only with Node.js 20+** - Required by all modern dependencies
-
----
-
-## Critical Pitfalls to Avoid
-
-### 1. Performance Degradation from High-Frequency Re-renders
-
-**Symptom:** UI becomes sluggish, high CPU usage, terminal flickering
-
-**Cause:** Each state update triggers full re-render. Multiple data sources updating simultaneously queue renders.
-
-**Prevention:**
-- Use Ink's `<Static>` component for non-updating content
-- Batch state updates rather than updating on every poll
-- Use appropriate polling intervals (1-2 seconds, not 100ms)
-- Leverage Zustand selectors to prevent unnecessary component re-renders
-
-**Phase:** Foundation (Phase 1) - establish patterns early
-
----
-
-### 2. Memory Leaks from Uncleared Timers
-
-**Symptom:** Memory usage grows over time, "state update on unmounted component" warnings
-
-**Cause:** setInterval and event subscriptions continue after component unmount
-
-**Prevention:**
-```typescript
-useEffect(() => {
-  const interval = setInterval(poll, 2000);
-  const unsubscribe = watcher.subscribe(handler);
-
-  return () => {
-    clearInterval(interval);
-    unsubscribe();
-  };
-}, []);
-```
-
-**Phase:** Foundation (Phase 1) - establish cleanup patterns in all hooks
-
----
-
-### 3. Cross-Platform child_process.spawn Failures
-
-**Symptom:** "spawn npm ENOENT" errors on Windows, works on Linux/macOS
-
-**Cause:** Windows requires `shell: true` for scripts; path handling differs
-
-**Prevention:**
-- Use `cross-spawn` package throughout
-- Or use `{ shell: isWindows }` option
-- Never use `execSync` (blocks event loop)
-- Always use async spawn with timeouts
-
-**Phase:** Foundation (Phase 1) - abstract from start
-
----
-
-### 4. WSL2-Specific Process Detection Issues
-
-**Symptom:** Different behavior on WSL2 vs native Linux, performance issues
-
-**Cause:** WSL2 is neither Windows nor Linux; PATH conflicts, filesystem performance varies
-
-**Prevention:**
-- Detect WSL2 explicitly: check `/proc/version` for "microsoft"
-- Handle WSL-specific paths and behaviors
-- Test on WSL2 separately from native Linux
-- Document WSL2 limitations
-
-**Phase:** Process Detection (Phase 3) - implement WSL2-specific logic
-
----
-
-### 5. tmux Output Parsing Fragility
-
-**Symptom:** Works locally, breaks with different tmux versions or locales
-
-**Cause:** Parsing human-readable output instead of machine-readable formats
-
-**Prevention:**
-```bash
-# Use format strings for structured output
-tmux list-sessions -F "#{session_id}:#{session_name}:#{session_attached}"
-tmux capture-pane -t "$session:$window.$pane" -p
-```
-
-**Phase:** Terminal Integration (Phase 4) - use format strings from start
-
----
-
-### 6. Focus Management Complexity
-
-**Symptom:** Keyboard shortcuts trigger wrong actions, focus jumps unexpectedly
-
-**Cause:** Multiple components with `useInput` handling same keypress
-
-**Prevention:**
-- Use `useFocus` and `useFocusManager` explicitly
-- Set `isActive: false` on `useInput` for unfocused components
-- Design clear focus hierarchy upfront
-- Implement visual focus indicators
-
-**Phase:** UI Components (Phase 2) - design focus model early
-
----
-
-### 7. Claude Code Instance Detection Unreliability
-
-**Symptom:** HUD shows no instances when Claude is running, or wrong counts
-
-**Cause:** Process names vary by installation/version; multiple processes per instance
-
-**Prevention:**
-- Parse JSONL logs as primary source: `~/.claude/projects/<project>/<session>.jsonl`
-- Use process detection as secondary/fallback
-- Match on multiple criteria (name, command line, working directory)
-- Handle detection failures gracefully
-- Log detection attempts for debugging
-
-**Phase:** Process Detection (Phase 3) - multi-method detection
-
----
+**Major components:**
+
+1. **tmuxPaneManager Service** (new) — Manages tmux session/pane structure
+   - Create claude-hud session on startup
+   - Split window: HUD pane (top, 2 lines) + session pane (bottom, remaining)
+   - Handle session switching in session pane
+   - Spawn new Claude instances via `send-keys`
+
+2. **HudStrip Component** (new) — Horizontal tab-style display
+   - Replaces vertical SessionList from v1.0
+   - Renders in 1-2 terminal rows
+   - Format: `[1:proj-name ✓ 25%]` per tab
+   - Handles terminal width detection and truncation
+
+3. **Startup Orchestrator** (new) — Initialize tmux environment before Ink
+   - Check if already in claude-hud session
+   - Create/attach tmux session as needed
+   - Start Ink app in HUD pane
+   - Error if tmux not available
+
+**Modified v1.0 components:**
+- `App.tsx`: Remove overlays, change to horizontal strip layout, add `n`/`b` handlers
+- `jumpService.ts`: Simplify to use tmuxPaneManager for switching
+- `appStore.ts`: Add hudSessionName, sessionPaneTarget
+- `Header.tsx`/`Footer.tsx`: Remove entirely (HUD strip is only visible element)
+
+**Data flow patterns:**
+- **Session discovery**: Unchanged — `useSessions` polls processes, builds session list
+- **Session switching**: `tmuxPaneManager.switchToSession()` → `send-keys` to switch pane
+- **New session**: User presses `n` → `spawnClaude(cwd)` → `send-keys -t session-pane "cd {cwd} && claude"`
+- **Return to HUD**: User presses `b` (tmux binding) → `select-pane -t hud-pane`
+
+### Critical Pitfalls (from PITFALLS.md)
+
+1. **HUD Pane Resizing Breaks Layout** — Use fixed line count (`split-window -l 2`) not percentage. Listen for SIGWINCH and re-adjust with `resize-pane -y 2`. Test with aggressive terminal resizing.
+
+2. **Input Goes to Wrong Pane After Focus Switch** — Known tmux bug where `pane-focus-in` triggers in wrong pane. Add 50-100ms delay after `select-pane`. Verify focus with `display-message -p '#{pane_id}'` before accepting input.
+
+3. **Nested tmux Detection Fails Session Creation** — `$TMUX` environment variable prevents new sessions from child processes. Always detect `process.env.TMUX` before session operations. Use `switch-client` when inside tmux, not `attach` or `new-session`.
+
+4. **send-keys Race Conditions** — Commands sent via `send-keys` can execute out of order or partially. Combine commands when possible (`cd /path && claude`). Add explicit delays between dependent operations. Avoid signal keys like Ctrl-Z.
+
+5. **TERM Environment Breaks Ink Rendering** — tmux sets `TERM=screen` or `TERM=tmux-256color` which may break Ink colors/characters. Document required tmux config: `set-option -g default-terminal "tmux-256color"`. Verify TERM on startup and warn if incompatible.
+
+**Additional moderate pitfalls:**
+- Working directory confusion (always specify `-c` option)
+- Dead panes after process exit (detect and clean during refresh)
+- Pane ID instability (re-resolve before operations, never cache long-term)
+- Terminal resize not propagated (listen to SIGWINCH + stdout resize)
+- Keyboard input conflicts (implement focus-aware input routing)
 
 ## Recommended Build Order
 
-### Phase 1: Foundation (Data Collection & Core UI)
-**Duration:** 1-2 weeks
+Based on dependencies and integration points, implementation should proceed in waves:
 
-**Build:**
-1. TypeScript interfaces and types
-2. ProcessSpawner with safe child_process wrappers
-3. ProcessDetector using ps-list
-4. Basic Ink setup (cli.tsx, app.tsx, Header, Footer)
-5. Zustand InstanceStore with polling hook
-6. Signal handlers for graceful shutdown
+### Phase 06-01: HUD Pane Foundation
+**Rationale:** Establish the rendering and tmux environment before building session management
+**Delivers:** Ink app runs in 2-line tmux pane with correct rendering
+**Addresses:**
+- TERM environment verification (Pitfall #5)
+- Terminal resize handling (Pitfall #9)
+- tmux version compatibility check (Pitfall #12)
+- Multiple instance prevention (Pitfall #15)
 
-**Deliverable:** Can detect Claude processes and display in basic TUI
+**Components:**
+- Startup orchestrator (check/create tmux session)
+- HudStrip component skeleton (horizontal layout)
+- Basic tmux pane creation (split-window -l 2)
 
-**Validates:**
-- Cross-platform process detection works
-- Ink rendering and cleanup patterns established
-- Polling without memory leaks
+**Research flag:** Standard patterns, skip phase research
 
----
+### Phase 06-02: tmux Pane Architecture
+**Rationale:** Build the pane management layer before interactive features
+**Delivers:** tmuxPaneManager service with session/pane lifecycle
+**Addresses:**
+- Pane resizing resilience (Pitfall #1)
+- Nested tmux detection (Pitfall #3)
+- External session discovery (existing v1.0 pattern)
 
-### Phase 2: Session State Detection
-**Duration:** 1-2 weeks
+**Components:**
+- tmuxPaneManager.ts service
+- Session/pane creation logic
+- Pane ID resolution (don't cache, re-query)
 
-**Build:**
-1. JSONL log parser for session state (Working/Idle/Blocked)
-2. TmuxScanner for session enumeration
-3. StatusParser to correlate process + JSONL data
-4. InstanceList and InstanceRow components
-5. StatusIndicator with RAG colors
-6. Session age/duration calculation
+**Research flag:** Standard patterns, skip phase research
 
-**Deliverable:** TUI shows Claude sessions with accurate status and colors
+### Phase 06-03: Input Handling and Session Spawning
+**Rationale:** Core interaction features depend on stable pane architecture
+**Delivers:** Session switching, spawning, and keyboard navigation
+**Addresses:**
+- Input routing to correct pane (Pitfall #2)
+- send-keys race conditions (Pitfall #4)
+- Working directory handling (Pitfall #6)
+- Keyboard input conflicts (Pitfall #10)
 
-**Validates:**
-- Status detection logic works
-- JSONL parsing reliable
-- tmux correlation successful
+**Components:**
+- Update jumpService.ts to use tmuxPaneManager
+- Implement `n` key handler for new sessions
+- Implement `b` key handler for return to HUD
+- Focus verification before input handling
 
----
+**Research flag:** Standard patterns, skip phase research
 
-### Phase 3: Navigation & Context Awareness
-**Duration:** 1 week
+### Phase 06-04: UI Transformation and Polish
+**Rationale:** Polish the UX after core mechanics are stable
+**Delivers:** Complete horizontal HUD strip with tab display
+**Addresses:**
+- Session list to horizontal tabs refactor
+- Status indicators in minimal format
+- Terminal width handling and truncation
 
-**Build:**
-1. Focus management with useFocus/useFocusManager
-2. Keyboard navigation (j/k, arrows, Enter)
-3. ContextWindowParser for token usage
-4. ContextMeter component with stoplight colors
-5. Quick-jump hotkeys (1-9)
-6. SelectionStore for UI state
+**Components:**
+- Complete HudStrip.tsx and SessionTab.tsx
+- Refactor App.tsx layout
+- Remove Header.tsx, Footer.tsx
+- Add visual polish (colors, selection indicators)
 
-**Deliverable:** Can navigate sessions with keyboard and see context window usage
+**Research flag:** Standard patterns, skip phase research
 
-**Validates:**
-- Focus system works correctly
-- Context parsing reliable
-- Keyboard shortcuts intuitive
+### Phase 06-05: Session Lifecycle and Cleanup
+**Rationale:** Handle edge cases after happy path works
+**Delivers:** Robust session management with cleanup
+**Addresses:**
+- Dead pane detection (Pitfall #7)
+- Orphaned state cleanup (Pitfall #11)
+- External session integration
 
----
+**Components:**
+- Dead pane cleanup in refresh cycle
+- Startup orphan detection
+- External session handling (show all with indicator)
 
-### Phase 4: Terminal Integration
-**Duration:** 1 week
+**Research flag:** Standard patterns, skip phase research
 
-**Build:**
-1. TmuxClient with format string parsing
-2. TerminalJumper for session navigation
-3. Enter key wired to jump action
-4. Graceful HUD exit before jump
-5. Error handling for missing sessions
+### Phase Ordering Rationale
 
-**Deliverable:** Press Enter to jump to selected Claude session in tmux
+- **Foundation first:** Establish tmux environment and rendering before building features
+- **Infrastructure before interaction:** Pane management must be stable before switching/spawning
+- **Core mechanics before polish:** Get switching working before refining tab display
+- **Edge cases last:** Handle cleanup and external sessions after happy path proven
 
-**Validates:**
-- tmux integration stable
-- Session navigation works
-- Edge cases handled
-
----
-
-### Phase 5: Power Features (Optional/Future)
-**Duration:** 1-2 weeks
-
-**Build:**
-1. Session preview pane (split view)
-2. Filter/search functionality
-3. Project grouping
-4. Model indicator
-5. Notification aggregation
-6. OpenTelemetry integration for cost/token tracking
-7. Long-blocked alerts
-
-**Deliverable:** Enhanced UX for power users
-
----
-
-## Open Questions
-
-These require validation during implementation:
-
-### Technical Validation Needed
-
-1. **JSONL log structure** - What fields are available? How do they map to status?
-2. **ps-list Windows limitations** - What data is NOT available on Windows? How to work around?
-3. **WSL2 process visibility** - Can WSL2 see Windows processes and vice versa?
-4. **tmux version compatibility** - What's the minimum tmux version? Do format strings work consistently?
-5. **Context window data source** - Where exactly is token usage data? In JSONL or requires OpenTelemetry?
-6. **Notification hook format** - What does `interrupt_reason` actually contain?
-7. **Terminal emulator detection** - Can we detect which terminal is running (iTerm2, GNOME Terminal, etc.)?
-
-### UX Decisions
-
-1. **Default polling interval** - 1 second? 2 seconds? Configurable?
-2. **Blocked session urgency** - How to prioritize multiple blocked sessions?
-3. **Layout for small terminals** - What's the minimum terminal size? How to handle 80x24?
-4. **Color scheme** - Respect NO_COLOR? Custom themes?
-5. **Error display** - How to show errors without disrupting UI?
-
-### Platform Testing
-
-1. **Native Windows support** - Is it worth supporting without WSL2?
-2. **macOS Terminal.app** - Does session jumping work?
-3. **Wayland** - Any specific issues?
-4. **Screen vs tmux** - Support GNU screen?
-
----
+This order avoids pitfalls by:
+- Testing resize handling from the start (Pitfall #1)
+- Verifying focus before building input features (Pitfall #2)
+- Establishing nested tmux patterns before session operations (Pitfall #3)
+- Building synchronization into send-keys from the start (Pitfall #4)
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| **Stack** | HIGH | All technologies verified via official sources; proven in production |
-| **Features** | HIGH | Based on real user pain points (GitHub issues) and established TUI patterns |
-| **Architecture** | HIGH | Patterns validated in similar projects (btop, k9s, lazydocker) |
-| **Pitfalls** | MEDIUM-HIGH | Common issues well-documented; some Claude-specific concerns need validation |
+| Stack | **HIGH** | No new dependencies, existing patterns proven in v1.0 |
+| Features | **HIGH** | Well-established patterns across multiple tmux managers |
+| Architecture | **HIGH** | tmux pane mechanics stable 20+ years, Ink rendering proven |
+| Pitfalls | **HIGH** | Verified via GitHub issues, official docs, existing codebase |
 
-### Known Gaps
+**Overall confidence: HIGH**
 
-1. **Claude Code JSONL log format** - Need to examine actual logs to finalize parsing logic
-2. **Notification hook data structure** - Need to test with live hooks to see actual payload
-3. **OpenTelemetry integration** - Unclear if users have OTel configured by default
-4. **Windows native behavior** - Most research focused on Unix-like systems
+All research areas are backed by authoritative sources (tmux man pages, GitHub official repos, verified issues). The v1.0 codebase provides proof-of-concept for Ink rendering and tmux integration. The only uncertainty is in user workflow preferences (external session handling), which requires feedback during implementation.
 
-### Research Sources Quality
+### Gaps to Address
 
-- **Official documentation:** Ink, Node.js, Claude Code docs (HIGH confidence)
-- **GitHub issues:** Real user problems and feature requests (HIGH confidence)
-- **npm packages:** Verified versions and APIs (HIGH confidence)
-- **Community tools:** clog, claude-code-viewer as reference implementations (MEDIUM confidence)
-- **TUI reference tools:** btop, lazydocker, k9s as design patterns (HIGH confidence)
+**External session handling strategy** — How to handle Claude sessions in other tmux sessions (not claude-hud)?
+- **Recommended:** Show all sessions with indicator, switch to their tmux session on select
+- **Validate:** User testing will reveal if this is confusing vs helpful
+- **Fallback:** Filter to only claude-hud sessions, provide toggle to show external
 
----
+**Multiple HUD instance behavior** — What if user runs cc-tui-hud twice?
+- **Recommended:** Attach to existing session (single source of truth)
+- **Validate:** Does tmux attach-session work reliably from startup script?
+- **Fallback:** Error with clear message about existing instance
+
+**Return-to-HUD keybinding** — Should `b` be tmux binding or HUD input?
+- **Recommended:** tmux global binding (`bind-key b select-pane -t hud-pane`)
+- **Validate:** Can HUD safely modify user's tmux bindings?
+- **Fallback:** Document manual tmux.conf addition, HUD only handles when focused
+
+## Implications for Roadmap
+
+The research strongly supports a 5-phase roadmap with clear dependencies:
+
+1. **Phase 06-01 (HUD Pane Foundation)** delivers the rendering environment
+2. **Phase 06-02 (tmux Pane Architecture)** builds the management layer
+3. **Phase 06-03 (Input Handling)** enables interaction
+4. **Phase 06-04 (UI Transformation)** completes the UX
+5. **Phase 06-05 (Session Lifecycle)** handles edge cases
+
+Each phase addresses specific pitfalls and builds on prior work. The architecture is sound, the stack is proven, and the implementation path is clear.
+
+**Ready for roadmap: yes**
 
 ## Sources
 
-### Official Documentation
-- [Ink GitHub Repository](https://github.com/vadimdemedes/ink)
-- [Ink v3 Release Notes](https://vadimdemedes.com/posts/ink-3)
-- [ps-list GitHub](https://github.com/sindresorhus/ps-list)
-- [Zustand GitHub](https://github.com/pmndrs/zustand)
-- [execa GitHub](https://github.com/sindresorhus/execa)
-- [is-wsl GitHub](https://github.com/sindresorhus/is-wsl)
-- [Chalk GitHub](https://github.com/chalk/chalk)
-- [Claude Code CLI Reference](https://code.claude.com/docs/en/cli-reference)
-- [Claude Code Monitoring](https://code.claude.com/docs/en/monitoring-usage)
-- [Node.js Child Process Documentation](https://nodejs.org/api/child_process.html)
+### Primary (HIGH confidence)
+- [tmux manual page](https://man7.org/linux/man-pages/man1/tmux.1.html) — Command reference
+- [tmux GitHub](https://github.com/tmux/tmux) — Official repo, issues for known bugs
+- [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) — TERM settings, common issues
+- [Ink GitHub](https://github.com/vadimdemedes/ink) — v6.6.0 features, React 19 compatibility
+- [ps-list GitHub](https://github.com/sindresorhus/ps-list) — v9.0.0 requirements
+- [Zustand GitHub](https://github.com/pmndrs/zustand) — v5.0.10 state management
+- [execa GitHub](https://github.com/sindresorhus/execa) — Process execution patterns
 
-### GitHub Issues (Claude Code)
-- [Issue #2654: Monitor multiple sessions](https://github.com/anthropics/claude-code/issues/2654)
-- [Issue #12048: Notification matcher for waiting input](https://github.com/anthropics/claude-code/issues/12048)
-- [Issue #11189: Interrupt/reason context to hooks](https://github.com/anthropics/claude-code/issues/11189)
-- [Issue #13922: Configurable idle_prompt timeout](https://github.com/anthropics/claude-code/issues/13922)
-- [Issue #3045: IME Issues in Claude Code](https://github.com/anthropics/claude-code/issues/3045)
+### Secondary (MEDIUM confidence)
+- [tmux-sessionx](https://github.com/omerxx/tmux-sessionx) — Session manager UX patterns
+- [tmuxinator](https://github.com/tmuxinator/tmuxinator) — Project-based management
+- [t-smart-tmux-session-manager](https://github.com/joshmedeski/t-smart-tmux-session-manager) — Smart create-or-attach
+- [tmux-sessionist](https://github.com/tmux-plugins/tmux-sessionist) — Lightweight operations
+- [Tao of Tmux](https://tao-of-tmux.readthedocs.io/) — Scripting patterns
+- [tmux Advanced Use](https://github.com/tmux/tmux/wiki/Advanced-Use) — Pane targeting
 
-### TUI Reference Tools
-- [btop++](https://github.com/aristocratos/btop) - Modern system monitor
-- [lazydocker](https://lazydocker.com/) - Docker TUI with keyboard navigation
-- [k9s](https://k9scli.io/) - Kubernetes TUI patterns
-- [tmuxwatch](https://github.com/steipete/tmuxwatch) - tmux session monitoring TUI
+### Tertiary (LOW confidence)
+- [Super Guide to split-window](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) — Detailed patterns
+- [TmuxAI guides](https://tmuxai.dev/) — Working directories, respawn
+- [Baeldung tmux guides](https://www.baeldung.com/linux/tmux-status-bar-customization) — Configuration
 
-### Community Tools
-- [clog](https://github.com/HillviewCap/clog) - Claude Code log viewer
-- [claude-code-viewer](https://github.com/d-kimuson/claude-code-viewer) - Web-based session viewer
-- [ClaudeCodeJSONLParser](https://github.com/amac0/ClaudeCodeJSONLParser)
-- [claude-JSONL-browser](https://github.com/withLinda/claude-JSONL-browser)
-
-### Technical References
-- [Building Terminal Interfaces with Node.js](https://blog.openreplay.com/building-terminal-interfaces-nodejs/)
-- [Ink v3 Advanced UI Components](https://developerlife.com/2021/11/25/ink-v3-advanced-ui-components/)
-- [OpenCode TUI Architecture](https://deepwiki.com/sst/opencode/6.2-tui-components)
-- [Ratatui Elm Architecture](https://ratatui.rs/concepts/application-patterns/the-elm-architecture/)
-- [React Clean Architecture](https://alexkondov.com/full-stack-tao-clean-architecture-react/)
-- [Zustand vs Jotai Comparison](https://jotai.org/docs/basics/comparison)
-- [tmux Output Formatting](https://qmacro.org/blog/posts/2021/08/06/tmux-output-formatting/)
-- [tmux Control Mode Wiki](https://github.com/tmux/tmux/wiki/Control-Mode)
-- [Handling Memory Leaks in React](https://www.lucentinnovation.com/resources/technology-posts/handling-memory-leaks-in-react-for-optimal-performance)
-- [Node.js Graceful Shutdown](https://dev.to/yusadolat/nodejs-graceful-shutdown-a-beginners-guide-40b6)
-- [Preventing Command Injection](https://auth0.com/blog/preventing-command-injection-attacks-in-node-js-apps/)
+### Verified from Codebase
+- `src/services/tmuxService.ts` — Pane enumeration patterns
+- `src/services/jumpService.ts` — Session switching patterns
+- `src/hooks/useSessions.ts` — Process detection independent of tmux
+- `src/services/platform.ts` — execAsync() pattern for tmux commands
 
 ---
-
-## Ready for Requirements Definition
-
-This research provides a solid foundation for roadmap creation. The stack is validated, features are prioritized, architectural patterns are proven, and critical pitfalls are identified with mitigation strategies. The recommended build order (4-5 phases) balances risk, dependencies, and testability.
-
-**Next Steps:**
-1. Create detailed phase specifications
-2. Define acceptance criteria for each deliverable
-3. Identify which phases need `/gsd:research-phase` for deeper technical research
-4. Set up project structure based on recommended architecture
+*Research completed: 2026-01-25*
+*Ready for roadmap: yes*

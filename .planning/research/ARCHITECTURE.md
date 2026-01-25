@@ -1,578 +1,505 @@
-# Architecture Research
+# Architecture Research: v2.0 tmux-Integrated HUD Strip
 
-**Domain:** TUI HUD for monitoring multiple Claude Code instances
-**Researched:** 2026-01-22
-**Confidence:** HIGH (verified with official sources and established patterns)
+**Researched:** 2026-01-25
+**Domain:** tmux pane architecture for always-visible HUD strip
+**Confidence:** HIGH (tmux patterns well-documented, existing codebase understood)
 
-## Component Overview
+## Current Architecture Summary
 
-Based on research into Ink applications, TUI dashboard patterns, and process monitoring systems, the architecture should be organized into four primary layers with clear boundaries.
+The v1.0 codebase is a full-screen Ink (React TUI) application with:
 
-### Layer 1: Data Collection Layer
+**Components:**
+- `App.tsx` - Main component with keyboard handling, overlays, layout
+- `Header.tsx` - Status summary (blocked/working/idle counts)
+- `Footer.tsx` - Keybindings and last refresh time
+- `SessionList.tsx` - Vertical list of sessions
+- `SessionRow.tsx` - Individual session display with status, context, tmux indicator
 
-**Responsibility:** Detect and monitor Claude Code instances across tmux sessions and terminal windows.
+**State Management:**
+- `appStore.ts` (Zustand) - UI state, sessions array, selection index, error handling
+- `types.ts` - Session interface with pid, status, contextUsage, tmuxTarget, etc.
 
-| Component | Responsibility | Platform Scope |
-|-----------|---------------|----------------|
-| ProcessDetector | Find running Claude Code processes via `ps` | All |
-| TmuxScanner | Enumerate tmux sessions and their processes | Linux, macOS, WSL2 |
-| TerminalScanner | Detect processes in standalone terminals | All |
-| StatusParser | Parse Claude output for status (working/idle/blocked) | All |
-| ContextWindowParser | Extract token usage for stoplight indicators | All |
+**Services:**
+- `processDetector.ts` - Find Claude processes via `ps` command
+- `tmuxService.ts` - Get tmux panes, check if process is in tmux
+- `sessionBuilder.ts` - Build Session objects from processes + tmux context
+- `jumpService.ts` - Navigate to tmux session (switch-client/attach)
+- `windowFocusService.ts` - Focus non-tmux terminal windows
+- `hookStateService.ts` - Read Claude hook state files for status
+- `contextService.ts` - Parse JSONL transcripts for context usage
 
-**Key decisions:**
-- Use Node.js `child_process.spawn` with `ps` command for cross-platform process detection
-- Use `node-tmux` or direct tmux CLI for tmux session enumeration
-- Polling-based detection (not event-driven) for simplicity and reliability
+**Hooks:**
+- `useSessions.ts` - Polls for sessions, updates store
+- `useInterval.ts` - Reliable polling utility
 
-### Layer 2: State Management Layer
+**Key Characteristics:**
+- Full-screen layout - HUD occupies entire terminal
+- Vertical session list - Sessions displayed as rows
+- Ink renders entire UI - All content managed by React/Ink
+- Jump navigates away - Jumping leaves HUD, return is unreliable
 
-**Responsibility:** Maintain application state, coordinate updates, expose reactive state to UI.
+## Integration Approach
 
-| Component | Responsibility |
-|-----------|---------------|
-| InstanceStore | Track all detected Claude instances and their states |
-| SelectionStore | Track currently selected/focused instance |
-| ConfigStore | User preferences (refresh interval, colors, layout) |
-| PollingManager | Coordinate data collection intervals |
+### Target Architecture
 
-**Key decisions:**
-- Use Zustand for global application state (simpler than Redux, works outside React)
-- Zustand stores can be accessed from data collection layer (non-React code)
-- React components subscribe to store slices for minimal re-renders
-- Polling managed at store level, not component level
+```
+tmux session: claude-hud
++----------------------------------------------------------------+
+| [1:proj-a ⏳ 45%] [2:proj-b ✓ 12%] [3:proj-c 🛑 78%]            | <- HUD pane (Ink app)
++----------------------------------------------------------------+
+|                                                                 |
+|  Active Claude session pane (shell running Claude)              |
+|                                                                 |
++----------------------------------------------------------------+
+```
 
-### Layer 3: UI Component Layer
+### Core Insight
 
-**Responsibility:** Render the terminal interface, handle keyboard input, manage focus.
+**tmux becomes the container; HUD becomes a status layer.**
 
-| Component | Responsibility |
-|-----------|---------------|
-| App | Root component, layout orchestration |
-| InstanceList | Scrollable list of Claude instances |
-| InstanceRow | Single instance display (status, context window) |
-| StatusIndicator | Working/idle/blocked visual indicator |
-| ContextMeter | Stoplight-style token usage display |
-| Header | Title, help hints, refresh indicator |
-| Footer | Status bar, keyboard shortcuts |
-| FocusManager | Keyboard navigation between instances |
+The v2.0 architecture inverts the relationship:
+- **v1.0:** HUD is the primary app, sessions exist externally
+- **v2.0:** tmux is the primary container, HUD is a pane within it
 
-**Key decisions:**
-- Functional components with hooks (Ink standard)
-- Use Ink's `useFocus` and `useFocusManager` for navigation
-- Use Ink's `useInput` for keyboard handling
-- Box-based flexbox layout for responsive terminal sizing
+This gives us:
+1. **Reliable session switching** - Native tmux `select-pane` commands
+2. **Always-visible HUD** - Top pane never changes
+3. **Input isolation** - Only active pane receives keystrokes
+4. **Persistent sessions** - tmux survives terminal disconnect
 
-### Layer 4: Infrastructure Layer
+### tmux Pane Layout Strategy
 
-**Responsibility:** Platform-specific integrations, external process communication.
+**Horizontal split with fixed-height HUD:**
 
-| Component | Responsibility |
-|-----------|---------------|
-| ProcessSpawner | Safe child_process wrappers with timeout |
-| TmuxClient | tmux CLI command execution |
-| TerminalJumper | Navigate to specific terminal/tmux session |
-| Logger | Debug logging (not to stdout, would corrupt TUI) |
+```bash
+# Create initial layout
+tmux new-session -d -s claude-hud -n main
+tmux split-window -v -t claude-hud:main -l 2  # HUD at bottom with 2 lines
+tmux select-pane -t claude-hud:main.0         # Focus the top pane (sessions)
+tmux swap-pane -D -t claude-hud:main.1        # Move HUD to top
 
-**Key decisions:**
-- Abstract platform differences behind consistent interfaces
-- Terminal jumping uses platform-specific approaches (tmux attach, terminal focus)
+# Result: HUD in pane 0 (top), sessions in pane 1 (bottom)
+```
+
+**Fixed-height HUD pane:**
+- tmux `resize-pane -y 2` sets absolute row height
+- Minimum tmux pane is 2 rows (PANE_MINIMUM in tmux source)
+- HUD strip of 1-2 lines fits perfectly
+
+**Note:** tmux `resize-pane -y 2` has a quirk where it may resize to 3 rows minimum for existing panes. Create with `-l 2` on `split-window` instead.
+
+### Input Routing Model
+
+**tmux handles input routing natively:**
+
+1. **HUD pane active:** Ink receives all keystrokes
+   - `j/k` for selection
+   - `1-9` for quick select
+   - `Enter` to switch to session pane
+   - `n` to spawn new session
+
+2. **Session pane active:** Claude receives all keystrokes
+   - Normal Claude operation
+   - `b` (via tmux bind-key) returns to HUD pane
+
+**No stdin splitting needed.** tmux panes are separate PTYs.
+
+### HUD-to-Session Communication
+
+**Mechanism:** tmux commands via `execAsync`
+
+```typescript
+// Switch focus to session pane
+await execAsync('tmux select-pane -t claude-hud:main.1');
+
+// Return to HUD pane
+await execAsync('tmux select-pane -t claude-hud:main.0');
+
+// Spawn Claude in session pane
+await execAsync('tmux send-keys -t claude-hud:main.1 "claude" Enter');
+```
+
+**No IPC protocol needed.** HUD doesn't need to communicate with Claude; it monitors Claude state via existing hook files.
+
+## New Components Needed
+
+### 1. tmuxPaneManager Service
+
+**Purpose:** Manage the tmux session/pane structure for the HUD
+
+**Responsibilities:**
+- Create claude-hud tmux session on startup (if not exists)
+- Create/manage HUD pane (top) and session pane (bottom)
+- Handle session switching in session pane
+- Spawn new Claude instances in session pane
+
+**Interface:**
+```typescript
+// src/services/tmuxPaneManager.ts
+export interface TmuxPaneManager {
+  initialize(): Promise<void>;       // Create session, panes
+  switchToSession(target: string): Promise<void>;
+  returnToHud(): Promise<void>;
+  spawnClaude(cwd: string): Promise<void>;
+  detectExternalSessions(): Promise<Session[]>;
+}
+```
+
+### 2. HudStrip Component
+
+**Purpose:** Horizontal tab-style display replacing vertical SessionList
+
+**Responsibilities:**
+- Render sessions as horizontal tabs
+- Fit in 1-2 terminal rows
+- Show condensed info: `[index:name status context%]`
+- Highlight selected session
+
+**Interface:**
+```tsx
+// src/components/HudStrip.tsx
+interface HudStripProps {
+  sessions: Session[];
+  selectedIndex: number;
+  terminalWidth: number;
+}
+```
+
+**Layout per tab:** `[1:proj-name ✓ 25%]`
+- Index (1-9)
+- Truncated project name
+- Status emoji
+- Context percentage (no meter, just number)
+
+### 3. SessionTab Component
+
+**Purpose:** Single session in horizontal format
+
+**Responsibilities:**
+- Condensed single-tab rendering
+- Color coding by status
+- Selection indicator (inverse colors or bracket style)
+
+### 4. Startup Orchestrator
+
+**Purpose:** Initialize the tmux environment before Ink app starts
+
+**Responsibilities:**
+- Check if already in claude-hud session
+- Create tmux session if needed
+- Split panes if needed
+- Start Ink app in HUD pane
+- Return error if tmux not available
+
+**Location:** `src/startup.ts` (runs before `cli.tsx`)
+
+## Modified Components
+
+### App.tsx
+
+**Changes:**
+- Remove overlays (help, exit confirmation) - space is precious
+- Change layout to single-row horizontal strip
+- Add keyboard handlers for `n` (new session), `b` (back to HUD via tmux)
+- Remove full-screen padding, borders
+
+**Before:**
+```tsx
+<Box flexDirection="column" padding={1}>
+  <Header />
+  <Box flexGrow={1}><SessionList /></Box>
+  <Footer />
+</Box>
+```
+
+**After:**
+```tsx
+<Box flexDirection="row">
+  <HudStrip sessions={sessions} selectedIndex={selectedIndex} />
+</Box>
+```
+
+### appStore.ts
+
+**Changes:**
+- Add `hudSessionName: string` - tmux session name for our HUD
+- Add `sessionPaneTarget: string` - current session pane target
+- May remove some v1.0-specific state (showHelp overlay, etc.)
+
+### jumpService.ts
+
+**Changes:**
+- Simplify to use tmuxPaneManager for switching
+- No more window focus logic needed (all sessions in tmux)
+- Switching means: select session pane, then switch to session's pane within our tmux session
+
+**Key insight:** In v2.0, "jumping" means switching which Claude runs in our session pane, not focusing external windows.
+
+### useSessions.ts
+
+**Changes:**
+- Continue polling for all Claude processes
+- Add logic to detect externally-created Claude sessions in our tmux session
+- May filter to only show sessions in our managed tmux session (or all + indicator)
+
+### Header.tsx / Footer.tsx
+
+**Changes:**
+- **Remove entirely** - HUD strip is the only visible element
+- Status counts could move into a minimal indicator on the strip if space permits
 
 ## Data Flow
 
-Data flows unidirectionally through the system, following React/Flux patterns.
+### Session Discovery Flow (unchanged conceptually)
 
 ```
-                    Polling Trigger (interval)
-                           |
-                           v
-    +------------------+   +------------------+   +------------------+
-    | ProcessDetector  |   | TmuxScanner      |   | TerminalScanner  |
-    +------------------+   +------------------+   +------------------+
-                \                 |                 /
-                 \                |                /
-                  v               v               v
-                  +-------------------------------+
-                  |        Data Aggregator        |
-                  |  (combines all instance data) |
-                  +-------------------------------+
-                                 |
-                                 v
-                  +-------------------------------+
-                  |        Zustand Store          |
-                  |   (InstanceStore.setAll())    |
-                  +-------------------------------+
-                                 |
-                                 v
-                  +-------------------------------+
-                  |     React Components          |
-                  |   (subscribe to store slices) |
-                  +-------------------------------+
-                                 |
-                                 v
-                  +-------------------------------+
-                  |       Ink Renderer            |
-                  |   (diff and render to TTY)    |
-                  +-------------------------------+
+useSessions hook
+    |
+    v
+findClaudeProcesses() --> buildSessions() --> appStore.setSessions()
+    +                          |
+    |                          v
+getTmuxPanes() ----------------+
 ```
 
-### User Input Flow
+### Session Switching Flow (v2.0)
 
 ```
-    Keyboard Input
-          |
-          v
-    +------------------+
-    | Ink useInput()   |
-    +------------------+
-          |
-          v
-    +------------------+
-    | Input Handler    |
-    | (arrow keys,     |
-    |  enter, q, etc.) |
-    +------------------+
-          |
-          +---> Navigation: useFocusManager().focus(id)
-          |
-          +---> Selection: SelectionStore.select(instanceId)
-          |
-          +---> Action: TerminalJumper.jumpTo(instanceId)
-          |
-          +---> Exit: useApp().exit()
+User presses Enter on selected session
+    |
+    v
+App.tsx: jumpToSession(session)
+    |
+    v
+tmuxPaneManager.switchToSession(session.tmuxTarget)
+    |
+    v
+tmux send-keys -t session-pane "tmux switch-client -t {target}"
+  OR
+tmux send-keys -t session-pane "cd {path} && claude" Enter
+    |
+    v
+User sees session in bottom pane
 ```
 
-### State Update Cycle
-
-1. **PollingManager** triggers data collection every N seconds
-2. **Scanners** execute platform-specific detection
-3. **Aggregator** combines results, dedupes, normalizes
-4. **Zustand store** updates with new instance list
-5. **React components** re-render (only changed slices)
-6. **Ink** diffs virtual terminal and updates TTY
-
-## Ink App Structure
-
-Based on research into Ink patterns and real-world projects, here is the recommended structure.
-
-### Directory Structure
+### New Session Flow (v2.0)
 
 ```
-src/
-  cli.tsx           # Entry point, argument parsing
-  app.tsx           # Root component, providers, layout
-
-  components/       # UI components
-    Header.tsx
-    Footer.tsx
-    InstanceList.tsx
-    InstanceRow.tsx
-    StatusIndicator.tsx
-    ContextMeter.tsx
-
-  hooks/            # Custom React hooks
-    usePolling.ts       # Polling interval management
-    useInstances.ts     # Instance store subscription
-    useKeyboardNav.ts   # Navigation shortcuts
-    useTerminalSize.ts  # Responsive layout
-
-  stores/           # Zustand stores
-    instanceStore.ts    # Claude instance state
-    selectionStore.ts   # UI selection state
-    configStore.ts      # User preferences
-
-  services/         # Data collection (non-React)
-    processDetector.ts
-    tmuxScanner.ts
-    terminalScanner.ts
-    statusParser.ts
-    contextParser.ts
-    aggregator.ts
-
-  infra/            # Platform abstractions
-    processSpawner.ts
-    tmuxClient.ts
-    terminalJumper.ts
-
-  types/            # TypeScript interfaces
-    instance.ts
-    status.ts
-    config.ts
+User presses 'n'
+    |
+    v
+App.tsx: spawnNewSession()
+    |
+    v
+tmuxPaneManager.spawnClaude(cwd)
+    |
+    v
+tmux send-keys -t session-pane "cd {cwd} && claude" Enter
+    |
+    v
+New session appears in HUD strip after next poll
 ```
 
-### Entry Point Pattern
+### Return to HUD Flow
 
-```typescript
-// cli.tsx
-#!/usr/bin/env node
-import { render } from 'ink';
-import meow from 'meow';
-import { App } from './app.js';
-
-const cli = meow(`
-  Usage: cc-hud [options]
-
-  Options:
-    --interval, -i  Polling interval in ms (default: 2000)
-`, {
-  flags: {
-    interval: { type: 'number', shortFlag: 'i', default: 2000 }
-  }
-});
-
-render(<App interval={cli.flags.interval} />);
+```
+User presses 'b' (bound via tmux)
+    |
+    v
+tmux select-pane -t hud-pane
+    |
+    v
+HUD pane is active, user can navigate sessions
 ```
 
-### Root Component Pattern
+## Architecture Patterns
 
-```typescript
-// app.tsx
-import { Box } from 'ink';
-import { Header } from './components/Header.js';
-import { Footer } from './components/Footer.js';
-import { InstanceList } from './components/InstanceList.js';
-import { usePolling } from './hooks/usePolling.js';
+### Pattern 1: tmux as Process Container
 
-export function App({ interval }: { interval: number }) {
-  usePolling(interval); // Starts data collection
+**What:** Let tmux manage process lifecycle, HUD is observer
 
-  return (
-    <Box flexDirection="column" height="100%">
-      <Header />
-      <Box flexGrow={1}>
-        <InstanceList />
-      </Box>
-      <Footer />
-    </Box>
-  );
-}
+**Why:**
+- tmux handles session persistence natively
+- No need for node-pty or embedded terminals
+- Reliable session switching via native tmux commands
+- Survives SSH disconnects
+
+**How:**
+- HUD never spawns Claude directly; sends commands to tmux panes
+- HUD reads Claude state via hook files (existing pattern)
+- HUD commands tmux to switch panes
+
+### Pattern 2: Minimal HUD Surface Area
+
+**What:** HUD pane is 1-2 rows, maximizes space for Claude
+
+**Why:**
+- Core value: monitor without obstruction
+- Sessions need maximum screen real estate
+- Status can be conveyed in compact format
+
+**How:**
+- Fixed-height tmux pane (2 rows minimum)
+- Horizontal tab layout vs vertical list
+- No overlays or secondary UI elements
+
+### Pattern 3: tmux Keybinding Integration
+
+**What:** Register HUD-related keybindings in tmux config
+
+**Why:**
+- 'b' key should work even when session pane is active
+- tmux prefix + key is reliable from any pane
+
+**How:**
+```bash
+# In startup or user's .tmux.conf
+bind-key b select-pane -t claude-hud:main.0  # Return to HUD
 ```
 
-## State Management
-
-### Recommendation: Zustand
-
-**Why Zustand over alternatives:**
-
-| Option | Pros | Cons | Verdict |
-|--------|------|------|---------|
-| useState/useContext | Built-in, no deps | Prop drilling, re-render issues | Not for this scale |
-| Zustand | Simple, works outside React, selectors | Another dependency | **Recommended** |
-| Jotai | Fine-grained atoms, minimal re-renders | Overkill for this use case | Not needed |
-| Redux | Powerful, devtools | Too heavy for a TUI | Overkill |
-
-**Key reasons for Zustand:**
-1. Data collection layer runs outside React components (in `useEffect` or separate module)
-2. Zustand stores can be updated from non-React code
-3. Selectors prevent unnecessary re-renders when only part of state changes
-4. Minimal boilerplate
-
-### Store Design
-
-```typescript
-// stores/instanceStore.ts
-import { create } from 'zustand';
-import type { ClaudeInstance } from '../types/instance.js';
-
-interface InstanceState {
-  instances: ClaudeInstance[];
-  lastUpdated: number | null;
-  isPolling: boolean;
-
-  setInstances: (instances: ClaudeInstance[]) => void;
-  setPolling: (polling: boolean) => void;
-}
-
-export const useInstanceStore = create<InstanceState>((set) => ({
-  instances: [],
-  lastUpdated: null,
-  isPolling: false,
-
-  setInstances: (instances) => set({
-    instances,
-    lastUpdated: Date.now()
-  }),
-  setPolling: (isPolling) => set({ isPolling }),
-}));
-
-// Can be called from non-React code:
-// useInstanceStore.getState().setInstances(newInstances);
-```
-
-### Polling Hook Pattern
-
-```typescript
-// hooks/usePolling.ts
-import { useEffect, useRef } from 'react';
-import { useInstanceStore } from '../stores/instanceStore.js';
-import { collectInstances } from '../services/aggregator.js';
-
-export function usePolling(intervalMs: number) {
-  const setInstances = useInstanceStore((s) => s.setInstances);
-  const setPolling = useInstanceStore((s) => s.setPolling);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  useEffect(() => {
-    const poll = async () => {
-      setPolling(true);
-      const instances = await collectInstances();
-      setInstances(instances);
-      setPolling(false);
-    };
-
-    // Initial poll
-    poll();
-
-    // Set up interval
-    intervalRef.current = setInterval(poll, intervalMs);
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, [intervalMs, setInstances, setPolling]);
-}
-```
-
-## Focus and Navigation
-
-Ink provides built-in focus management that maps well to this use case.
-
-### Navigation Pattern
-
-```typescript
-// components/InstanceList.tsx
-import { Box, useFocusManager, useInput } from 'ink';
-import { useInstanceStore } from '../stores/instanceStore.js';
-import { InstanceRow } from './InstanceRow.js';
-
-export function InstanceList() {
-  const instances = useInstanceStore((s) => s.instances);
-  const { focusNext, focusPrevious } = useFocusManager();
-
-  useInput((input, key) => {
-    if (key.downArrow || input === 'j') {
-      focusNext();
-    }
-    if (key.upArrow || input === 'k') {
-      focusPrevious();
-    }
-  });
-
-  return (
-    <Box flexDirection="column">
-      {instances.map((instance) => (
-        <InstanceRow key={instance.id} instance={instance} />
-      ))}
-    </Box>
-  );
-}
-```
-
-### Row Focus Pattern
-
-```typescript
-// components/InstanceRow.tsx
-import { Box, Text, useFocus, useInput, useApp } from 'ink';
-import type { ClaudeInstance } from '../types/instance.js';
-import { jumpToInstance } from '../infra/terminalJumper.js';
-
-export function InstanceRow({ instance }: { instance: ClaudeInstance }) {
-  const { isFocused } = useFocus({ id: instance.id });
-  const { exit } = useApp();
-
-  useInput((input, key) => {
-    if (!isFocused) return;
-
-    if (key.return) {
-      // Jump to this Claude instance
-      exit(); // Exit HUD before jumping
-      jumpToInstance(instance);
-    }
-  }, { isActive: isFocused });
-
-  return (
-    <Box>
-      <Text inverse={isFocused}>
-        {instance.name} - {instance.status}
-      </Text>
-    </Box>
-  );
-}
-```
-
-## Suggested Build Order
-
-Build order is driven by dependencies and testability. Each phase produces a working (if minimal) artifact.
-
-### Phase 1: Foundation (Data Collection)
-
-**Build:**
-1. `types/` - Define TypeScript interfaces first
-2. `infra/processSpawner.ts` - Safe child_process wrapper
-3. `services/processDetector.ts` - Basic process detection via `ps`
-
-**Why first:**
-- No UI dependencies
-- Testable in isolation
-- Validates cross-platform approach early
-- Most likely to surface platform-specific issues
-
-**Deliverable:** Can run `ts-node src/services/processDetector.ts` and see Claude processes.
+Or HUD startup script adds this binding dynamically.
 
-### Phase 2: Tmux Integration
+### Anti-Patterns to Avoid
 
-**Build:**
-1. `infra/tmuxClient.ts` - tmux CLI wrapper
-2. `services/tmuxScanner.ts` - Enumerate tmux sessions
-3. Extend `processDetector.ts` to correlate processes with tmux sessions
+1. **Embedded PTY:** Don't try to run Claude inside Ink/Node. Use tmux panes.
 
-**Why second:**
-- Builds on Phase 1 foundation
-- tmux is primary expected use case
-- Adds session context to raw process data
+2. **stdin multiplexing:** Don't try to split input between HUD and session. Let tmux handle it.
 
-**Deliverable:** Can enumerate Claude instances with tmux session names.
+3. **Full-screen HUD in v2.0:** Don't keep the full-screen layout. It defeats the always-visible purpose.
 
-### Phase 3: Minimal UI Shell
+4. **IPC between HUD and Claude:** Don't build custom communication. Read hook files, send tmux commands.
 
-**Build:**
-1. `cli.tsx` - Entry point with argument parsing
-2. `app.tsx` - Root component with basic layout
-3. `components/Header.tsx` - Simple header
-4. `components/Footer.tsx` - Help text
+## Build Order
 
-**Why third:**
-- Establishes Ink project structure
-- Validates rendering works
-- Provides visual test harness for state management
+Based on dependencies and integration points, recommended implementation sequence:
 
-**Deliverable:** Can run `cc-hud` and see a basic TUI frame.
+### Wave 1: tmux Infrastructure
 
-### Phase 4: State Management
+**Plan 1: tmux Pane Manager Foundation**
+- Create `tmuxPaneManager.ts` service
+- Implement session/pane creation logic
+- Implement `initialize()`, `returnToHud()`, `selectSessionPane()`
+- Test: Can create claude-hud session with correct pane layout
 
-**Build:**
-1. `stores/instanceStore.ts` - Zustand store for instances
-2. `hooks/usePolling.ts` - Polling hook
-3. `services/aggregator.ts` - Combine data sources
+### Wave 2: Startup Flow
 
-**Why fourth:**
-- Connects data collection to UI
-- Proves reactive update cycle works
-- Enables end-to-end data flow testing
+**Plan 2: Startup Orchestrator**
+- Create `startup.ts` that runs before Ink
+- Check/create tmux session
+- Launch Ink in HUD pane
+- Handle "already running" case gracefully
+- Test: `cc-tui-hud` command creates correct tmux environment
 
-**Deliverable:** TUI shows updating list of detected processes.
+### Wave 3: UI Transformation
 
-### Phase 5: Instance Display
+**Plan 3: HudStrip Component**
+- Create `HudStrip.tsx` horizontal layout
+- Create `SessionTab.tsx` for individual tabs
+- Handle terminal width detection and tab truncation
+- Test: Sessions render as horizontal tabs
 
-**Build:**
-1. `components/InstanceList.tsx` - List container
-2. `components/InstanceRow.tsx` - Single instance display
-3. `components/StatusIndicator.tsx` - Working/idle/blocked
-4. `services/statusParser.ts` - Parse Claude output for status
+**Plan 4: App Layout Refactor**
+- Replace full-screen layout with strip layout
+- Remove Header, Footer, overlays
+- Adjust keyboard handlers for new layout
+- Test: HUD renders in 1-2 rows
 
-**Why fifth:**
-- All infrastructure in place
-- Can focus purely on UI/UX
-- Status parsing may require iteration
+### Wave 4: Session Management
 
-**Deliverable:** TUI shows Claude instances with status.
+**Plan 5: Session Switching Integration**
+- Update `jumpService.ts` to use tmuxPaneManager
+- Implement switching active session in session pane
+- Add 'n' key handler for new session
+- Test: Enter switches session, 'n' spawns new Claude
 
-### Phase 6: Context Window Meter
+**Plan 6: External Session Detection**
+- Detect Claude sessions created outside HUD
+- Integrate them into the session list
+- Handle sessions in other tmux sessions gracefully
+- Test: Externally started Claude appears in HUD
 
-**Build:**
-1. `components/ContextMeter.tsx` - Stoplight display
-2. `services/contextParser.ts` - Extract token usage
+### Wave 5: Polish
 
-**Why sixth:**
-- Depends on status parsing patterns from Phase 5
-- May require different parsing approach
-- Self-contained feature
+**Plan 7: tmux Keybinding and UX**
+- Register 'b' binding for return-to-HUD
+- Add any final polish (colors, indicators)
+- Document user setup requirements
+- Test: Full workflow - launch, switch, return, spawn
 
-**Deliverable:** Context window usage with stoplight colors.
+## Integration Points Summary
 
-### Phase 7: Navigation
+| Existing Component | Integration Type | Changes Needed |
+|-------------------|------------------|----------------|
+| `appStore.ts` | Extend | Add hudSessionName, sessionPaneTarget |
+| `useSessions.ts` | Extend | Add external session detection |
+| `jumpService.ts` | Replace internals | Use tmuxPaneManager instead of direct tmux |
+| `tmuxService.ts` | Reuse | Keep for session detection, add pane info |
+| `App.tsx` | Major refactor | New layout, new handlers |
+| `SessionRow.tsx` | Replace | New SessionTab component |
+| `Header.tsx` | Remove | Strip replaces header |
+| `Footer.tsx` | Remove | Strip replaces footer |
 
-**Build:**
-1. `hooks/useKeyboardNav.ts` - Navigation shortcuts
-2. Update `InstanceList.tsx` with focus management
-3. Update `InstanceRow.tsx` with `useFocus`
-4. `stores/selectionStore.ts` - Track selection
+## Open Questions
 
-**Why seventh:**
-- UI must be stable first
-- Focus management is a refinement
-- Keyboard shortcuts are polish
+### 1. External Session Handling
 
-**Deliverable:** Can navigate instances with arrow keys and j/k.
+**Question:** How to handle Claude sessions running in other tmux sessions (not claude-hud)?
 
-### Phase 8: Terminal Jumping
+**Options:**
+- A) Show all sessions, mark external ones, switch to their tmux session on select
+- B) Only show sessions in claude-hud tmux session
+- C) Offer to "adopt" external sessions by attaching them
 
-**Build:**
-1. `infra/terminalJumper.ts` - Platform-specific jump logic
-2. Wire Enter key to jump action
+**Recommendation:** Option A - show all with indicator. Users may have legitimate sessions elsewhere. Switching would use `tmux switch-client` to their session.
 
-**Why last:**
-- Requires all other pieces working
-- Most platform-specific code
-- Requires exiting HUD gracefully
+### 2. Multiple HUD Instances
 
-**Deliverable:** Press Enter to jump to selected Claude instance.
+**Question:** What if user runs `cc-tui-hud` twice?
 
-## Anti-Patterns to Avoid
+**Options:**
+- A) Error: "HUD already running in tmux session claude-hud"
+- B) Attach to existing session
+- C) Create claude-hud-2, claude-hud-3, etc.
 
-### Anti-Pattern 1: Polling in Components
+**Recommendation:** Option B - attach to existing. Single source of truth.
 
-**What:** Putting `setInterval` directly in component `useEffect`
+### 3. Non-tmux Fallback
 
-**Why bad:**
-- Multiple components might poll independently
-- Hard to coordinate pause/resume
-- Cleanup issues on unmount
+**Question:** What if tmux isn't available?
 
-**Instead:** Single polling hook at app root, or store-level polling with Zustand middleware.
+**Options:**
+- A) Error and exit
+- B) Fall back to v1.0 full-screen mode
+- C) Install tmux automatically (too invasive)
 
-### Anti-Pattern 2: Synchronous Process Spawning
-
-**What:** Using `execSync` or blocking process operations
-
-**Why bad:**
-- Blocks event loop
-- TUI becomes unresponsive
-- Can't handle timeouts gracefully
-
-**Instead:** Always use async `spawn` with timeout handling.
-
-### Anti-Pattern 3: Global Keyboard Handlers
-
-**What:** Using raw `process.stdin` listeners outside Ink's `useInput`
-
-**Why bad:**
-- Conflicts with Ink's input handling
-- Can cause focus issues
-- Hard to clean up
-
-**Instead:** Always use Ink's `useInput` hook with `isActive` for conditional handling.
-
-### Anti-Pattern 4: Direct Store Updates in Render
-
-**What:** Calling `store.setState()` during component render
-
-**Why bad:**
-- Causes infinite render loops
-- React strict mode will catch this
-- Hard to debug
-
-**Instead:** Update stores in `useEffect`, event handlers, or external async code.
+**Recommendation:** Option A with clear message. v2.0 is tmux-integrated by design per PROJECT.md constraints.
 
 ## Sources
 
-- [Ink GitHub Repository](https://github.com/vadimdemedes/ink) - Official documentation and examples
-- [OpenCode TUI Architecture](https://deepwiki.com/sst/opencode/6.2-tui-components) - Production TUI architecture patterns
-- [Ratatui Elm Architecture](https://ratatui.rs/concepts/application-patterns/the-elm-architecture/) - Model-View-Update patterns for TUI
-- [Node.js Child Process Documentation](https://nodejs.org/api/child_process.html) - Process spawning reference
-- [Zustand vs Jotai Comparison](https://jotai.org/docs/basics/comparison) - State management decision
-- [React Clean Architecture](https://alexkondov.com/full-stack-tao-clean-architecture-react/) - Layer separation patterns
-- [Dan Abramov's useInterval](https://usehooks.com/useinterval) - Polling hook pattern
-- [node-tmux npm](https://www.npmjs.com/package/node-tmux) - tmux Node.js integration
+### tmux Commands and Patterns
+- [tmux man page](https://man7.org/linux/man-pages/man1/tmux.1.html) - Authoritative command reference
+- [tmux Wiki - Getting Started](https://github.com/tmux/tmux/wiki/Getting-Started) - Session/window/pane concepts
+- [tmux Wiki - Control Mode](https://github.com/tmux/tmux/wiki/Control-Mode) - Programmatic control patterns
+- [Tao of Tmux - Scripting](https://tao-of-tmux.readthedocs.io/en/latest/manuscript/10-scripting.html) - Scripting patterns
+- [tmux split-window guide](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) - Detailed split-window usage
+- [tmux resize-pane discussion](https://github.com/tmux/tmux/issues/1480) - Minimum pane size behavior
+
+### Ink React TUI
+- [Ink GitHub](https://github.com/vadimdemedes/ink) - useInput, useStdin, rendering patterns
+- [Ink npm](https://www.npmjs.com/package/ink) - API documentation
+
+### Node.js tmux Libraries
+- [node-tmux npm](https://www.npmjs.com/package/node-tmux) - Lightweight wrapper (reference, not dependency)
+
+---
+
+**Confidence Assessment:**
+
+| Area | Confidence | Reason |
+|------|------------|--------|
+| tmux pane mechanics | HIGH | Well-documented, stable for 20+ years |
+| Ink single-row rendering | HIGH | Existing codebase proves capability |
+| Integration approach | HIGH | Builds on existing services, minimal new concepts |
+| External session handling | MEDIUM | Multiple valid approaches, needs user feedback |
+
+**Research date:** 2026-01-25

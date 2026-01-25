@@ -1,713 +1,585 @@
-# Pitfalls Research
+# Pitfalls Research: v2.0 tmux Integration
 
-**Domain:** TUI HUD for monitoring Claude Code instances
-**Researched:** 2026-01-22
-**Confidence:** MEDIUM-HIGH (Multiple sources, verified patterns)
+**Domain:** tmux-integrated terminal application (Ink HUD + managed session panes)
+**Researched:** 2026-01-25
+**Confidence:** HIGH (verified with official sources, GitHub issues, and codebase analysis)
 
-## Ink-Specific Pitfalls
+## Critical Pitfalls
 
-### Critical: Performance Degradation with High-Frequency Re-renders
+### Pitfall 1: HUD Pane Resizing Breaks Layout
 
-**What goes wrong:** Applications that update state frequently (like process monitors with polling) can cause significant performance issues. Gatsby's team noticed their build process slowed down when using Ink for status displays.
+**Symptom:** After terminal window resize, the HUD strip (top pane) becomes too large or too small, or pane ratio resets to 50%.
 
-**Why it happens:** Each state update triggers a full re-render cycle. With polling intervals and multiple data sources updating simultaneously, renders can queue up.
+**Cause:** When using `split-window -p <percentage>`, tmux may reset pane ratios to 50% after window resize operations. The percentage is calculated at split time, not maintained dynamically.
 
-**Consequences:**
-- UI becomes sluggish or unresponsive
-- High CPU usage from constant rendering
-- Terminal flickering
-
-**Warning signs:**
-- CPU usage spikes when HUD is running
-- UI lags behind actual process state
-- Visual artifacts or flickering
+**Warning Signs:**
+- HUD strip grows to consume half the screen after resize
+- User resizes their terminal and HUD becomes unusable
+- Layout looks correct initially but breaks when terminal dimensions change
 
 **Prevention:**
-- Use Ink's `<Static>` component for content that doesn't need updates (completed items, logs)
-- Batch state updates rather than updating on every poll
-- Use appropriate polling intervals (500ms-2000ms, not 100ms)
-- Leverage Ink 3's improved rendering (2x performance improvement over Ink 2)
+- Use fixed line count (`split-window -l 2`) instead of percentage for HUD strip
+- Listen for terminal resize (SIGWINCH) and re-adjust pane size with `resize-pane -y 2`
+- Save and restore HUD height after resize operations
+- Test with aggressive terminal resizing during development
 
-**Phase to address:** Phase 1 (Core Architecture) - establish update patterns early
+**Phase:** Phase 06-02 (tmux pane architecture) - establish resize-resilient layout from start
 
 **Sources:**
-- [Ink 3 Release Notes](https://vadimdemedes.com/posts/ink-3)
-- [Building Terminal Interfaces with Node.js](https://blog.openreplay.com/building-terminal-interfaces-nodejs/)
+- [tmux split pane ratio reset issue](https://github.com/tmux/tmux/issues/2094)
+- [tmux resize-pane percentage feature request](https://github.com/tmux/tmux/issues/383)
 
 ---
 
-### Critical: Memory Leaks from Uncleared Timers and Subscriptions
+### Pitfall 2: Input Goes to Wrong Pane After Focus Switch
 
-**What goes wrong:** Polling intervals, process watchers, and tmux subscriptions continue running after component unmount, consuming memory and causing stale state updates.
+**Symptom:** User types in HUD pane but input appears in session pane, or vice versa.
 
-**Why it happens:** React cleanup patterns from web development don't always translate directly. Developers forget to clear `setInterval` in `useEffect` cleanup, or don't properly unsubscribe from event emitters.
+**Cause:** Known tmux bug where `pane-focus-in` event triggers in the wrong (former) pane. Also, `select-pane` doesn't always synchronize with actual input routing immediately.
 
-**Consequences:**
-- Memory usage grows over time
-- "Can't perform state update on unmounted component" warnings
-- Eventual application crash
-- Stale data from dead subscriptions
+**Warning Signs:**
+- User selects HUD pane but keystrokes affect Claude session
+- Focus indicator shows one pane but input goes elsewhere
+- Problem intermittent and hard to reproduce
 
-**Warning signs:**
-- Memory usage increases over time without new sessions
-- Console warnings about state updates after unmount
-- Multiple identical poll requests in logs
+**Prevention:**
+- Add small delay (50-100ms) after `select-pane` before accepting input
+- Use `tmux display-message -p '#{pane_id}'` to verify focus after switch
+- Implement explicit focus verification before routing keystrokes
+- Avoid mouse-based pane selection when possible (more prone to issues)
+- Test focus switching rapidly in development
+
+**Phase:** Phase 06-03 (input handling) - verify focus before processing input
+
+**Sources:**
+- [pane-focus-in wrong pane issue](https://github.com/tmux/tmux/issues/3506)
+- [Wrong pane focus with mouse click](https://github.com/tmux/tmux/issues/619)
+
+---
+
+### Pitfall 3: Nested tmux Detection and Session Creation
+
+**Symptom:** Error "sessions should be nested with care, unset $TMUX to force" when spawning sessions, or HUD creates duplicate nested sessions.
+
+**Cause:** HUD running inside tmux sets `$TMUX` environment variable, which prevents creating new tmux sessions or attaching from child processes.
+
+**Warning Signs:**
+- `tmux new-session` commands fail with nested session warning
+- User runs HUD from within existing tmux and spawning breaks
+- HUD works standalone but fails inside tmux
 
 **Prevention:**
 ```typescript
-useEffect(() => {
-  const interval = setInterval(pollProcesses, 1000);
-  const unsubscribe = processWatcher.subscribe(handler);
-
-  return () => {
-    clearInterval(interval);
-    unsubscribe();
-  };
-}, []);
-```
-
-**Phase to address:** Phase 1 (Core Architecture) - establish cleanup patterns in initial hooks
-
-**Sources:**
-- [Handling Memory Leaks in React](https://www.lucentinnovation.com/resources/technology-posts/handling-memory-leaks-in-react-for-optimal-performance)
-- [How to Fix Memory Leaks in React Applications](https://www.freecodecamp.org/news/fix-memory-leaks-in-react-apps/)
-
----
-
-### Moderate: IME (Input Method Editor) Performance Issues
-
-**What goes wrong:** Ink's TextInput component has known issues with IME input causing significant performance degradation and duplicate conversion candidates.
-
-**Why it happens:** React Ink's TextInput component makes incorrect assumptions about IME usage in terminal environments.
-
-**Consequences:**
-- Slow/laggy text input for users with IME
-- Duplicate characters appearing
-- Poor experience for non-ASCII input
-
-**Warning signs:**
-- Users report sluggish keyboard response
-- Character duplication when typing
-
-**Prevention:**
-- For this HUD, minimize text input requirements (use keyboard shortcuts instead)
-- If text input needed, compose in external editor and paste
-- This is a known upstream issue with no direct fix available
-
-**Phase to address:** Phase 2 (UI Components) - design around keyboard shortcuts, not text input
-
-**Sources:**
-- [GitHub Issue: IME Issues in Claude Code](https://github.com/anthropics/claude-code/issues/3045)
-
----
-
-### Moderate: Focus Management Complexity
-
-**What goes wrong:** Multiple interactive components compete for input focus, causing unpredictable behavior when users navigate.
-
-**Why it happens:** Ink's `useInput` hook captures all keyboard input. Multiple components with `useInput` can handle the same input multiple times.
-
-**Consequences:**
-- Keyboard shortcuts trigger wrong actions
-- Focus jumps unexpectedly
-- Navigation becomes confusing
-
-**Warning signs:**
-- Users report keyboard shortcuts not working consistently
-- Multiple components respond to same keypress
-
-**Prevention:**
-- Use `useFocus` and `useFocusManager` hooks explicitly
-- Set `isActive: false` option on `useInput` for unfocused components
-- Design clear focus hierarchy upfront
-- Implement focus indicators so users know what's selected
-
-**Phase to address:** Phase 2 (UI Components) - design focus model with keyboard navigation
-
-**Sources:**
-- [Ink v3 Advanced UI Components Reference](https://developerlife.com/2021/11/25/ink-v3-advanced-ui-components/)
-- [Ink 3 Release Notes](https://vadimdemedes.com/posts/ink-3)
-
----
-
-### Minor: Console.log Interference
-
-**What goes wrong:** `console.log` calls corrupt the Ink UI display, causing visual glitches.
-
-**Why it happens:** Ink intercepts console methods to render logs above the UI, but direct console output can still interfere with rendering.
-
-**Consequences:**
-- Debug output breaks UI layout
-- Logs appear in wrong locations
-- Visual corruption
-
-**Prevention:**
-- Use Ink's logging patterns (`useStderr`, write to files)
-- Remove or gate debug console.log calls
-- Use Ink 3's built-in console interception (logs display above UI)
-
-**Phase to address:** Phase 1 - establish logging conventions early
-
----
-
-### Minor: Flexbox Layout Limitations
-
-**What goes wrong:** Percentage-based `minWidth`/`minHeight` don't work; developers expect full CSS flexbox compatibility.
-
-**Why it happens:** Ink uses Yoga for flexbox layout, which has some limitations compared to browser CSS.
-
-**Consequences:**
-- Layouts break at certain terminal sizes
-- Elements don't resize as expected
-
-**Warning signs:**
-- UI looks wrong at small terminal sizes
-- Components overlap or truncate unexpectedly
-
-**Prevention:**
-- Test at various terminal sizes (80x24, 120x40, 200x60)
-- Use fixed minimum values instead of percentages
-- Wrap `<Text>` correctly (all text must be in `<Text>` components)
-- Don't use `<Transform>` in ways that change dimensions
-
-**Phase to address:** Phase 2 (UI Components) - test layouts at multiple sizes
-
-**Sources:**
-- [Yoga Flexbox Issue #872](https://github.com/facebook/yoga/issues/872)
-- [Ink GitHub Repository](https://github.com/vadimdemedes/ink)
-
----
-
-## Cross-Platform Pitfalls
-
-### Critical: child_process.spawn Behavior Differences
-
-**What goes wrong:** Code that works on Linux/macOS fails on Windows with ENOENT errors, or vice versa.
-
-**Why it happens:**
-- Windows requires `shell: true` to run scripts
-- `path.resolve()` returns backslashes on Windows, but spawn needs forward slashes
-- `.bat`/`.cmd` files can't run with `execFile()` on Windows
-- PATHEXT is ignored by spawn on Windows
-
-**Consequences:**
-- "spawn npm ENOENT" errors on Windows
-- Scripts work locally but fail in CI
-- WSL2 users hit different bugs than native Linux
-
-**Warning signs:**
-- Works on developer machine, fails on user machine
-- ENOENT errors with correct file paths
-- "command not found" for commands that exist
-
-**Prevention:**
-```typescript
-import { platform } from 'os';
-
-// Platform-aware spawn
-const isWindows = platform() === 'win32';
-
-spawn(command, args, {
-  shell: isWindows, // Required for Windows scripts
-  // Or use cross-spawn package
-});
-
-// Or better: use cross-spawn
-import spawn from 'cross-spawn';
-```
-
-**Phase to address:** Phase 1 (Core Architecture) - use cross-spawn or platform abstractions from start
-
-**Sources:**
-- [Node.js child_process.spawn Issues](https://github.com/nodejs/node/issues/3675)
-- [Cross-platform child process](https://www.brainbell.com/javascript/child-process.html)
-- [Resolving Compatibility Issues](https://medium.com/@python-javascript-php-html-css/resolving-compatibility-issues-with-node-js-child-process-spawn-and-grep-across-platforms-b33be96f9438)
-
----
-
-### Critical: WSL2-Specific Issues
-
-**What goes wrong:** WSL2 has unique characteristics that can break cross-platform assumptions.
-
-**Why it happens:** WSL2 is neither native Windows nor native Linux. PATH conflicts, filesystem performance, and process visibility behave differently.
-
-**Consequences:**
-- Node.js runs from Windows PATH instead of WSL
-- Performance 3x slower than expected in some scenarios
-- Localhost networking intermittently fails
-- Cannot access Windows processes from WSL or vice versa
-
-**Warning signs:**
-- Different behavior on WSL2 vs native Linux
-- `which node` returns Windows path
-- Connections to localhost fail intermittently
-
-**Prevention:**
-```bash
-# /etc/wsl.conf
-[interop]
-appendWindowsPath=false  # Prevent Windows PATH pollution
-```
-
-```typescript
-// Detect WSL2
-const isWSL = process.platform === 'linux' &&
-  (fs.existsSync('/proc/version') &&
-   fs.readFileSync('/proc/version', 'utf8').includes('microsoft'));
-
-// Handle accordingly
-if (isWSL) {
-  // WSL-specific process detection path
-}
-```
-
-**Phase to address:** Phase 3 (Process Detection) - implement WSL2-specific detection logic
-
-**Sources:**
-- [Microsoft WSL Documentation](https://learn.microsoft.com/en-us/windows/wsl/troubleshooting)
-- [WSL GitHub Issues](https://github.com/microsoft/WSL/issues/6851)
-- [Working with Node.js on WSL2](https://blog.logrocket.com/working-with-node-js-on-hyper-v-and-wsl2/)
-
----
-
-### Moderate: Terminal Color Support Detection
-
-**What goes wrong:** Colors display incorrectly, not at all, or corrupt the display in certain terminals.
-
-**Why it happens:** Not all terminals support ANSI colors, and support levels vary (16 colors, 256 colors, truecolor). SSH sessions and minimal terminals often have limited support.
-
-**Consequences:**
-- Ugly/unreadable UI in unsupported terminals
-- ANSI escape codes displayed as literal text
-- Colors that work locally break in CI or SSH
-
-**Warning signs:**
-- Users report "garbage characters" in output
-- Colors look wrong in screenshots
-
-**Prevention:**
-```typescript
-import { supportsColor } from 'chalk';
-
-// Check before assuming color support
-if (process.stdout.isTTY && supportsColor) {
-  // Use colors
+// Check if already in tmux before operations
+const isInTmux = !!process.env.TMUX;
+
+if (isInTmux) {
+  // Use switch-client or select-window, not attach or new-session
+  await execAsync(`tmux switch-client -t "${sessionName}"`);
 } else {
-  // Graceful fallback
-}
-
-// Or use environment variables
-// FORCE_COLOR=0 disables, FORCE_COLOR=1/2/3 enables
-```
-
-**Phase to address:** Phase 2 (UI Components) - test in multiple terminal types
-
-**Sources:**
-- [Using Console Colors with Node.js](https://blog.logrocket.com/using-console-colors-node-js/)
-- [ansi-colors npm](https://www.npmjs.com/package/ansi-colors)
-
----
-
-### Minor: Terminal Resize Handling
-
-**What goes wrong:** UI doesn't update when terminal is resized, or crashes on resize.
-
-**Why it happens:** Node.js has a bug where TTY 'resize' event doesn't fire unless SIGWINCH is also listened on process.
-
-**Consequences:**
-- Layout breaks after resize
-- Content gets cut off
-- Must restart app after resize
-
-**Prevention:**
-```typescript
-// Listen to both
-process.stdout.on('resize', handleResize);
-process.on('SIGWINCH', handleResize); // Required for resize to fire
-
-function handleResize() {
-  const { columns, rows } = process.stdout;
-  // Update layout
+  // Can use new-session or attach
+  await execAsync(`tmux new-session -d -s "${sessionName}"`);
 }
 ```
+- Always detect tmux context before session operations
+- Use `switch-client` for within-tmux navigation
+- Provide clear error message if nested context prevents operation
 
-**Phase to address:** Phase 2 (UI Components) - Ink may handle this, but verify
+**Phase:** Phase 06-02 (session management) - detect context before every session operation
 
 **Sources:**
-- [Node.js TTY Resize Issue](https://github.com/nodejs/node/issues/19609)
-- [window-size npm](https://www.npmjs.com/package/window-size)
+- [Nested tmux sessions guidance](https://koenwoortman.com/tmux-sessions-should-be-nested-with-care-unset-tmux-to-force/)
+- [tmux nested session best practices](https://www.freecodecamp.org/news/tmux-in-practice-local-and-nested-remote-tmux-sessions-4f7ba5db8795/)
 
 ---
 
-## Process Detection Pitfalls
+### Pitfall 4: send-keys Race Conditions
 
-### Critical: Process Detection Method Varies by Platform
+**Symptom:** Commands sent via `tmux send-keys` execute out of order, partially, or not at all.
 
-**What goes wrong:** Code assumes a single method works everywhere. Linux uses `/proc`, macOS uses `ps`, Windows uses `wmic`.
+**Cause:** `send-keys` operations are asynchronous and can race with each other or with shell state changes. Sending signals like Ctrl-Z creates race conditions with shell job control.
 
-**Why it happens:** Each OS exposes process information differently. Libraries like `pidusage` and `ps-list` abstract this, but with subtle differences.
-
-**Consequences:**
-- Missing processes on some platforms
-- Different data available per platform
-- Performance varies dramatically
-
-**Warning signs:**
-- Same code returns different results per OS
-- Processes visible in terminal not detected by app
-
-**Prevention:**
-- Use established libraries: `ps-list`, `pidusage`, or `find-process`
-- Test on all target platforms (not just development machine)
-- Document what data is available per platform
-- Have fallback detection methods
-
-```typescript
-import psList from 'ps-list';
-
-// Works cross-platform but returns different fields
-const processes = await psList();
-// Check actual fields available before using
-```
-
-**Phase to address:** Phase 3 (Process Detection) - build abstraction layer with platform fallbacks
-
-**Sources:**
-- [pidusage GitHub](https://github.com/soyuka/pidusage)
-- [ps-list vs pidusage comparison](https://npm-compare.com/pidusage,ps-list,ps-node)
-
----
-
-### Critical: Detecting Claude Code Instances
-
-**What goes wrong:** Claude Code detection may break with updates, use inconsistent process names, or have multiple processes per instance.
-
-**Why it happens:** Claude Code's implementation details aren't guaranteed stable. Process names may vary by installation method or version.
-
-**Consequences:**
-- HUD shows no instances when Claude Code is running
-- Multiple entries for single instance
-- Incorrect status for detected instances
-
-**Warning signs:**
-- Process list shows Claude but HUD doesn't
-- Instance count doesn't match reality
-
-**Prevention:**
-- Parse Claude Code's JSONL logs as primary source: `~/.claude/projects/<project>/<session-id>.jsonl`
-- Use process detection as secondary/fallback
-- Match on multiple criteria (process name, command line, working directory)
-- Handle gracefully when detection fails
-- Log detection attempts for debugging
-
-**Phase to address:** Phase 3 (Process Detection) - implement multi-method detection
-
-**Sources:**
-- [Claude Code Log Location](https://simonwillison.net/2025/Oct/22/claude-code-logs/)
-- [Claude Code JSONL Parser](https://github.com/amac0/ClaudeCodeJSONLParser)
-
----
-
-### Moderate: Polling Interval Performance Impact
-
-**What goes wrong:** Polling too frequently causes high CPU usage; too infrequently causes stale data.
-
-**Why it happens:** Process detection involves OS calls that aren't free. Combining with UI re-renders multiplies impact.
-
-**Consequences:**
-- HUD itself becomes resource hog
-- Stale status display
-- Battery drain on laptops
-
-**Warning signs:**
-- HUD process shows high CPU in activity monitor
-- Status updates feel sluggish or delayed
+**Warning Signs:**
+- Commands appear truncated in session pane
+- Multi-key sequences don't complete (e.g., vim mode switching)
+- Spawned process doesn't receive intended input
 
 **Prevention:**
 ```typescript
-// Use appropriate intervals
-const POLL_INTERVAL = 2000; // 2 seconds is reasonable for status
+// Bad: multiple send-keys in sequence
+await execAsync(`tmux send-keys -t "${pane}" "cd /path" C-m`);
+await execAsync(`tmux send-keys -t "${pane}" "claude" C-m`);
 
-// Use integer intervals (float causes bugs)
-setInterval(poll, 2000); // Good
-setInterval(poll, 2000.5); // Bad - causes CPU spike
+// Better: combine into single shell command
+await execAsync(`tmux send-keys -t "${pane}" "cd /path && claude" C-m`);
 
-// Consider adaptive polling
-const interval = hasActiveProcesses ? 1000 : 5000;
+// Or: add explicit sync
+await execAsync(`tmux send-keys -t "${pane}" "cd /path" C-m`);
+await new Promise(resolve => setTimeout(resolve, 100)); // Wait for shell
+await execAsync(`tmux send-keys -t "${pane}" "claude" C-m`);
 ```
+- Combine commands when possible
+- Add delays between dependent send-keys operations
+- Avoid Ctrl-Z or other signal keys through send-keys
+- Test with slow shells/machines
 
-**Phase to address:** Phase 3 (Process Detection) - tune and make configurable
+**Phase:** Phase 06-03 (session spawning) - use combined commands or explicit synchronization
 
 **Sources:**
-- [setInterval Float Bug](https://github.com/nodejs/node-v0.x-archive/issues/7391)
-- [Node.js Event Loop](https://blog.platformatic.dev/the-nodejs-event-loop)
+- [send-keys async execution issue](https://github.com/tmux/tmux/issues/1517)
+- [send-keys Ctrl-Z race condition](https://github.com/tmux/tmux/issues/3360)
 
 ---
 
-### Moderate: Active Window Detection Limitations
+### Pitfall 5: TERM Environment Breaks Ink Rendering
 
-**What goes wrong:** Can't reliably detect which terminal window is active, or which tmux pane has focus.
+**Symptom:** Ink app renders incorrectly inside tmux pane - colors wrong, characters garbled, or layout broken.
 
-**Why it happens:**
-- Wayland doesn't expose active window for security reasons
-- macOS Terminal.app returns same PID for all windows
-- X11 libraries require native bindings
+**Cause:** tmux sets `TERM=screen` or `TERM=tmux-256color` which may not match what Ink expects. The terminal capabilities described by TERM affect how Ink renders.
 
-**Consequences:**
-- Can't implement "jump to active" feature on all platforms
-- Features work inconsistently across platforms
-
-**Warning signs:**
-- Feature works on dev machine but not user's
-- Wayland users report "not supported" errors
-
-**Prevention:**
-- Make active window detection optional/graceful fallback
-- Use `active-win` package but handle `undefined` result
-- Don't design features that critically depend on this
-- Consider alternative: focus by session ID rather than "current window"
-
-**Phase to address:** Phase 4 (Terminal Integration) - design around limitations
-
-**Sources:**
-- [active-win npm](https://www.npmjs.com/package/active-win)
-- [node-window-manager GitHub](https://github.com/sentialx/node-window-manager)
-
----
-
-## Terminal Integration Pitfalls
-
-### Critical: tmux State Synchronization
-
-**What goes wrong:** HUD state and actual tmux sessions get out of sync. Sessions show as running when killed, or vice versa.
-
-**Why it happens:** Manual session termination, tmux crashes, or network disconnects don't notify the HUD.
-
-**Consequences:**
-- Zombie entries in HUD
-- Missing active sessions
-- User can't trust HUD display
-
-**Warning signs:**
-- Session counts don't match `tmux list-sessions`
-- "Jump to session" fails with error
-
-**Prevention:**
-- Re-query tmux state on every display refresh
-- Don't cache tmux state for long
-- Handle "session not found" errors gracefully
-- Provide manual refresh option
-- Consider tmux control mode for real-time notifications
-
-```typescript
-// Always verify session exists before operations
-const sessions = await getTmuxSessions();
-if (!sessions.includes(targetSession)) {
-  // Handle missing session
-}
-```
-
-**Phase to address:** Phase 4 (Terminal Integration) - design for eventual consistency
-
-**Sources:**
-- [tmux Session Disappearing Issues](https://github.com/tmux/tmux/issues/1776)
-- [tmux-claude-mcp-server Common Issues](https://deepwiki.com/michael-abdo/tmux-claude-mcp-server/11.1-common-issues)
-
----
-
-### Critical: tmux Output Parsing Fragility
-
-**What goes wrong:** Parsing tmux command output breaks with different tmux versions, locales, or unexpected content.
-
-**Why it happens:** Relying on string parsing of human-readable output rather than machine-readable formats.
-
-**Consequences:**
-- HUD breaks after tmux update
-- Non-English locales cause parse failures
-- Special characters in session names cause errors
-
-**Warning signs:**
-- Works locally, fails on CI or other machines
-- Errors when session names contain spaces or special chars
+**Warning Signs:**
+- Colors look wrong (16 colors instead of 256)
+- Box-drawing characters display as `q`, `x`, etc.
+- Cursor invisible or in wrong position
+- Works outside tmux but breaks inside
 
 **Prevention:**
 ```bash
-# Use format strings for machine-readable output
-tmux list-sessions -F "#{session_id}:#{session_name}:#{session_attached}"
-
-# Use capture-pane with -p for stdout
-tmux capture-pane -t "$session:$window.$pane" -p
-
-# Consider tmux control mode for structured output
-tmux -C new-session  # Returns structured notifications
+# In tmux.conf
+set-option -g default-terminal "tmux-256color"
+set-option -ga terminal-overrides ",xterm-256color:Tc"
 ```
 
-**Phase to address:** Phase 4 (Terminal Integration) - use format strings from start
+```typescript
+// In HUD startup, verify TERM compatibility
+const term = process.env.TERM;
+if (term && !term.includes('256color') && !term.includes('truecolor')) {
+  console.warn('Limited color support detected. Set TERM=xterm-256color for best results.');
+}
+```
+- Document required tmux configuration
+- Detect and warn about incompatible TERM settings
+- Test HUD in fresh tmux with default config
+- Never manually set TERM in application code (let tmux handle it)
+
+**Phase:** Phase 06-01 (HUD pane setup) - verify TERM on startup
 
 **Sources:**
-- [tmux Output Formatting](https://qmacro.org/blog/posts/2021/08/06/tmux-output-formatting/)
-- [tmux Control Mode Wiki](https://github.com/tmux/tmux/wiki/Control-Mode)
+- [tmux FAQ on TERM settings](https://github.com/tmux/tmux/wiki/FAQ)
+- [tmux TERM environment issues](https://github.com/tmux/tmux/issues/1790)
 
 ---
 
-### Moderate: Non-tmux Session Detection
+## Moderate Pitfalls
 
-**What goes wrong:** Can only detect Claude instances in tmux, missing standalone terminal windows.
+### Pitfall 6: Working Directory Confusion When Spawning
 
-**Why it happens:** Terminal emulators don't provide standardized APIs. Each one (iTerm2, GNOME Terminal, Konsole) has different (or no) programmatic access.
+**Symptom:** New Claude sessions spawn in wrong directory, or `#{pane_current_path}` returns unexpected value.
 
-**Consequences:**
-- Users not using tmux see incomplete status
-- Feature asymmetry confuses users
+**Cause:** By default, tmux opens new panes in the directory where tmux server started, not the current pane's directory. Different shells (bash, zsh, fish) also handle PWD differently.
 
-**Warning signs:**
-- Users report "HUD doesn't see my sessions"
-- Works in tmux, not in regular terminals
-
-**Prevention:**
-- Use process detection as primary method (process name, command line)
-- tmux integration as secondary enhancement
-- Parse Claude Code's log files (`~/.claude/projects/`) as source of truth
-- Document what's detected and what isn't
-
-**Phase to address:** Phase 3 (Process Detection) - process-based detection covers this
-
-**Sources:**
-- [Claude Code JSONL Browser](https://github.com/withLinda/claude-JSONL-browser)
-
----
-
-### Moderate: Graceful Shutdown and Cleanup
-
-**What goes wrong:** HUD exit leaves terminal in bad state, cursor hidden, raw mode stuck.
-
-**Why it happens:** Ctrl+C handling doesn't properly clean up Ink state and restore terminal settings.
-
-**Consequences:**
-- Terminal unusable after HUD crash
-- Need to run `reset` command
-- Lost cursor or weird input behavior
-
-**Warning signs:**
-- Users report terminal "broken" after HUD use
-- Must close and reopen terminal
+**Warning Signs:**
+- User expects session in project dir but it opens in ~
+- `split-window` ignores apparent current directory
+- Works with bash, breaks with fish shell
 
 **Prevention:**
 ```typescript
-import { useApp } from 'ink';
+// Always specify working directory explicitly
+await execAsync(
+  `tmux split-window -v -c "${projectPath}" "claude"`,
+  { cwd: projectPath }
+);
 
-// Handle exit properly
-const { exit } = useApp();
+// Or use pane_current_path format
+await execAsync(
+  `tmux split-window -v -c '#{pane_current_path}' "claude"`
+);
+```
+- Never rely on default working directory
+- Always pass `-c` option with explicit path
+- Verify directory exists before spawning
+- Handle paths with spaces (quote properly)
 
-useInput((input, key) => {
-  if (input === 'q' || key.ctrl && input === 'c') {
-    exit();
+**Phase:** Phase 06-03 (session spawning) - always specify -c directory
+
+**Sources:**
+- [tmux working directories explained](https://tmuxai.dev/tmux-working-directories/)
+- [New panes in same directory](https://qmacro.org/blog/posts/2021/04/01/new-tmux-panes-and-windows-in-the-right-directory/)
+
+---
+
+### Pitfall 7: Pane Process Exit Leaves Dead Panes
+
+**Symptom:** Claude session exits but pane remains visible as empty/dead, cluttering the window.
+
+**Cause:** By default, tmux destroys panes when their process exits. But if `remain-on-exit` is set (globally or on pane), dead panes persist.
+
+**Warning Signs:**
+- User closes Claude but blank pane remains
+- Pane shows "[exited]" but doesn't close
+- Layout has empty slots where sessions were
+
+**Prevention:**
+```typescript
+// Detect dead panes during refresh
+const paneStatus = await execAsync(
+  `tmux list-panes -t "${target}" -F '#{pane_id}:#{?pane_dead,dead,alive}'`
+);
+
+// Clean up dead panes
+if (paneStatus.includes('dead')) {
+  await execAsync(`tmux kill-pane -t "${paneId}"`);
+}
+```
+- Don't set global `remain-on-exit` option
+- Check for dead panes during session refresh cycle
+- Provide manual cleanup option (kill dead panes)
+- Consider auto-cleanup with configurable delay
+
+**Phase:** Phase 06-04 (session lifecycle) - detect and clean dead panes
+
+**Sources:**
+- [tmux respawn pane management](https://tmuxai.dev/tmux-respawn-pane/)
+- [Baeldung tmux kill/respawn](https://www.baeldung.com/linux/tmux-kill-respawn-pane)
+
+---
+
+### Pitfall 8: Window/Pane ID Instability
+
+**Symptom:** Cached pane IDs become invalid, causing operations to fail with "no such pane" errors.
+
+**Cause:** tmux pane IDs change when windows are rearranged, panes are killed, or session is re-created. IDs are not persistent across tmux server restarts.
+
+**Warning Signs:**
+- "can't find pane" errors after some time
+- Operations work initially then fail
+- Works until user manually manipulates tmux layout
+
+**Prevention:**
+```typescript
+// Don't cache pane IDs long-term
+// Re-resolve target before each operation
+async function getValidTarget(sessionName: string): Promise<string | null> {
+  const result = await execAsync(
+    `tmux list-panes -t "${sessionName}" -F '#{pane_id}' 2>/dev/null`
+  );
+  return result.stdout.trim() || null;
+}
+
+// Always handle "not found" gracefully
+try {
+  await execAsync(`tmux select-pane -t "${target}"`);
+} catch (e) {
+  if (e.message.includes("can't find")) {
+    // Pane no longer exists, refresh state
+    await refreshSessions();
   }
-});
-
-// Also handle process signals
-process.on('SIGINT', () => {
-  cleanup();
-  process.exit(0);
-});
-
-process.on('SIGTERM', () => {
-  cleanup();
-  process.exit(0);
-});
+}
 ```
+- Never cache pane/window IDs for more than one operation
+- Re-query tmux state before operations
+- Handle "not found" errors as normal state, not exceptions
+- Use session names (stable) rather than IDs when possible
 
-**Phase to address:** Phase 1 (Core Architecture) - implement from the start
+**Phase:** Phase 06-02 (session detection) - always re-resolve before operations
 
 **Sources:**
-- [Ink useApp Hook](https://github.com/vadimdemedes/ink)
-- [Node.js Graceful Shutdown](https://dev.to/yusadolat/nodejs-graceful-shutdown-a-beginners-guide-40b6)
+- [tmux session disappearing issues](https://github.com/tmux/tmux/issues/1776)
 
 ---
 
-### Minor: Security - Command Injection via User Input
+### Pitfall 9: Terminal Size Not Propagated to Pane
 
-**What goes wrong:** If session names or paths come from user input and are passed to shell commands, attackers can inject malicious commands.
+**Symptom:** Ink app doesn't detect resize, displays at wrong dimensions, or content gets clipped.
 
-**Why it happens:** Using `exec()` with string concatenation instead of `spawn()` with argument arrays.
+**Cause:** Resizing tmux panes doesn't always trigger SIGWINCH in running processes. Also, `tput` may report stale dimensions after resize.
 
-**Consequences:**
-- Arbitrary command execution
-- Data exfiltration
-- System compromise
-
-**Warning signs:**
-- Using `exec()` anywhere in codebase
-- String concatenation for shell commands
+**Warning Signs:**
+- HUD content doesn't reflow after pane resize
+- Layout looks correct initially but breaks after resize
+- `process.stdout.columns` returns old value
 
 **Prevention:**
 ```typescript
-// NEVER do this
-exec(`tmux send-keys -t ${sessionName} "ls"`);
+// Force SIGWINCH propagation
+process.on('SIGWINCH', () => {
+  // Re-read dimensions
+  const { columns, rows } = process.stdout;
+  // Trigger Ink re-render
+  forceRerender();
+});
 
-// DO this instead
-spawn('tmux', ['send-keys', '-t', sessionName, 'ls']);
-
-// Even better: use execFile for external commands
-execFile('tmux', ['list-sessions', '-F', '#{session_name}']);
+// Also listen to stdout resize event
+process.stdout.on('resize', handleResize);
 ```
 
-**Phase to address:** Phase 4 (Terminal Integration) - code review for all shell calls
+From tmux side:
+```bash
+# Send SIGWINCH to pane process
+kill -WINCH $(tmux display-message -p '#{pane_pid}')
+```
+- Listen to both SIGWINCH and stdout resize
+- Don't trust cached terminal dimensions
+- Re-query dimensions before each render cycle
+- Test with frequent resize during development
+
+**Phase:** Phase 06-01 (HUD rendering) - handle resize signals properly
 
 **Sources:**
-- [Preventing Command Injection in Node.js](https://auth0.com/blog/preventing-command-injection-attacks-in-node-js-apps/)
-- [Node.js Command Injection](https://www.stackhawk.com/blog/nodejs-command-injection-examples-and-prevention/)
+- [tmux resize not updating terminfo](https://github.com/tmux/tmux/issues/2005)
+- [Programs report incorrect size after resize](https://github.com/tmux/tmux/issues/1880)
 
 ---
 
-## Prevention Strategies Summary
+### Pitfall 10: Keyboard Input Conflicts Between HUD and Sessions
 
-### Phase 1 (Core Architecture)
-| Pitfall | Prevention Strategy |
-|---------|---------------------|
-| Memory leaks | Establish useEffect cleanup patterns in all hooks |
-| Console interference | Set up dedicated logging (file or stderr) |
-| Graceful shutdown | Implement signal handlers from start |
-| Cross-platform spawn | Use `cross-spawn` package throughout |
+**Symptom:** Keystrokes meant for HUD affect Claude session, or HUD captures keys that should go to session.
 
-### Phase 2 (UI Components)
-| Pitfall | Prevention Strategy |
-|---------|---------------------|
-| Performance degradation | Use `<Static>` for logs, batch updates, reasonable intervals |
-| Focus complexity | Design clear focus model with `useFocus`/`useFocusManager` |
-| IME issues | Use keyboard shortcuts instead of text input |
-| Layout issues | Test at multiple terminal sizes |
-| Color support | Use chalk with automatic detection |
-| Resize handling | Listen to both 'resize' and SIGWINCH |
+**Cause:** Both HUD pane and session pane are active in the same tmux window. Without careful input routing, keys can be misrouted based on which pane has tmux focus vs which pane the user thinks is active.
 
-### Phase 3 (Process Detection)
-| Pitfall | Prevention Strategy |
-|---------|---------------------|
-| Platform differences | Use ps-list/pidusage with fallbacks |
-| Claude detection | Use JSONL logs as primary source, process detection as backup |
-| Polling performance | Use 2s intervals, integer values, adaptive polling |
-| WSL2 issues | Detect WSL2 and use platform-specific paths |
-| Active window limits | Make feature optional, handle gracefully |
+**Warning Signs:**
+- User presses 'q' to quit HUD but Claude receives it
+- HUD hotkey triggers while user is typing in Claude
+- Input behavior unpredictable
 
-### Phase 4 (Terminal Integration)
-| Pitfall | Prevention Strategy |
-|---------|---------------------|
-| tmux sync | Re-query on refresh, handle missing sessions |
-| Output parsing | Use `-F` format strings, not human-readable output |
-| Non-tmux detection | Rely on process detection, not terminal APIs |
-| Command injection | Use spawn/execFile with argument arrays, never exec |
+**Prevention:**
+- Design clear focus model: HUD pane ONLY receives input when tmux focus is on it
+- Visual focus indicator (border color, title) showing which pane is active
+- HUD should detect when it doesn't have tmux focus and ignore input
+- Consider "pass-through mode" where HUD forwards keys to session pane
+- Document expected focus switching behavior clearly
+
+```typescript
+// Detect if HUD pane currently has focus
+async function hudHasFocus(): Promise<boolean> {
+  const result = await execAsync(
+    `tmux display-message -p '#{pane_active}'`
+  );
+  return result.stdout.trim() === '1';
+}
+
+// In input handler
+useInput((input, key) => {
+  // Only handle input if we have focus
+  if (!hudHasFocus()) return;
+  // ... handle input
+});
+```
+
+**Phase:** Phase 06-03 (input handling) - implement focus-aware input routing
+
+**Sources:**
+- [tmux pane focus events](https://github.com/tmux/tmux/issues/2808)
+
+---
+
+## Minor Pitfalls
+
+### Pitfall 11: Child Process Cleanup on SIGKILL
+
+**Symptom:** If HUD is killed (SIGKILL, not SIGTERM), child processes or tmux state may be left inconsistent.
+
+**Cause:** SIGKILL cannot be caught, so cleanup handlers don't run. Any spawned processes or tmux manipulations cannot be undone.
+
+**Warning Signs:**
+- Zombie session panes after HUD crash
+- tmux layout corrupted after force-kill
+- Must manually clean up tmux state
+
+**Prevention:**
+- Use SIGTERM for normal shutdown (can be caught)
+- Design for recovery: HUD should detect and clean up orphaned state on startup
+- Don't spawn processes that would be problematic if abandoned
+- Keep tmux state minimal (prefer detecting existing sessions over managing lifecycle)
+
+**Phase:** Phase 06-04 (startup/shutdown) - implement orphan detection on startup
+
+**Sources:**
+- [Node.js child process SIGKILL issues](https://github.com/nodejs/node/issues/12101)
+
+---
+
+### Pitfall 12: tmux Version Incompatibility
+
+**Symptom:** HUD commands fail on older tmux versions, or format strings don't work.
+
+**Cause:** tmux features and format variables change between versions. Features like `display-popup` require tmux 3.2+, some format variables are newer.
+
+**Warning Signs:**
+- Works on dev machine, fails on user's older tmux
+- "unknown command" or "bad format" errors
+- Features present in docs but not in installed version
+
+**Prevention:**
+```typescript
+// Check tmux version on startup
+async function getTmuxVersion(): Promise<string> {
+  const result = await execAsync('tmux -V');
+  return result.stdout.trim(); // "tmux 3.3a"
+}
+
+// Document minimum version requirement
+const MIN_TMUX_VERSION = '2.6'; // or whatever minimum we need
+```
+- Document minimum tmux version
+- Test on oldest supported version in CI
+- Avoid bleeding-edge features unless necessary
+- Provide helpful error if version too old
+
+**Phase:** Phase 06-01 (startup) - verify tmux version compatibility
+
+**Sources:**
+- [tmux changelog](https://raw.githubusercontent.com/tmux/tmux/master/CHANGES)
+
+---
+
+### Pitfall 13: Externally Created Sessions Not Detected
+
+**Symptom:** User creates Claude session outside HUD (in a different tmux window/pane) and HUD doesn't see it.
+
+**Cause:** HUD only monitors sessions it creates, or only monitors specific tmux session names. External sessions don't match expected patterns.
+
+**Warning Signs:**
+- User runs `claude` manually and HUD shows 0 sessions
+- Sessions appear after HUD restart but not dynamically
+- Detection works for spawned sessions but not pre-existing ones
+
+**Prevention:**
+- Use process detection (existing v1.0 approach) as primary method
+- tmux integration is for management, not detection
+- Scan all tmux panes for Claude processes, not just "known" sessions
+- Regular polling of both process list and tmux pane list
+
+**Phase:** Phase 06-02 (session detection) - existing useSessions hook already handles this
+
+**Sources:**
+- Existing codebase: `useSessions.ts` uses process detection independent of tmux state
+
+---
+
+## Integration Pitfalls (Ink + tmux)
+
+### Pitfall 14: Ink stdout Conflicts with tmux Capture
+
+**Symptom:** Using `tmux capture-pane` on HUD pane returns garbled output or interferes with Ink rendering.
+
+**Cause:** Ink uses cursor movement, colors, and alternate screen buffer. Capturing pane content while Ink is rendering can get partial state.
+
+**Warning Signs:**
+- External tools trying to read HUD state get garbage
+- Ink rendering corrupted after external pane capture
+- Intermittent visual glitches
+
+**Prevention:**
+- Don't expose HUD pane for external capture
+- If capture needed, pause Ink rendering first
+- Use state store for programmatic access, not screen scraping
+- Document that HUD pane shouldn't be captured
+
+**Phase:** Phase 06-01 (HUD pane) - document limitation, don't support external capture
+
+---
+
+### Pitfall 15: Multiple HUD Instances Conflict
+
+**Symptom:** User accidentally starts two HUD instances, causing tmux state confusion or duplicate session entries.
+
+**Cause:** No singleton enforcement - user can start multiple `cc-hud` processes, each trying to manage the same tmux sessions.
+
+**Warning Signs:**
+- Duplicate entries in HUD after restart
+- Operations fail with "already exists"
+- Inconsistent state between two HUD windows
+
+**Prevention:**
+- Check for existing HUD process on startup (pid file or process detection)
+- Lock file in temp directory
+- Clear error message if HUD already running
+- Offer to attach to existing HUD instead of starting new one
+
+```typescript
+// Check for existing instance
+const lockFile = '/tmp/cc-hud.lock';
+if (fs.existsSync(lockFile)) {
+  const existingPid = fs.readFileSync(lockFile, 'utf8');
+  if (processExists(existingPid)) {
+    console.error(`HUD already running (pid ${existingPid}). Use existing instance.`);
+    process.exit(1);
+  }
+}
+// Create lock file
+fs.writeFileSync(lockFile, process.pid.toString());
+```
+
+**Phase:** Phase 06-01 (startup) - implement instance locking
+
+---
+
+## Prevention Strategy Summary by Phase
+
+### Phase 06-01: HUD Pane Foundation
+| Pitfall | Prevention |
+|---------|------------|
+| TERM environment (#5) | Verify TERM on startup, document requirements |
+| Terminal resize (#9) | Handle SIGWINCH + resize events |
+| Multiple instances (#15) | Lock file or pid check |
+| tmux version (#12) | Check version on startup |
+
+### Phase 06-02: tmux Pane Architecture
+| Pitfall | Prevention |
+|---------|------------|
+| Pane resizing (#1) | Use fixed `-l` lines, handle resize events |
+| Nested tmux (#3) | Detect $TMUX, use appropriate commands |
+| ID instability (#8) | Re-resolve before operations |
+| External sessions (#13) | Use process detection, not just tmux tracking |
+
+### Phase 06-03: Input Handling and Session Spawning
+| Pitfall | Prevention |
+|---------|------------|
+| Input to wrong pane (#2) | Verify focus before handling input |
+| send-keys races (#4) | Combine commands or add delays |
+| Working directory (#6) | Always specify -c option |
+| Keyboard conflicts (#10) | Focus-aware input routing |
+
+### Phase 06-04: Session Lifecycle
+| Pitfall | Prevention |
+|---------|------------|
+| Dead panes (#7) | Detect and clean during refresh |
+| SIGKILL cleanup (#11) | Orphan detection on startup |
 
 ---
 
 ## Quality Checklist
 
-Before each phase completion, verify:
+Before completing tmux integration phases:
 
-- [ ] All timers/intervals have cleanup in useEffect return
-- [ ] Signal handlers restore terminal state
-- [ ] Shell commands use spawn/execFile, not exec
-- [ ] Cross-platform tested (Linux, macOS, WSL2 if possible)
-- [ ] Color support detection in place
-- [ ] Error states handled gracefully (no crashes)
-- [ ] Focus behavior tested with multiple components
-- [ ] Layout tested at 80x24 and 200x60 terminal sizes
+- [ ] HUD renders correctly inside tmux pane (colors, characters)
+- [ ] Resize handling works (pane resize + terminal window resize)
+- [ ] Session spawning works from within tmux (nested context)
+- [ ] Input routing is predictable (HUD vs session pane)
+- [ ] Dead/orphaned panes are cleaned up
+- [ ] tmux version >= minimum documented requirement
+- [ ] Multiple HUD instances prevented or handled
+- [ ] External (manually created) sessions detected
+- [ ] send-keys operations complete reliably
+- [ ] Working directory correct for spawned sessions
+
+---
+
+## Sources Summary
+
+### Primary (HIGH confidence)
+- [tmux manual page](https://man7.org/linux/man-pages/man1/tmux.1.html) - Command reference
+- [tmux GitHub issues](https://github.com/tmux/tmux/issues) - Known bugs and limitations
+- [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) - TERM settings, common issues
+
+### Secondary (MEDIUM confidence)
+- [tmux Advanced Use wiki](https://github.com/tmux/tmux/wiki/Advanced-Use) - Patterns
+- [Super Guide to split-window](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) - Detailed subcommand reference
+- [TmuxAI guides](https://tmuxai.dev/) - Working directories, respawn, FAQ
+
+### Verified from Codebase
+- Existing `tmuxService.ts` - Pane enumeration patterns
+- Existing `jumpService.ts` - Session switching patterns
+- Existing `useSessions.ts` - Process detection independent of tmux state
