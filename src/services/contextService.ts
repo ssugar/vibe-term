@@ -11,6 +11,9 @@ interface CacheEntry {
 }
 const cache = new Map<string, CacheEntry>();
 
+// Last known good percentage - survives parse failures during active file writing
+const lastKnownGood = new Map<string, number>();
+
 /**
  * Usage data from Claude API response
  */
@@ -99,12 +102,13 @@ export function getContextUsage(transcriptPath: string | null): number | null {
         { encoding: 'utf-8', maxBuffer: 1024 * 1024 }
       ).trim();
     } catch {
-      // grep returns exit code 1 if no matches - that's okay
-      return null;
+      // grep failed - return last known good value if available
+      return lastKnownGood.get(transcriptPath) ?? null;
     }
 
     if (!lastMainEntry) {
-      return null;
+      // No entries found - return last known good value if available
+      return lastKnownGood.get(transcriptPath) ?? null;
     }
 
     // Parse the JSON entry
@@ -112,13 +116,15 @@ export function getContextUsage(transcriptPath: string | null): number | null {
     try {
       entry = JSON.parse(lastMainEntry);
     } catch {
-      return null;
+      // Parse failed (possibly due to concurrent write) - return last known good
+      return lastKnownGood.get(transcriptPath) ?? null;
     }
 
     // Extract usage
     const usage = extractUsage(entry);
     if (!usage) {
-      return null;
+      // Extraction failed - return last known good
+      return lastKnownGood.get(transcriptPath) ?? null;
     }
 
     // Calculate total tokens for context:
@@ -135,12 +141,13 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       100
     );
 
-    // Update cache
+    // Update caches
     cache.set(transcriptPath, { mtime, percentage });
+    lastKnownGood.set(transcriptPath, percentage);
 
     return percentage;
   } catch {
-    // Graceful degradation - return null on any error
-    return null;
+    // Graceful degradation - return last known good or null
+    return lastKnownGood.get(transcriptPath) ?? null;
   }
 }
