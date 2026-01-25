@@ -4,7 +4,9 @@ import * as fs from 'fs';
 const CONTEXT_WINDOW_SIZE = 200_000;
 
 // Read last N bytes for performance (transcript files can be 10-20MB)
-const READ_TAIL_BYTES = 50_000;
+// Increased to 150KB to handle subagent-heavy transcripts where recent
+// entries may be mostly sidechain messages
+const READ_TAIL_BYTES = 150_000;
 
 // Cache to avoid re-parsing unchanged files
 interface CacheEntry {
@@ -12,6 +14,10 @@ interface CacheEntry {
   percentage: number;
 }
 const cache = new Map<string, CacheEntry>();
+
+// Separate cache for last known MAIN context value
+// Used when subagents flood the transcript end with sidechain entries
+const lastKnownMainContext = new Map<string, number>();
 
 /**
  * Usage data from Claude API response
@@ -127,8 +133,16 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       }
     }
 
-    // No valid entry found
+    // No valid entry found in recent portion
+    // This can happen when subagents flood the transcript with sidechain entries
+    // Return last known main context value if available
     if (!usage) {
+      const lastKnown = lastKnownMainContext.get(transcriptPath);
+      if (lastKnown !== undefined) {
+        // Update mtime cache to avoid re-parsing until file changes again
+        cache.set(transcriptPath, { mtime, percentage: lastKnown });
+        return lastKnown;
+      }
       return null;
     }
 
@@ -146,8 +160,9 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       100
     );
 
-    // Update cache
+    // Update caches
     cache.set(transcriptPath, { mtime, percentage });
+    lastKnownMainContext.set(transcriptPath, percentage);
 
     return percentage;
   } catch {
