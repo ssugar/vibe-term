@@ -6,6 +6,7 @@ import { useSessions } from './hooks/useSessions.js';
 import { Header } from './components/Header.js';
 import { Footer } from './components/Footer.js';
 import { SessionList } from './components/SessionList.js';
+import { jumpToSession } from './services/jumpService.js';
 
 interface AppProps {
   refreshInterval: number;
@@ -102,6 +103,30 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         }
         return;
       }
+
+      // Enter to jump to selected session
+      if (key.return) {
+        const state = useAppStore.getState();
+        const session = state.sessions[state.selectedIndex];
+        if (session) {
+          jumpToSession(session).then((result) => {
+            if (!result.success) {
+              state.setError(result.message);
+              // Auto-clear error after 3 seconds
+              setTimeout(() => {
+                useAppStore.getState().setError(null);
+              }, 3000);
+            }
+          });
+        }
+        return;
+      }
+    }
+
+    // x to dismiss error
+    if (input === 'x') {
+      useAppStore.getState().setError(null);
+      return;
     }
 
     // Normal mode key handling
