@@ -66,6 +66,7 @@ function pathsMatch(processCwd: string, stateCwd: string): boolean {
 /**
  * Find state by CWD (for sessions we detect by process but don't have hook session ID).
  * Uses prefix matching to handle subdirectory CWDs from subagents/tools.
+ * When multiple sessions match the same CWD, returns the most recently updated one.
  */
 export function findStateByPath(cwd: string): HookSessionState | null {
   try {
@@ -73,6 +74,9 @@ export function findStateByPath(cwd: string): HookSessionState | null {
       return null;
     }
     const files = fs.readdirSync(STATE_DIR);
+    let bestMatch: HookSessionState | null = null;
+    let bestTime = 0;
+
     for (const file of files) {
       if (!file.endsWith('.json')) continue;
       try {
@@ -80,13 +84,18 @@ export function findStateByPath(cwd: string): HookSessionState | null {
         const state = JSON.parse(content) as HookSessionState;
         // Match by cwd using prefix matching
         if (pathsMatch(cwd, state.cwd)) {
-          return state;
+          // If multiple sessions match same CWD, prefer most recent
+          const updateTime = state.lastUpdate ? new Date(state.lastUpdate).getTime() : 0;
+          if (updateTime > bestTime) {
+            bestMatch = state;
+            bestTime = updateTime;
+          }
         }
       } catch {
         continue;
       }
     }
-    return null;
+    return bestMatch;
   } catch {
     return null;
   }
