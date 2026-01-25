@@ -2,8 +2,8 @@
 
 ## Milestones
 
-- ✅ **v1.0 Standalone HUD** - Phases 1-6 (shipped 2026-01-25)
-- 🚧 **v2.0 Integrated Claude Terminal** - Phases 7-11 (in progress)
+- v1.0 Standalone HUD - Phases 1-6 (shipped 2026-01-25)
+- **v2.0 Integrated Claude Terminal** - Phases 7-11 (in progress)
 
 ## Phases
 
@@ -139,15 +139,16 @@ Plans:
 **Depends on**: Phase 6 (v1.0 complete)
 **Requirements**: TMUX-01, TMUX-02, TMUX-06
 **Success Criteria** (what must be TRUE):
-  1. User runs cc-tui-hud and is automatically placed in the claude-hud tmux session
+  1. User runs claude-terminal and is automatically placed in the claude-terminal tmux session
   2. HUD renders correctly in a 2-line fixed-height top pane
   3. Graceful error message displays when tmux is not available
-  4. Running cc-tui-hud when already in claude-hud session attaches to existing instance
-**Plans**: TBD
+  4. Running claude-terminal when already in claude-terminal session attaches to existing instance
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — TBD
-- [ ] 07-02-PLAN.md — TBD
+- [ ] 07-01-PLAN.md — Startup infrastructure (tmux detection, config service)
+- [ ] 07-02-PLAN.md — CLI integration and session setup
+- [ ] 07-03-PLAN.md — Quit handler and verification
 
 ### Phase 8: HUD Strip UI
 **Goal**: Users see all sessions as horizontal tabs with status and context in a compact 1-2 line display
@@ -224,7 +225,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 4. Context Window | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 5. Navigation | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
-| 7. tmux Foundation | v2.0 | 0/TBD | Not started | - |
+| 7. tmux Foundation | v2.0 | 0/3 | Planned | - |
 | 8. HUD Strip UI | v2.0 | 0/TBD | Not started | - |
 | 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
 | 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
