@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Session Detection** - Detect running Claude instances and display session list
 - [x] **Phase 3: Status Detection** - Hooks-based Working/Idle/Blocked status with visual indicators
 - [x] **Phase 4: Context Window** - Display context window usage with stoplight colors
-- [ ] **Phase 5: Navigation** - Keyboard navigation and session selection
+- [x] **Phase 5: Navigation** - Keyboard navigation and session selection
 - [ ] **Phase 6: Terminal Integration** - Jump to selected session in tmux or terminal
 
 ## Phase Details
@@ -100,8 +100,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 05-01-PLAN.md — Navigation keys (j/k/arrows, 1-9 hotkeys) and selection highlighting
-- [ ] 05-02-PLAN.md — Jump service and Enter key handler for tmux session switching
+- [x] 05-01-PLAN.md — Navigation keys (j/k/arrows, 1-9 hotkeys) and selection highlighting
+- [x] 05-02-PLAN.md — Jump service and Enter key handler for tmux session switching
 
 ### Phase 6: Terminal Integration
 **Goal**: Users can jump from HUD directly to a selected Claude session in their terminal
@@ -129,8 +129,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 2. Session Detection | 3/3 | Complete | 2026-01-22 |
 | 3. Status Detection | 4/4 | Complete | 2026-01-23 |
 | 4. Context Window | 2/2 | Complete | 2026-01-25 |
-| 5. Navigation | 0/2 | Ready | - |
-| 6. Terminal Integration | 0/2 | Not started | - |
+| 5. Navigation | 2/2 | Complete | 2026-01-25 |
+| 6. Terminal Integration | 0/2 | Ready | - |
 
 ---
 *Roadmap created: 2026-01-22*

@@ -9,32 +9,32 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Session Detection
 
-- [ ] **SESS-01**: Display list of all running Claude Code instances
-- [ ] **SESS-02**: Show project path/directory for each session
-- [ ] **SESS-03**: Auto-refresh status with configurable polling interval (1-2 seconds)
-- [ ] **SESS-04**: Display session age/duration (how long running or blocked)
+- [x] **SESS-01**: Display list of all running Claude Code instances
+- [x] **SESS-02**: Show project path/directory for each session
+- [x] **SESS-03**: Auto-refresh status with configurable polling interval (1-2 seconds)
+- [x] **SESS-04**: Display session age/duration (how long running or blocked)
 
 ### Status Indicators
 
-- [ ] **STAT-01**: Detect Working state (Claude actively processing)
-- [ ] **STAT-02**: Detect Idle state (Claude waiting for next user input)
-- [ ] **STAT-03**: Detect Blocked state (Claude waiting for permission/input)
-- [ ] **STAT-04**: Display RAG color-coded status (Red=Blocked, Amber=Working, Green=Idle)
-- [ ] **STAT-05**: Highlight blocked sessions visually (bold, color emphasis)
-- [ ] **STAT-06**: Show model indicator for each session (sonnet/opus/haiku)
+- [x] **STAT-01**: Detect Working state (Claude actively processing)
+- [x] **STAT-02**: Detect Idle state (Claude waiting for next user input)
+- [x] **STAT-03**: Detect Blocked state (Claude waiting for permission/input)
+- [x] **STAT-04**: Display RAG color-coded status (Red=Blocked, Amber=Working, Green=Idle)
+- [x] **STAT-05**: Highlight blocked sessions visually (bold, color emphasis)
+- [x] **STAT-06**: Show model indicator for each session (sonnet/opus/haiku)
 
 ### Context Window
 
-- [ ] **CTXT-01**: Display context window usage percentage for each session
-- [ ] **CTXT-02**: Apply stoplight colors to context meter (Green <30%, Yellow 30-70%, Red >70%)
+- [x] **CTXT-01**: Display context window usage percentage for each session
+- [x] **CTXT-02**: Apply stoplight colors to context meter (Green <30%, Yellow 30-70%, Red >70%)
 
 ### Navigation
 
-- [ ] **NAV-01**: Navigate session list with keyboard (j/k or arrow keys)
-- [ ] **NAV-02**: Jump to selected session with Enter key
-- [ ] **NAV-03**: Quit HUD with q key
-- [ ] **NAV-04**: Display help/keybindings with ? key
-- [ ] **NAV-05**: Quick-jump to session by number (1-9 hotkeys)
+- [x] **NAV-01**: Navigate session list with keyboard (j/k or arrow keys)
+- [x] **NAV-02**: Jump to selected session with Enter key
+- [x] **NAV-03**: Quit HUD with q key
+- [x] **NAV-04**: Display help/keybindings with ? key
+- [x] **NAV-05**: Quick-jump to session by number (1-9 hotkeys)
 
 ### Terminal Integration
 
@@ -106,19 +106,19 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TERM-01 | Phase 2: Session Detection | Complete |
 | TERM-02 | Phase 2: Session Detection | Complete |
 | TERM-04 | Phase 2: Session Detection | Complete |
-| STAT-01 | Phase 3: Status Detection | Pending |
-| STAT-02 | Phase 3: Status Detection | Pending |
-| STAT-03 | Phase 3: Status Detection | Pending |
-| STAT-04 | Phase 3: Status Detection | Pending |
-| STAT-05 | Phase 3: Status Detection | Pending |
-| STAT-06 | Phase 3: Status Detection | Pending |
-| CTXT-01 | Phase 4: Context Window | Pending |
-| CTXT-02 | Phase 4: Context Window | Pending |
-| NAV-01 | Phase 5: Navigation | Pending |
-| NAV-02 | Phase 5: Navigation | Pending |
-| NAV-03 | Phase 5: Navigation | Pending |
-| NAV-04 | Phase 5: Navigation | Pending |
-| NAV-05 | Phase 5: Navigation | Pending |
+| STAT-01 | Phase 3: Status Detection | Complete |
+| STAT-02 | Phase 3: Status Detection | Complete |
+| STAT-03 | Phase 3: Status Detection | Complete |
+| STAT-04 | Phase 3: Status Detection | Complete |
+| STAT-05 | Phase 3: Status Detection | Complete |
+| STAT-06 | Phase 3: Status Detection | Complete |
+| CTXT-01 | Phase 4: Context Window | Complete |
+| CTXT-02 | Phase 4: Context Window | Complete |
+| NAV-01 | Phase 5: Navigation | Complete |
+| NAV-02 | Phase 5: Navigation | Complete |
+| NAV-03 | Phase 5: Navigation | Complete |
+| NAV-04 | Phase 5: Navigation | Complete |
+| NAV-05 | Phase 5: Navigation | Complete |
 | TERM-03 | Phase 6: Terminal Integration | Pending |
 | TERM-05 | Phase 6: Terminal Integration | Pending |
 
