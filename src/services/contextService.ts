@@ -1,12 +1,8 @@
 import * as fs from 'fs';
+import { execSync } from 'child_process';
 
 // All Claude 4.x models use 200K standard context window
 const CONTEXT_WINDOW_SIZE = 200_000;
-
-// Read last N bytes for performance (transcript files can be 10-20MB)
-// Increased to 150KB to handle subagent-heavy transcripts where recent
-// entries may be mostly sidechain messages
-const READ_TAIL_BYTES = 150_000;
 
 // Cache to avoid re-parsing unchanged files
 interface CacheEntry {
@@ -14,10 +10,6 @@ interface CacheEntry {
   percentage: number;
 }
 const cache = new Map<string, CacheEntry>();
-
-// Separate cache for last known MAIN context value
-// Used when subagents flood the transcript end with sidechain entries
-const lastKnownMainContext = new Map<string, number>();
 
 /**
  * Usage data from Claude API response
@@ -68,6 +60,9 @@ function extractUsage(entry: unknown): Usage | null {
 /**
  * Get context window usage percentage from JSONL transcript
  *
+ * Uses grep to efficiently find the last main agent assistant entry,
+ * filtering out sidechain (subagent) entries.
+ *
  * @param transcriptPath - Path to JSONL transcript file, or null
  * @returns Percentage (0-100), or null if unavailable
  */
@@ -93,56 +88,36 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       return cached.percentage;
     }
 
-    // Read last portion of file (performance optimization)
-    const fileSize = stats.size;
-    let content: string;
-
-    if (fileSize <= READ_TAIL_BYTES) {
-      // Small file - read entirely
-      content = fs.readFileSync(transcriptPath, 'utf-8');
-    } else {
-      // Large file - read from end
-      const fd = fs.openSync(transcriptPath, 'r');
-      const buffer = Buffer.alloc(READ_TAIL_BYTES);
-      const startPosition = fileSize - READ_TAIL_BYTES;
-      fs.readSync(fd, buffer, 0, READ_TAIL_BYTES, startPosition);
-      fs.closeSync(fd);
-      content = buffer.toString('utf-8');
+    // Use grep to find the last main agent assistant entry
+    // 1. Find all lines with "type":"assistant"
+    // 2. Filter out sidechain entries (subagents)
+    // 3. Get the last match
+    let lastMainEntry: string;
+    try {
+      lastMainEntry = execSync(
+        `grep -a '"type":"assistant"' "${transcriptPath}" | grep -v '"isSidechain":true' | tail -1`,
+        { encoding: 'utf-8', maxBuffer: 1024 * 1024 }
+      ).trim();
+    } catch {
+      // grep returns exit code 1 if no matches - that's okay
+      return null;
     }
 
-    // Split into lines and parse from end
-    const lines = content.split('\n').filter(line => line.trim());
-
-    // Find last valid assistant entry with usage (parse in reverse order)
-    let usage: Usage | null = null;
-
-    for (let i = lines.length - 1; i >= 0; i--) {
-      const line = lines[i];
-
-      try {
-        const entry = JSON.parse(line);
-        const extractedUsage = extractUsage(entry);
-
-        if (extractedUsage) {
-          usage = extractedUsage;
-          break; // Found most recent valid entry
-        }
-      } catch {
-        // Line may be partial (from reading file middle) - skip
-        continue;
-      }
+    if (!lastMainEntry) {
+      return null;
     }
 
-    // No valid entry found in recent portion
-    // This can happen when subagents flood the transcript with sidechain entries
-    // Return last known main context value if available
+    // Parse the JSON entry
+    let entry: unknown;
+    try {
+      entry = JSON.parse(lastMainEntry);
+    } catch {
+      return null;
+    }
+
+    // Extract usage
+    const usage = extractUsage(entry);
     if (!usage) {
-      const lastKnown = lastKnownMainContext.get(transcriptPath);
-      if (lastKnown !== undefined) {
-        // Update mtime cache to avoid re-parsing until file changes again
-        cache.set(transcriptPath, { mtime, percentage: lastKnown });
-        return lastKnown;
-      }
       return null;
     }
 
@@ -160,9 +135,8 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       100
     );
 
-    // Update caches
+    // Update cache
     cache.set(transcriptPath, { mtime, percentage });
-    lastKnownMainContext.set(transcriptPath, percentage);
 
     return percentage;
   } catch {
