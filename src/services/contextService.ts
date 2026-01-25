@@ -26,20 +26,15 @@ interface Usage {
 /**
  * JSONL entry structure (from Claude Code transcripts)
  *
- * Actual format is nested:
- * - Top level: type: "progress", isSidechain: boolean
- * - Nested: data.message.type: "assistant", data.message.message.usage: {...}
+ * Assistant messages have:
+ * - Top level: type: "assistant", isSidechain: boolean
+ * - Usage at: message.usage
  */
 interface JsonlEntry {
-  type: string;  // "progress", "user", etc at top level
+  type: string;  // "assistant", "user", "progress", etc
   isSidechain?: boolean;
-  data?: {
-    message?: {
-      type?: string;  // "assistant", "user", etc
-      message?: {
-        usage?: Usage;
-      };
-    };
+  message?: {
+    usage?: Usage;
   };
 }
 
@@ -51,18 +46,14 @@ function extractUsage(entry: unknown): Usage | null {
 
   const e = entry as JsonlEntry;
 
+  // Must be assistant type at top level
+  if (e.type !== 'assistant') return null;
+
   // Must not be sidechain (subagent context is separate)
   if (e.isSidechain === true) return null;
 
-  // Navigate to nested assistant message with usage
-  const nestedMessage = e.data?.message;
-  if (!nestedMessage) return null;
-
-  // Must be assistant type at nested level
-  if (nestedMessage.type !== 'assistant') return null;
-
-  // Get usage from nested message.message.usage
-  const usage = nestedMessage.message?.usage;
+  // Get usage from message.usage
+  const usage = e.message?.usage;
   if (!usage || typeof usage.input_tokens !== 'number') return null;
 
   return usage;
