@@ -225,29 +225,20 @@ async function focusMacWindow(session: Session): Promise<FocusResult> {
  */
 async function focusWsl2Window(session: Session): Promise<FocusResult> {
   // PowerShell script to focus Windows Terminal
+  // Uses -MemberDefinition instead of here-strings for single-line compatibility
   const psScript = `
-Add-Type @'
-using System;
-using System.Runtime.InteropServices;
-public class User32 {
-  [DllImport("user32.dll")]
-  public static extern bool SetForegroundWindow(IntPtr hWnd);
-  [DllImport("user32.dll")]
-  public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);
-}
-'@
-$proc = Get-Process -Name "WindowsTerminal" -ErrorAction SilentlyContinue | Select-Object -First 1
+Add-Type -Name User32 -Namespace Win32 -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);';
+$proc = Get-Process -Name "WindowsTerminal" -ErrorAction SilentlyContinue | Select-Object -First 1;
 if ($proc) {
-  $hwnd = $proc.MainWindowHandle
-  [User32]::ShowWindowAsync($hwnd, 9) | Out-Null
-  [User32]::SetForegroundWindow($hwnd) | Out-Null
+  $hwnd = $proc.MainWindowHandle;
+  [Win32.User32]::ShowWindowAsync($hwnd, 9) | Out-Null;
+  [Win32.User32]::SetForegroundWindow($hwnd) | Out-Null;
   exit 0
-}
+};
 exit 1
 `;
 
   // Escape the script for shell execution
-  // Replace newlines with semicolons, escape quotes
   const escapedScript = psScript
     .trim()
     .replace(/"/g, '\\"')
@@ -256,7 +247,6 @@ exit 1
   try {
     await execAsync(
       `powershell.exe -NoProfile -Command "${escapedScript}"`,
-      // Note: timeout is not supported by current execAsync, but we document the intent
     );
     return {
       success: true,
