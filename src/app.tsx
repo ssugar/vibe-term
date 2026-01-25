@@ -7,6 +7,7 @@ import { Header } from './components/Header.js';
 import { Footer } from './components/Footer.js';
 import { SessionList } from './components/SessionList.js';
 import { jumpToSession } from './services/jumpService.js';
+import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
 
 interface AppProps {
   refreshInterval: number;
@@ -36,6 +37,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       initializedRef.current = true;
       useAppStore.getState().setRefreshInterval(refreshInterval);
       useAppStore.getState().setLastRefresh(new Date());
+      // Save HUD window ID for return-to-HUD feature (Linux X11 only)
+      saveHudWindowId();
     }
   }, [refreshInterval]);
 
@@ -112,10 +115,10 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
           jumpToSession(session).then((result) => {
             if (!result.success) {
               state.setError(result.message);
-              // Auto-clear error after 3 seconds
+              // Auto-clear error after 7 seconds (longer for focus hints)
               setTimeout(() => {
                 useAppStore.getState().setError(null);
-              }, 3000);
+              }, 7000);
             }
           });
         }
@@ -126,6 +129,20 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
     // x to dismiss error
     if (input === 'x') {
       useAppStore.getState().setError(null);
+      return;
+    }
+
+    // b to return focus to HUD (after jumping to a session)
+    if (input === 'b') {
+      returnToHud().then((result) => {
+        if (!result.success) {
+          useAppStore.getState().setError(result.hint || result.message);
+          // Longer timeout for focus errors (7 seconds) to read hints
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 7000);
+        }
+      });
       return;
     }
 
@@ -181,8 +198,9 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             <Text bold color="cyan">Keyboard Shortcuts</Text>
             <Text> </Text>
             <Text><Text dimColor>j/k</Text>    Move down/up</Text>
-            <Text><Text dimColor>enter</Text>  Select session</Text>
-            <Text><Text dimColor>1-9</Text>    Jump to session</Text>
+            <Text><Text dimColor>enter</Text>  Jump to session</Text>
+            <Text><Text dimColor>b</Text>      Back to HUD</Text>
+            <Text><Text dimColor>1-9</Text>    Quick select</Text>
             <Text><Text dimColor>q</Text>      Quit</Text>
             <Text><Text dimColor>?</Text>      Toggle help</Text>
             <Text> </Text>
