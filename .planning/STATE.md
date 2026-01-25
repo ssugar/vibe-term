@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Defining requirements
+**Current focus:** Milestone v2.0 — Phase 7 (tmux Foundation)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-01-25 — Milestone v2.0 started
+Phase: 7 of 11 (tmux Foundation)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-01-25 — v2.0 roadmap created
 
-Progress: [░░░░░░░░░░] 0% (new milestone)
+Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
 
 ## Performance Metrics
 
@@ -23,7 +23,10 @@ Progress: [░░░░░░░░░░] 0% (new milestone)
 - Total execution time: ~109 min
 - Average duration: ~7.3 min/plan
 
-*v2.0 metrics will be tracked after execution begins*
+**v2.0:**
+- Total plans: TBD (estimated 9-11)
+- Completed: 0
+- Average duration: pending
 
 ## Accumulated Context
 
@@ -50,6 +53,7 @@ Progress: [░░░░░░░░░░] 0% (new milestone)
 - tmux splits over embedded terminal (native reliability)
 - Evolve v1.0 codebase (don't rewrite)
 - Minimal HUD strip (1-2 lines max)
+- No new npm dependencies (tmux CLI via execAsync)
 
 ### Pending Todos
 
@@ -59,12 +63,8 @@ Progress: [░░░░░░░░░░] 0% (new milestone)
 
 None.
 
-### Quick Tasks Completed
-
-*See MILESTONES.md for v1.0 quick tasks*
-
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Starting v2.0 milestone
+Stopped at: v2.0 roadmap created, ready to plan Phase 7
 Resume file: None

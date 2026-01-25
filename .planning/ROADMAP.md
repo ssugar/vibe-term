@@ -1,10 +1,14 @@
 # Roadmap: Claude Code TUI HUD
 
-## Overview
+## Milestones
 
-This roadmap delivers a terminal-based heads-up display for monitoring multiple Claude Code instances. Starting from project foundation and core infrastructure, we progressively build session detection, status parsing, context awareness, keyboard navigation, and terminal integration. Each phase delivers a coherent, testable capability that builds toward the core value: never miss a blocked Claude.
+- ✅ **v1.0 Standalone HUD** - Phases 1-6 (shipped 2026-01-25)
+- 🚧 **v2.0 Integrated Claude Terminal** - Phases 7-11 (in progress)
 
 ## Phases
+
+<details>
+<summary>v1.0 Standalone HUD (Phases 1-6) - SHIPPED 2026-01-25</summary>
 
 **Phase Numbering:**
 - Integer phases (1, 2, 3): Planned milestone work
@@ -17,9 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Status Detection** - Hooks-based Working/Idle/Blocked status with visual indicators
 - [x] **Phase 4: Context Window** - Display context window usage with stoplight colors
 - [x] **Phase 5: Navigation** - Keyboard navigation and session selection
-- [ ] **Phase 6: Terminal Integration** - Jump to selected session in tmux or terminal
-
-## Phase Details
+- [x] **Phase 6: Terminal Integration** - Jump to selected session in tmux or terminal
 
 ### Phase 1: Foundation
 **Goal**: Establish project infrastructure with cross-platform patterns that all subsequent phases depend on
@@ -115,23 +117,120 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 06-01-PLAN.md — Window focus service for non-tmux sessions (Linux X11, macOS, WSL2)
-- [ ] 06-02-PLAN.md — HUD window save and 'b' key return-to-HUD functionality
+- [x] 06-01-PLAN.md — Window focus service for non-tmux sessions (Linux X11, macOS, WSL2)
+- [x] 06-02-PLAN.md — HUD window save and 'b' key return-to-HUD functionality
+
+</details>
+
+### v2.0 Integrated Claude Terminal (In Progress)
+
+**Milestone Goal:** Transform the standalone HUD into a tmux-integrated terminal where sessions run inside managed panes with an always-visible status strip.
+
+- [ ] **Phase 7: tmux Foundation** - Create/attach managed tmux session, HUD pane setup, environment verification
+- [ ] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
+- [ ] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
+- [ ] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
+- [ ] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
+
+## Phase Details
+
+### Phase 7: tmux Foundation
+**Goal**: HUD runs inside a managed tmux session with proper environment for reliable rendering
+**Depends on**: Phase 6 (v1.0 complete)
+**Requirements**: TMUX-01, TMUX-02, TMUX-06
+**Success Criteria** (what must be TRUE):
+  1. User runs cc-tui-hud and is automatically placed in the claude-hud tmux session
+  2. HUD renders correctly in a 2-line fixed-height top pane
+  3. Graceful error message displays when tmux is not available
+  4. Running cc-tui-hud when already in claude-hud session attaches to existing instance
+**Plans**: TBD
+
+Plans:
+- [ ] 07-01-PLAN.md — TBD
+- [ ] 07-02-PLAN.md — TBD
+
+### Phase 8: HUD Strip UI
+**Goal**: Users see all sessions as horizontal tabs with status and context in a compact 1-2 line display
+**Depends on**: Phase 7
+**Requirements**: STRIP-01, STRIP-02, STRIP-03, STRIP-04, STRIP-05
+**Success Criteria** (what must be TRUE):
+  1. Sessions display as horizontal tabs in format [index:name status context%]
+  2. Active/selected session is visually distinct (highlighted)
+  3. Blocked sessions are prominently indicated (color/bold)
+  4. Tab overflow is handled gracefully when many sessions exist (truncation or indicator)
+  5. HUD strip occupies minimal space (1-2 terminal lines)
+**Plans**: TBD
+
+Plans:
+- [ ] 08-01-PLAN.md — TBD
+- [ ] 08-02-PLAN.md — TBD
+
+### Phase 9: Pane Architecture
+**Goal**: Users can switch between sessions using native tmux pane operations and return to HUD with one keypress
+**Depends on**: Phase 8
+**Requirements**: TMUX-03, TMUX-04, TMUX-05
+**Success Criteria** (what must be TRUE):
+  1. Claude sessions run in the bottom pane (main terminal area)
+  2. Pressing Enter on a session switches the bottom pane to that session
+  3. User can return to HUD view with b key from any pane
+  4. Session switching is reliable (no focus confusion or input routing errors)
+**Plans**: TBD
+
+Plans:
+- [ ] 09-01-PLAN.md — TBD
+- [ ] 09-02-PLAN.md — TBD
+
+### Phase 10: Session Lifecycle
+**Goal**: Users can spawn new Claude sessions and the HUD automatically manages session lifecycle
+**Depends on**: Phase 9
+**Requirements**: SESS-01, SESS-02, SESS-03, SESS-04, SESS-05
+**Success Criteria** (what must be TRUE):
+  1. User can spawn new Claude session with n key
+  2. New session prompts for working directory and starts in bottom pane
+  3. Externally-created tmux sessions running Claude appear in HUD
+  4. Dead or orphaned sessions are automatically cleaned up
+  5. Session list updates in real-time without manual refresh
+**Plans**: TBD
+
+Plans:
+- [ ] 10-01-PLAN.md — TBD
+- [ ] 10-02-PLAN.md — TBD
+
+### Phase 11: Navigation Integration
+**Goal**: Keyboard navigation from v1.0 works correctly in the new tmux-integrated architecture
+**Depends on**: Phase 10
+**Requirements**: NAV-01, NAV-02, NAV-03, NAV-04, NAV-05
+**Success Criteria** (what must be TRUE):
+  1. User can navigate sessions with j/k or arrow keys
+  2. User can quick-jump to sessions 1-9 with number keys
+  3. User can switch to selected session with Enter key
+  4. User can quit HUD with q key (cleans up tmux session properly)
+  5. User can view help with ? key
+**Plans**: TBD
+
+Plans:
+- [ ] 11-01-PLAN.md — TBD
 
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
 
-| Phase | Plans Complete | Status | Completed |
-|-------|----------------|--------|-----------|
-| 1. Foundation | 3/3 | Complete | 2026-01-22 |
-| 2. Session Detection | 3/3 | Complete | 2026-01-22 |
-| 3. Status Detection | 4/4 | Complete | 2026-01-23 |
-| 4. Context Window | 2/2 | Complete | 2026-01-25 |
-| 5. Navigation | 2/2 | Complete | 2026-01-25 |
-| 6. Terminal Integration | 0/2 | Ready | - |
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 1. Foundation | v1.0 | 3/3 | Complete | 2026-01-22 |
+| 2. Session Detection | v1.0 | 3/3 | Complete | 2026-01-22 |
+| 3. Status Detection | v1.0 | 4/4 | Complete | 2026-01-23 |
+| 4. Context Window | v1.0 | 2/2 | Complete | 2026-01-25 |
+| 5. Navigation | v1.0 | 2/2 | Complete | 2026-01-25 |
+| 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
+| 7. tmux Foundation | v2.0 | 0/TBD | Not started | - |
+| 8. HUD Strip UI | v2.0 | 0/TBD | Not started | - |
+| 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
+| 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
+| 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-22*
+*v2.0 phases added: 2026-01-25*
 *Last updated: 2026-01-25*

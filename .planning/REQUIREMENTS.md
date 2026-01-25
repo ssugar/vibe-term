@@ -76,33 +76,33 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TMUX-01 | TBD | Pending |
-| TMUX-02 | TBD | Pending |
-| TMUX-03 | TBD | Pending |
-| TMUX-04 | TBD | Pending |
-| TMUX-05 | TBD | Pending |
-| TMUX-06 | TBD | Pending |
-| STRIP-01 | TBD | Pending |
-| STRIP-02 | TBD | Pending |
-| STRIP-03 | TBD | Pending |
-| STRIP-04 | TBD | Pending |
-| STRIP-05 | TBD | Pending |
-| SESS-01 | TBD | Pending |
-| SESS-02 | TBD | Pending |
-| SESS-03 | TBD | Pending |
-| SESS-04 | TBD | Pending |
-| SESS-05 | TBD | Pending |
-| NAV-01 | TBD | Pending |
-| NAV-02 | TBD | Pending |
-| NAV-03 | TBD | Pending |
-| NAV-04 | TBD | Pending |
-| NAV-05 | TBD | Pending |
+| TMUX-01 | Phase 7 | Pending |
+| TMUX-02 | Phase 7 | Pending |
+| TMUX-03 | Phase 9 | Pending |
+| TMUX-04 | Phase 9 | Pending |
+| TMUX-05 | Phase 9 | Pending |
+| TMUX-06 | Phase 7 | Pending |
+| STRIP-01 | Phase 8 | Pending |
+| STRIP-02 | Phase 8 | Pending |
+| STRIP-03 | Phase 8 | Pending |
+| STRIP-04 | Phase 8 | Pending |
+| STRIP-05 | Phase 8 | Pending |
+| SESS-01 | Phase 10 | Pending |
+| SESS-02 | Phase 10 | Pending |
+| SESS-03 | Phase 10 | Pending |
+| SESS-04 | Phase 10 | Pending |
+| SESS-05 | Phase 10 | Pending |
+| NAV-01 | Phase 11 | Pending |
+| NAV-02 | Phase 11 | Pending |
+| NAV-03 | Phase 11 | Pending |
+| NAV-04 | Phase 11 | Pending |
+| NAV-05 | Phase 11 | Pending |
 
 **Coverage:**
 - v2.0 requirements: 21 total
-- Mapped to phases: 0
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after initial definition*
+*Last updated: 2026-01-25 after roadmap creation*
