@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 4 - Context Window (in progress)
+**Current focus:** Phase 5 - Navigation (plan 1 of 2 complete)
 
 ## Current Position
 
-Phase: 4 of 6 (Context Window)
-Plan: 1 of 2 in phase 4 complete
+Phase: 5 of 6 (Navigation)
+Plan: 1 of 2 in phase 5 complete
 Status: In progress
-Last activity: 2026-01-24 - Completed 04-01-PLAN.md
+Last activity: 2026-01-25 - Completed 05-01-PLAN.md
 
-Progress: [######....] 71% (11/15 plans)
+Progress: [########░.] 87% (13/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 13
 - Average duration: ~8 min
-- Total execution time: ~86 min
+- Total execution time: ~99 min
 
 **By Phase:**
 
@@ -30,11 +30,12 @@ Progress: [######....] 71% (11/15 plans)
 | 01-foundation | 3 | 24 min | 8 min |
 | 02-session-detection | 3 | 14 min | ~5 min |
 | 03-status-detection | 4 | ~42 min | ~10 min |
-| 04-context-window | 1 | 6 min | 6 min |
+| 04-context-window | 2 | 14 min | 7 min |
+| 05-navigation | 1 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02 (2 min), 03-03 (5 min), 03-04 (~30 min), 04-01 (6 min)
-- Trend: Context window plan executed quickly, one bug fix for JSONL format
+- Last 5 plans: 03-04 (~30 min), 04-01 (6 min), 04-02 (8 min), 05-01 (5 min)
+- Trend: Phase 5 progressing. Navigation implementation straightforward.
 
 *Updated after each plan completion*
 
@@ -66,9 +67,11 @@ Recent decisions affecting current work:
 - mainModel preservation (only update on UserPromptSubmit to avoid subagent overwrite)
 - SubagentStart/Stop tracking with count display (+N indicator)
 - SessionEnd cleanup removes stale state files
-- **NEW:** 200K context window standard for all Claude 4.x models
-- **NEW:** JSONL format is nested: data.message.type='assistant', data.message.message.usage
-- **NEW:** Tail-read optimization (last 50KB) and mtime caching for JSONL parsing
+- 200K context window standard for all Claude 4.x models
+- JSONL format is nested: data.message.type='assistant', data.message.message.usage
+- Tail-read optimization (last 50KB) and mtime caching for JSONL parsing
+- **NEW:** Inverse colors for selection highlighting (terminal-theme agnostic)
+- **NEW:** Context meter and tmux indicator preserve colors when row selected
 
 ### Pending Todos
 
@@ -80,6 +83,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-24
-Stopped at: Completed 04-01-PLAN.md (Context service for JSONL parsing)
+Last session: 2026-01-25
+Stopped at: Completed 05-01-PLAN.md (Navigation key handlers + selection highlighting)
 Resume file: None
