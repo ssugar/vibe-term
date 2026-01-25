@@ -50,7 +50,11 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
   const modelDisplay = session.model || 'unknown';
 
   // Subagent indicator (e.g., "+2" if 2 subagents running)
-  const subagentDisplay = session.subagentCount > 0 ? `+${session.subagentCount}` : '';
+  // Fixed 3-char width for consistent alignment of context meters
+  const subagentWidth = 3;
+  const subagentDisplay = session.subagentCount > 0
+    ? `+${session.subagentCount}`.padEnd(subagentWidth, ' ')
+    : ' '.repeat(subagentWidth);
 
   // Check if session is blocked for visual emphasis
   const isBlocked = session.status === 'blocked';
@@ -70,13 +74,11 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         >
           [{index}] {statusEmoji} {paddedName} {paddedDuration} {modelDisplay}
         </Text>
-        {/* Subagent indicator after colored section */}
-        {subagentDisplay && (
-          <>
-            <Text> </Text>
-            <Text color="yellow" bold>{subagentDisplay}</Text>
-          </>
-        )}
+        {/* Subagent indicator - fixed 3-char width */}
+        <Text> </Text>
+        <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+          {subagentDisplay}
+        </Text>
         {/* Context meter - always visible */}
         <Text> </Text>
         <ContextMeter percent={session.contextUsage ?? 0} width={12} />
@@ -116,12 +118,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         <Text inverse>{modelDisplay}</Text>
         <Text> </Text>
 
-        {/* Subagent indicator - yellow if active (not inverted) */}
-        {subagentDisplay ? (
-          <Text color="yellow" bold>{subagentDisplay}</Text>
-        ) : (
-          <Text>  </Text>
-        )}
+        {/* Subagent indicator - fixed 3-char width, yellow if active */}
+        <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+          {subagentDisplay}
+        </Text>
         <Text> </Text>
 
         {/* Context meter (not inverted - has its own colors) */}
@@ -164,12 +164,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
       <Text dimColor>{modelDisplay}</Text>
       <Text> </Text>
 
-      {/* Subagent indicator - yellow if active */}
-      {subagentDisplay ? (
-        <Text color="yellow" bold>{subagentDisplay}</Text>
-      ) : (
-        <Text>  </Text>
-      )}
+      {/* Subagent indicator - fixed 3-char width, yellow if active */}
+      <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+        {subagentDisplay}
+      </Text>
       <Text> </Text>
 
       {/* Context meter */}
