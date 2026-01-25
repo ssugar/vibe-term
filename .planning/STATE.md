@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 7 of 11 (tmux Foundation)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-25 — Completed 07-01-PLAN.md
+Last activity: 2026-01-25 — Completed 07-02-PLAN.md
 
-Progress: [##########..........] 53% (v1.0 complete, v2.0 plan 1/~9 done)
+Progress: [###########.........] 56% (v1.0 complete, v2.0 plan 2/~9 done)
 
 ## Performance Metrics
 
@@ -25,9 +25,9 @@ Progress: [##########..........] 53% (v1.0 complete, v2.0 plan 1/~9 done)
 
 **v2.0:**
 - Total plans: TBD (estimated 9-11)
-- Completed: 1
-- Execution time: 2 min
-- Average duration: 2 min/plan
+- Completed: 2
+- Execution time: 5 min
+- Average duration: 2.5 min/plan
 
 ## Accumulated Context
 
@@ -59,6 +59,8 @@ Progress: [##########..........] 53% (v1.0 complete, v2.0 plan 1/~9 done)
 - **07-01:** stdio: 'inherit' for terminal handoff to tmux
 - **07-01:** No auto-create config file - users create manually
 - **07-01:** Config validation with type guards
+- **07-02:** Session options scoped to session (no -g flag) to avoid affecting other tmux sessions
+- **07-02:** HUD pane split created with -b flag for top position
 
 ### Pending Todos
 
@@ -71,5 +73,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 07-01-PLAN.md
+Stopped at: Completed 07-02-PLAN.md
 Resume file: None
