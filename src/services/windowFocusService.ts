@@ -226,13 +226,14 @@ async function focusMacWindow(session: Session): Promise<FocusResult> {
 async function focusWsl2Window(session: Session): Promise<FocusResult> {
   // PowerShell script to focus Windows Terminal
   // Uses -MemberDefinition instead of here-strings for single-line compatibility
+  // Note: $ must be escaped as \$ to survive bash shell layer
   const psScript = `
 Add-Type -Name User32 -Namespace Win32 -MemberDefinition '[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd); [DllImport("user32.dll")] public static extern bool ShowWindowAsync(IntPtr hWnd, int nCmdShow);';
-$proc = Get-Process -Name "WindowsTerminal" -ErrorAction SilentlyContinue | Select-Object -First 1;
-if ($proc) {
-  $hwnd = $proc.MainWindowHandle;
-  [Win32.User32]::ShowWindowAsync($hwnd, 9) | Out-Null;
-  [Win32.User32]::SetForegroundWindow($hwnd) | Out-Null;
+\\$proc = Get-Process -Name "WindowsTerminal" -ErrorAction SilentlyContinue | Select-Object -First 1;
+if (\\$proc) {
+  \\$hwnd = \\$proc.MainWindowHandle;
+  [Win32.User32]::ShowWindowAsync(\\$hwnd, 9) | Out-Null;
+  [Win32.User32]::SetForegroundWindow(\\$hwnd) | Out-Null;
   exit 0
 };
 exit 1
