@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Box, Text, useInput, useApp } from 'ink';
+import { spawnSync } from 'child_process';
 import { useAppStore } from './stores/appStore.js';
 import { useInterval } from './hooks/useInterval.js';
 import { useSessions } from './hooks/useSessions.js';
@@ -8,6 +9,7 @@ import { Footer } from './components/Footer.js';
 import { SessionList } from './components/SessionList.js';
 import { jumpToSession } from './services/jumpService.js';
 import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
+import { TMUX_SESSION_NAME } from './startup.js';
 
 interface AppProps {
   refreshInterval: number;
@@ -16,6 +18,9 @@ interface AppProps {
 export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const { exit } = useApp();
   const initializedRef = useRef(false);
+
+  // Quit mode state: 'none' | 'confirming' (shows detach/kill prompt)
+  const [quitMode, setQuitMode] = useState<'none' | 'confirming'>('none');
 
   // Session detection polling hook
   useSessions();
@@ -79,6 +84,23 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
     // If showing help, any key dismisses
     if (showHelp) {
       setShowHelp(false);
+      return;
+    }
+
+    // Handle quit confirmation keys (detach/kill prompt)
+    if (quitMode === 'confirming') {
+      if (input === 'd') {
+        // Detach: session stays alive, user returns to original terminal
+        spawnSync('tmux', ['detach-client'], { stdio: 'inherit' });
+        exit();
+      } else if (input === 'k') {
+        // Kill: cleanup completely, destroy the tmux session
+        spawnSync('tmux', ['kill-session', '-t', TMUX_SESSION_NAME], { stdio: 'inherit' });
+        exit();
+      } else if (key.escape || input === 'n') {
+        // Cancel: return to normal HUD
+        setQuitMode('none');
+      }
       return;
     }
 
@@ -148,7 +170,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
     // Normal mode key handling
     if (input === 'q') {
-      setConfirmingExit(true);
+      setQuitMode('confirming');
     }
     if (input === '?') {
       setShowHelp(true);
@@ -165,7 +187,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
       <Footer />
 
-      {/* Exit confirmation overlay */}
+      {/* Exit confirmation overlay (for Ctrl+C emergency exit) */}
       {isConfirmingExit && (
         <Box
           position="absolute"
@@ -177,6 +199,27 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             <Text bold color="green">y</Text>
             <Text>/</Text>
             <Text bold color="red">n</Text>
+          </Box>
+        </Box>
+      )}
+
+      {/* Quit prompt overlay (for 'q' key with detach/kill options) */}
+      {quitMode === 'confirming' && (
+        <Box
+          position="absolute"
+          marginTop={3}
+          marginLeft={2}
+        >
+          <Box borderStyle="round" borderColor="yellow" paddingX={1}>
+            <Text>Quit: </Text>
+            <Text color="yellow">[d]</Text>
+            <Text>etach </Text>
+            <Text dimColor>| </Text>
+            <Text color="red">[k]</Text>
+            <Text>ill </Text>
+            <Text dimColor>| </Text>
+            <Text color="gray">[n/Esc]</Text>
+            <Text> cancel</Text>
           </Box>
         </Box>
       )}
