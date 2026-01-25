@@ -138,7 +138,7 @@ export interface HudLayout {
 
 /**
  * Create the HUD pane layout within the current window.
- * Creates a fixed-height pane at top or bottom for the HUD strip.
+ * The HUD (current process) stays in a small pane, main area is created for sessions.
  *
  * @param position - 'top' or 'bottom' for HUD placement
  * @param height - Number of lines for HUD pane (1-3)
@@ -148,29 +148,33 @@ export async function createHudLayout(
   position: 'top' | 'bottom',
   height: number
 ): Promise<HudLayout> {
-  // Get current pane ID (will become main pane after split)
-  const { stdout: currentPane } = await execAsync(
+  // Get current pane ID (this is where HUD is running - it will stay here)
+  const { stdout: hudPane } = await execAsync(
     `tmux display-message -p '#{pane_id}'`
   );
 
-  // Split options:
-  // -v: vertical split (top/bottom)
-  // -b: place new pane before (above) - used for top position
-  // -l N: exact line height
-  // -P -F: print new pane ID
-  const splitArgs =
-    position === 'top' ? `-v -b -l ${height}` : `-v -l ${height}`;
+  // Strategy: Create a new pane for the main area, then resize HUD pane to be small.
+  // The HUD stays in the current pane; the new pane becomes the main session area.
 
-  const { stdout: hudPane } = await execAsync(
+  // Split to create main pane:
+  // -v: vertical split (top/bottom)
+  // For top HUD: split below us (no -b flag)
+  // For bottom HUD: split above us (-b flag)
+  const splitArgs = position === 'top' ? '-v' : '-v -b';
+
+  const { stdout: mainPane } = await execAsync(
     `tmux split-window ${splitArgs} -P -F '#{pane_id}'`
   );
 
-  // After split:
-  // - For top: new pane (HUD) is above, current pane (main) is below
-  // - For bottom: new pane (HUD) is below, current pane (main) is above
+  // Now resize our pane (the HUD pane) to the desired height
+  // -t targets our pane, -y sets the height in lines
+  await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
+
+  // Select the main pane so it's ready for user interaction
+  await execAsync(`tmux select-pane -t ${mainPane.trim()}`);
 
   return {
     hudPaneId: hudPane.trim(),
-    mainPaneId: currentPane.trim(),
+    mainPaneId: mainPane.trim(),
   };
 }
