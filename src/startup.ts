@@ -1,4 +1,6 @@
 import { spawnSync, SpawnSyncReturns } from 'child_process';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 
 /**
  * The managed tmux session name for claude-terminal
@@ -145,10 +147,16 @@ Install with:
   // 6. Handle case: outside tmux - create or attach to session
   if (!sessionExists) {
     // Create new session WITH our CLI running inside it
-    // Build the command to run inside tmux
-    const fullCommand = process.argv
-      .map((arg) => (arg.includes(' ') ? `"${arg}"` : arg))
-      .join(' ');
+    // Use absolute paths to ensure command works inside tmux
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    // Go up one level to project root (works for both src/ and dist/)
+    const projectRoot = dirname(__dirname);
+    const cliPath = join(projectRoot, 'dist', 'cli.js');
+
+    // Quote path if it contains spaces
+    const quotedCliPath = cliPath.includes(' ') ? `"${cliPath}"` : cliPath;
+    const fullCommand = `node ${quotedCliPath}`;
 
     // Create session running our command and attach to it
     // Note: without -d, this creates AND attaches in one step
