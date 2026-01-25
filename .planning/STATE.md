@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 7 of 11 (tmux Foundation)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-01-25 — v2.0 roadmap created
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-25 — Completed 07-01-PLAN.md
 
-Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
+Progress: [##########..........] 53% (v1.0 complete, v2.0 plan 1/~9 done)
 
 ## Performance Metrics
 
@@ -25,8 +25,9 @@ Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
 
 **v2.0:**
 - Total plans: TBD (estimated 9-11)
-- Completed: 0
-- Average duration: pending
+- Completed: 1
+- Execution time: 2 min
+- Average duration: 2 min/plan
 
 ## Accumulated Context
 
@@ -54,6 +55,10 @@ Progress: [##########..........] 50% (v1.0 complete, v2.0 starting)
 - Evolve v1.0 codebase (don't rewrite)
 - Minimal HUD strip (1-2 lines max)
 - No new npm dependencies (tmux CLI via execAsync)
+- **07-01:** spawnSync (not execAsync) for synchronous startup before Ink
+- **07-01:** stdio: 'inherit' for terminal handoff to tmux
+- **07-01:** No auto-create config file - users create manually
+- **07-01:** Config validation with type guards
 
 ### Pending Todos
 
@@ -66,5 +71,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: v2.0 roadmap created, ready to plan Phase 7
+Stopped at: Completed 07-01-PLAN.md
 Resume file: None
