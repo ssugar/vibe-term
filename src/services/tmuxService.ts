@@ -126,6 +126,17 @@ export async function configureSession(sessionName: string): Promise<void> {
   for (const opt of options) {
     await execAsync(`tmux ${opt}`);
   }
+
+  // Add keybindings that work regardless of which pane is focused
+  // -n flag means no prefix key needed
+  const bindings = [
+    // Ctrl+\\ to detach (keep session alive)
+    `bind-key -n C-\\\\ detach-client`,
+  ];
+
+  for (const bind of bindings) {
+    await execAsync(`tmux ${bind}`);
+  }
 }
 
 /**
@@ -169,6 +180,17 @@ export async function createHudLayout(
   // Now resize our pane (the HUD pane) to the desired height
   // -t targets our pane, -y sets the height in lines
   await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
+
+  // Store HUD pane ID in tmux environment for keybindings
+  await execAsync(
+    `tmux set-environment CLAUDE_TERMINAL_HUD_PANE ${hudPane.trim()}`
+  );
+
+  // Add keybinding to focus HUD pane (Ctrl+g for "go to HUD")
+  // Uses the stored environment variable to find the right pane
+  await execAsync(
+    `tmux bind-key -n C-g select-pane -t ${hudPane.trim()}`
+  );
 
   // Select the main pane so it's ready for user interaction
   await execAsync(`tmux select-pane -t ${mainPane.trim()}`);

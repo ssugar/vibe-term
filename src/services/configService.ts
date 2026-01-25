@@ -7,7 +7,7 @@ import { homedir } from 'os';
  */
 export interface Config {
   hudPosition: 'top' | 'bottom';
-  hudHeight: 1 | 2 | 3;
+  hudHeight: number; // Lines for HUD pane (3-15 reasonable range)
 }
 
 /**
@@ -15,7 +15,7 @@ export interface Config {
  */
 export const DEFAULT_CONFIG: Config = {
   hudPosition: 'top',
-  hudHeight: 2,
+  hudHeight: 6,
 };
 
 /**
@@ -31,10 +31,10 @@ function isValidHudPosition(value: unknown): value is 'top' | 'bottom' {
 }
 
 /**
- * Validate that hudHeight is a valid value
+ * Validate that hudHeight is a valid value (3-15 lines)
  */
-function isValidHudHeight(value: unknown): value is 1 | 2 | 3 {
-  return value === 1 || value === 2 || value === 3;
+function isValidHudHeight(value: unknown): value is number {
+  return typeof value === 'number' && value >= 3 && value <= 15;
 }
 
 /**
