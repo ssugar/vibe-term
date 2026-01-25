@@ -91,14 +91,13 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       return cached.percentage;
     }
 
-    // Use grep to find the last main agent assistant entry
-    // 1. Find all lines with "type":"assistant"
-    // 2. Filter out sidechain entries (subagents)
-    // 3. Get the last match
+    // Use grep to find the last main agent assistant entry with usage data
+    // Pattern: entries with "requestId" + "type":"assistant" + "usage" (actual API responses with token counts)
+    // Then filter out sidechain (subagent) entries
     let lastMainEntry: string;
     try {
       lastMainEntry = execSync(
-        `grep -a '"type":"assistant"' "${transcriptPath}" | grep -v '"isSidechain":true' | tail -1`,
+        `grep -a '"requestId"' "${transcriptPath}" | grep '"type":"assistant"' | grep '"usage"' | grep -v '"isSidechain":true' | tail -1`,
         { encoding: 'utf-8', maxBuffer: 1024 * 1024 }
       ).trim();
     } catch {
