@@ -2,6 +2,11 @@ import { detectPlatform, execAsync } from './platform.js';
 import type { Session } from '../stores/types.js';
 
 /**
+ * Module-level state for HUD window ID (Linux X11 only)
+ */
+let hudWindowId: string | null = null;
+
+/**
  * Result of a window focus operation
  */
 export interface FocusResult {
@@ -285,5 +290,49 @@ export async function focusTerminalWindow(
       return focusMacWindow(session);
     case 'wsl2':
       return focusWsl2Window(session);
+  }
+}
+
+/**
+ * Save the current HUD window ID for return-to-HUD feature.
+ * Only works on Linux X11 - silently no-ops on other platforms.
+ * Call this on app startup while HUD is the active window.
+ */
+export async function saveHudWindowId(): Promise<void> {
+  if (detectPlatform() !== 'linux' || isWayland()) {
+    return; // Only works on Linux X11
+  }
+
+  try {
+    const { stdout } = await execAsync('xdotool getactivewindow');
+    hudWindowId = stdout.trim();
+  } catch {
+    hudWindowId = null;
+  }
+}
+
+/**
+ * Return focus to the HUD window.
+ * Only works on Linux X11 where we saved the window ID on startup.
+ *
+ * @returns FocusResult with success status and message
+ */
+export async function returnToHud(): Promise<FocusResult> {
+  if (!hudWindowId) {
+    return {
+      success: false,
+      message: 'HUD window ID not saved',
+      hint: 'Return-to-HUD only works on Linux X11',
+    };
+  }
+
+  try {
+    await execAsync(`xdotool windowactivate ${hudWindowId}`);
+    return { success: true, message: 'Returned to HUD' };
+  } catch {
+    return {
+      success: false,
+      message: 'Failed to return to HUD',
+    };
   }
 }
