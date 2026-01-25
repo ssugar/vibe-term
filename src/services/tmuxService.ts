@@ -105,3 +105,72 @@ export function getTmuxTarget(
   const info = isProcessInTmux(ppid, panes);
   return info.tmuxTarget;
 }
+
+/**
+ * Configure tmux session options for claude-terminal.
+ * Options are scoped to the specific session (not global).
+ * Should be called after session creation/attachment.
+ */
+export async function configureSession(sessionName: string): Promise<void> {
+  const options = [
+    // Disable status bar - HUD replaces it
+    `set-option -t ${sessionName} status off`,
+    // Enable mouse for pane selection/scrolling
+    `set-option -t ${sessionName} mouse on`,
+    // Fast escape time for responsive key handling
+    `set-option -t ${sessionName} escape-time 0`,
+    // Increase history limit
+    `set-option -t ${sessionName} history-limit 10000`,
+  ];
+
+  for (const opt of options) {
+    await execAsync(`tmux ${opt}`);
+  }
+}
+
+/**
+ * Result of HUD layout creation
+ */
+export interface HudLayout {
+  hudPaneId: string;
+  mainPaneId: string;
+}
+
+/**
+ * Create the HUD pane layout within the current window.
+ * Creates a fixed-height pane at top or bottom for the HUD strip.
+ *
+ * @param position - 'top' or 'bottom' for HUD placement
+ * @param height - Number of lines for HUD pane (1-3)
+ * @returns Pane IDs for HUD and main panes
+ */
+export async function createHudLayout(
+  position: 'top' | 'bottom',
+  height: number
+): Promise<HudLayout> {
+  // Get current pane ID (will become main pane after split)
+  const { stdout: currentPane } = await execAsync(
+    `tmux display-message -p '#{pane_id}'`
+  );
+
+  // Split options:
+  // -v: vertical split (top/bottom)
+  // -b: place new pane before (above) - used for top position
+  // -l N: exact line height
+  // -P -F: print new pane ID
+  const splitArgs =
+    position === 'top' ? `-v -b -l ${height}` : `-v -l ${height}`;
+
+  const { stdout: hudPane } = await execAsync(
+    `tmux split-window ${splitArgs} -P -F '#{pane_id}'`
+  );
+
+  // After split:
+  // - For top: new pane (HUD) is above, current pane (main) is below
+  // - For bottom: new pane (HUD) is below, current pane (main) is above
+
+  return {
+    hudPaneId: hudPane.trim(),
+    mainPaneId: currentPane.trim(),
+  };
+}
