@@ -1,11 +1,11 @@
 {
-  "name": "cc-tui-hud",
+  "name": "claude-terminal",
   "version": "1.0.0",
-  "description": "Claude Code TUI HUD - Monitor multiple Claude Code instances",
+  "description": "Claude Terminal - Manage multiple Claude Code instances in tmux",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "cc-tui-hud": "dist/cli.js"
+    "claude-terminal": "dist/cli.js"
   },
   "scripts": {
     "dev": "tsx src/cli.tsx",
@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ssugar/cc-tui-hud.git"
+    "url": "git+https://github.com/ssugar/claude-terminal.git"
   },
   "keywords": [
     "claude",
@@ -29,9 +29,9 @@
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ssugar/cc-tui-hud/issues"
+    "url": "https://github.com/ssugar/claude-terminal/issues"
   },
-  "homepage": "https://github.com/ssugar/cc-tui-hud#readme",
+  "homepage": "https://github.com/ssugar/claude-terminal#readme",
   "dependencies": {
     "figures": "^6.1.0",
     "ink": "^6.6.0",

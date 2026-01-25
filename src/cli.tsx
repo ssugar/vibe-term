@@ -4,19 +4,21 @@ import { render } from 'ink';
 import meow from 'meow';
 import App from './app.js';
 import { useAppStore } from './stores/appStore.js';
+import { ensureTmuxEnvironment, TMUX_SESSION_NAME } from './startup.js';
+import { loadConfig } from './services/configService.js';
+import { configureSession, createHudLayout } from './services/tmuxService.js';
 
 const cli = meow(
   `
   Usage
-    $ cc-tui-hud
+    $ claude-terminal
 
   Options
     --refresh, -r  Refresh interval in seconds (default: 2)
 
   Examples
-    $ cc-tui-hud
-    $ cc-tui-hud --refresh 5
-    $ cc-tui-hud -r 1
+    $ claude-terminal
+    $ claude-terminal --refresh 5
 `,
   {
     importMeta: import.meta,
@@ -32,6 +34,36 @@ const cli = meow(
 
 // Convert seconds to milliseconds
 const refreshInterval = cli.flags.refresh * 1000;
+
+// Step 1: Ensure tmux environment
+const startupResult = ensureTmuxEnvironment();
+
+if (!startupResult.success) {
+  console.error(startupResult.error);
+  process.exit(1);
+}
+
+if (!startupResult.shouldRenderInk) {
+  // Returned from tmux attach/new-session (user detached or killed)
+  process.exit(0);
+}
+
+// Step 2: Load config
+const config = loadConfig();
+
+// Step 3: Configure tmux session (async, but we're now inside tmux)
+await configureSession(TMUX_SESSION_NAME);
+
+// Step 4: Create HUD layout
+const layout = await createHudLayout(config.hudPosition, config.hudHeight);
+
+// Step 5: Check terminal size and warn if too small
+const { rows } = process.stdout;
+if (rows && rows < 10) {
+  console.error(
+    `Warning: Terminal height (${rows} rows) is very small. HUD may not display correctly.`
+  );
+}
 
 // Track Ctrl+C presses for two-stage exit
 let ctrlCPressed = false;
