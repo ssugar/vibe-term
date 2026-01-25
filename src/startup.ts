@@ -143,11 +143,24 @@ Install with:
   }
 
   // 6. Handle case: outside tmux - create or attach to session
-  // Use -A flag: attach if exists, create if not
-  // This hands off terminal control to tmux with stdio: 'inherit'
-  spawnSync('tmux', ['new-session', '-A', '-s', TMUX_SESSION_NAME], {
-    stdio: 'inherit',
-  });
+  if (!sessionExists) {
+    // Create new session WITH our CLI running inside it
+    // Build the command to run inside tmux
+    const fullCommand = process.argv
+      .map((arg) => (arg.includes(' ') ? `"${arg}"` : arg))
+      .join(' ');
+
+    // Create session running our command and attach to it
+    // Note: without -d, this creates AND attaches in one step
+    spawnSync('tmux', ['new-session', '-s', TMUX_SESSION_NAME, fullCommand], {
+      stdio: 'inherit',
+    });
+  } else {
+    // Session already exists - just attach to it
+    spawnSync('tmux', ['attach', '-t', TMUX_SESSION_NAME], {
+      stdio: 'inherit',
+    });
+  }
 
   // If we reach here, tmux exited (user detached or killed session)
   // Don't render Ink - just exit cleanly
