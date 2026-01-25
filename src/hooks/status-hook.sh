@@ -162,11 +162,21 @@ fi
 # Write state file (atomic write via temp file)
 TEMP_FILE="$STATE_FILE.tmp.$$"
 
+# Format model and mainModel as JSON (null if empty, quoted string otherwise)
+MODEL_JSON="null"
+if [ -n "$MODEL" ]; then
+  MODEL_JSON="\"$MODEL\""
+fi
+MAIN_MODEL_JSON="null"
+if [ -n "$MAIN_MODEL" ]; then
+  MAIN_MODEL_JSON="\"$MAIN_MODEL\""
+fi
+
 cat > "$TEMP_FILE" << EOF
 {
   "status": "$STATUS",
-  "model": "$MODEL",
-  "mainModel": "$MAIN_MODEL",
+  "model": $MODEL_JSON,
+  "mainModel": $MAIN_MODEL_JSON,
   "cwd": "$CWD",
   "sessionId": "$SESSION_ID",
   "subagentCount": $SUBAGENT_COUNT,
