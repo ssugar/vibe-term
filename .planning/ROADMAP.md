@@ -112,11 +112,11 @@ Plans:
   2. HUD continues running after jumping (does not exit)
   3. Non-tmux terminal windows receive focus where platform supports it
   4. Graceful error message if session no longer exists
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 06-01: TBD
-- [ ] 06-02: TBD
+- [ ] 06-01-PLAN.md — Window focus service for non-tmux sessions (Linux X11, macOS, WSL2)
+- [ ] 06-02-PLAN.md — HUD window save and 'b' key return-to-HUD functionality
 
 ## Progress
 
