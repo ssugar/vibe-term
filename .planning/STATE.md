@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-01-22)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress.
-**Current focus:** Phase 5 - Navigation (plan 1 of 2 complete)
+**Current focus:** Phase 5 complete - Ready for Phase 6 (Terminal Integration)
 
 ## Current Position
 
 Phase: 5 of 6 (Navigation)
-Plan: 1 of 2 in phase 5 complete
-Status: In progress
-Last activity: 2026-01-25 - Completed 05-01-PLAN.md
+Plan: 2 of 2 in phase 5 complete
+Status: Phase complete
+Last activity: 2026-01-25 - Completed 05-02-PLAN.md
 
-Progress: [########░.] 87% (13/15 plans)
+Progress: [#########░] 93% (14/15 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
-- Average duration: ~8 min
-- Total execution time: ~99 min
+- Total plans completed: 14
+- Average duration: ~7.6 min
+- Total execution time: ~107 min
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [########░.] 87% (13/15 plans)
 | 02-session-detection | 3 | 14 min | ~5 min |
 | 03-status-detection | 4 | ~42 min | ~10 min |
 | 04-context-window | 2 | 14 min | 7 min |
-| 05-navigation | 1 | 5 min | 5 min |
+| 05-navigation | 2 | 13 min | 6.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-04 (~30 min), 04-01 (6 min), 04-02 (8 min), 05-01 (5 min)
-- Trend: Phase 5 progressing. Navigation implementation straightforward.
+- Last 5 plans: 04-01 (6 min), 04-02 (8 min), 05-01 (5 min), 05-02 (8 min)
+- Trend: Phase 5 complete. Navigation fully implemented.
 
 *Updated after each plan completion*
 
@@ -76,6 +76,8 @@ Recent decisions affecting current work:
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
+- Future: Non-tmux session jumping (terminal container concept)
+- Future: Return to HUD after jumping (tmux keybinding or embedded approach)
 
 ### Blockers/Concerns
 
@@ -84,5 +86,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-25
-Stopped at: Completed 05-01-PLAN.md (Navigation key handlers + selection highlighting)
+Stopped at: Completed 05-02-PLAN.md (Session jumping with Enter key)
 Resume file: None
