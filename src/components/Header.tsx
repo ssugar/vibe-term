@@ -5,10 +5,14 @@ import { useAppStore } from '../stores/appStore.js';
 export function Header(): React.ReactElement {
   const sessions = useAppStore((state) => state.sessions);
 
-  // Count sessions by status (for later phases)
+  // Count sessions by status
   const blocked = sessions.filter((s) => s.status === 'blocked').length;
   const working = sessions.filter((s) => s.status === 'working').length;
+  const tool = sessions.filter((s) => s.status === 'tool').length;
   const idle = sessions.filter((s) => s.status === 'idle').length;
+
+  // Combined active count (working + tool) for display
+  const active = working + tool;
 
   const hasAny = sessions.length > 0;
 
@@ -19,9 +23,14 @@ export function Header(): React.ReactElement {
       {hasAny ? (
         <>
           {blocked > 0 && <Text color="red" bold>{blocked} blocked</Text>}
-          {blocked > 0 && working > 0 && <Text>, </Text>}
-          {working > 0 && <Text color="yellow">{working} working</Text>}
-          {(blocked > 0 || working > 0) && idle > 0 && <Text>, </Text>}
+          {blocked > 0 && active > 0 && <Text>, </Text>}
+          {active > 0 && (
+            <>
+              <Text color="yellow">{active} working</Text>
+              {tool > 0 && <Text color="yellow" dimColor> ({tool} tool)</Text>}
+            </>
+          )}
+          {(blocked > 0 || active > 0) && idle > 0 && <Text>, </Text>}
           {idle > 0 && <Text color="green">{idle} idle</Text>}
         </>
       ) : (
