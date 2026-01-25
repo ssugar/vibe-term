@@ -1,4 +1,5 @@
 import { execAsync } from './platform.js';
+import { focusTerminalWindow } from './windowFocusService.js';
 import type { Session } from '../stores/types.js';
 
 export interface JumpResult {
@@ -14,14 +15,17 @@ export interface JumpResult {
  * - If HUD is not in tmux: attach-session (takes over current terminal)
  *
  * For non-tmux sessions:
- * - Return error (can't programmatically focus arbitrary terminals)
+ * - Attempt to focus the terminal window via platform-specific methods
  */
 export async function jumpToSession(session: Session): Promise<JumpResult> {
-  // Non-tmux sessions: can't jump programmatically
+  // Non-tmux sessions: try to focus the terminal window
   if (!session.inTmux || !session.tmuxTarget) {
+    const result = await focusTerminalWindow(session);
     return {
-      success: false,
-      message: `Cannot jump: ${session.projectName} is not in tmux`,
+      success: result.success,
+      message: result.hint
+        ? `${result.message}. ${result.hint}`
+        : result.message,
     };
   }
 
