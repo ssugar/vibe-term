@@ -22,6 +22,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const isConfirmingExit = useAppStore((state) => state.isConfirmingExit);
   const showHelp = useAppStore((state) => state.showHelp);
   const error = useAppStore((state) => state.error);
+  const sessions = useAppStore((state) => state.sessions);
+  const selectedIndex = useAppStore((state) => state.selectedIndex);
 
   // Store actions - get directly from store to avoid dependency issues
   const setConfirmingExit = useAppStore((state) => state.setConfirmingExit);
@@ -76,6 +78,32 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       return;
     }
 
+    // Navigation key handling (only when sessions exist)
+    if (sessions.length > 0) {
+      // j/k and arrow key navigation
+      if (input === 'j' || key.downArrow) {
+        useAppStore.getState().setSelectedIndex(
+          Math.min(selectedIndex + 1, sessions.length - 1)
+        );
+        return;
+      }
+      if (input === 'k' || key.upArrow) {
+        useAppStore.getState().setSelectedIndex(
+          Math.max(selectedIndex - 1, 0)
+        );
+        return;
+      }
+
+      // Number hotkeys 1-9 for quick-jump
+      if (/^[1-9]$/.test(input)) {
+        const targetIndex = parseInt(input, 10) - 1;
+        if (targetIndex < sessions.length) {
+          useAppStore.getState().setSelectedIndex(targetIndex);
+        }
+        return;
+      }
+    }
+
     // Normal mode key handling
     if (input === 'q') {
       setConfirmingExit(true);
@@ -83,7 +111,6 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
     if (input === '?') {
       setShowHelp(true);
     }
-    // j/k navigation will be implemented in Phase 5
   });
 
   return (
