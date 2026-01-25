@@ -49,6 +49,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
   // Model display (defensive fallback to 'unknown' if falsy)
   const modelDisplay = session.model || 'unknown';
 
+  // Fixed-width model column (7 chars to accommodate "unknown")
+  const modelWidth = 7;
+  const paddedModel = modelDisplay.padEnd(modelWidth, ' ');
+
   // Subagent indicator (e.g., "+2" if 2 subagents running)
   // Fixed 3-char width for consistent alignment of context meters
   const subagentWidth = 3;
@@ -72,7 +76,7 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
           backgroundColor={isSelected ? undefined : 'red'}
           color={isSelected ? undefined : 'white'}
         >
-          [{index}] {statusEmoji} {paddedName} {paddedDuration} {modelDisplay}
+          [{index}] {statusEmoji} {paddedName} {paddedDuration} {paddedModel}
         </Text>
         {/* Subagent indicator - fixed 3-char width */}
         <Text> </Text>
@@ -114,8 +118,8 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         <Text inverse>{paddedDuration}</Text>
         <Text inverse> </Text>
 
-        {/* Model - inverse */}
-        <Text inverse>{modelDisplay}</Text>
+        {/* Model - inverse, fixed width */}
+        <Text inverse>{paddedModel}</Text>
         <Text> </Text>
 
         {/* Subagent indicator - fixed 3-char width, yellow if active */}
@@ -160,8 +164,8 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
       <Text dimColor>{paddedDuration}</Text>
       <Text> </Text>
 
-      {/* Model - dimmed */}
-      <Text dimColor>{modelDisplay}</Text>
+      {/* Model - dimmed, fixed width */}
+      <Text dimColor>{paddedModel}</Text>
       <Text> </Text>
 
       {/* Subagent indicator - fixed 3-char width, yellow if active */}
