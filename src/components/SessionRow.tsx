@@ -19,6 +19,7 @@ const STATUS_EMOJI: Record<Session['status'], string> = {
 interface SessionRowProps {
   session: Session;
   index: number; // 1-based display index
+  isSelected: boolean; // Whether this row is currently selected
 }
 
 /**
@@ -27,7 +28,7 @@ interface SessionRowProps {
  *
  * Blocked sessions have red background with bold white text for emphasis.
  */
-export function SessionRow({ session, index }: SessionRowProps): React.ReactElement {
+export function SessionRow({ session, index, isSelected }: SessionRowProps): React.ReactElement {
   // Truncate project name if too long (max 24 chars, show 23 + ellipsis)
   const maxNameLength = 24;
   const displayName =
@@ -58,10 +59,15 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
   const statusEmoji = STATUS_EMOJI[session.status];
 
   if (isBlocked) {
-    // Blocked row: red background, white bold text, entire row
+    // Blocked row: red background (or inverse if selected), white bold text
     return (
       <Box flexDirection="row">
-        <Text bold backgroundColor="red" color="white">
+        <Text
+          bold
+          inverse={isSelected}
+          backgroundColor={isSelected ? undefined : 'red'}
+          color={isSelected ? undefined : 'white'}
+        >
           [{index}] {statusEmoji} {paddedName} {paddedDuration} {modelDisplay}
         </Text>
         {/* Subagent indicator after colored section */}
@@ -80,6 +86,55 @@ export function SessionRow({ session, index }: SessionRowProps): React.ReactElem
             <Text> </Text>
             <Text dimColor color="cyan">[T]</Text>
           </>
+        )}
+      </Box>
+    );
+  }
+
+  // Selected non-blocked row: inverse colors for high contrast
+  if (isSelected) {
+    return (
+      <Box flexDirection="row">
+        {/* Index - bold cyan inverse */}
+        <Text color="cyan" bold inverse>
+          [{index}]
+        </Text>
+        <Text inverse> </Text>
+
+        {/* Status emoji */}
+        <Text inverse>{statusEmoji} </Text>
+
+        {/* Project name - fixed width */}
+        <Text inverse>{paddedName}</Text>
+        <Text inverse> </Text>
+
+        {/* Duration - inverse */}
+        <Text inverse>{paddedDuration}</Text>
+        <Text inverse> </Text>
+
+        {/* Model - inverse */}
+        <Text inverse>{modelDisplay}</Text>
+        <Text> </Text>
+
+        {/* Subagent indicator - yellow if active (not inverted) */}
+        {subagentDisplay ? (
+          <Text color="yellow" bold>{subagentDisplay}</Text>
+        ) : (
+          <Text>  </Text>
+        )}
+        <Text> </Text>
+
+        {/* Context meter (not inverted - has its own colors) */}
+        <ContextMeter percent={session.contextUsage ?? 0} width={12} />
+        <Text> </Text>
+
+        {/* tmux indicator - show [T] if in tmux */}
+        {session.inTmux ? (
+          <Text dimColor color="cyan">
+            [T]
+          </Text>
+        ) : (
+          <Text>   </Text>
         )}
       </Box>
     );
