@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Project scaffolding, types, basic Ink setup, Zustand stores
 - [x] **Phase 2: Session Detection** - Detect running Claude instances and display session list
 - [x] **Phase 3: Status Detection** - Hooks-based Working/Idle/Blocked status with visual indicators
-- [ ] **Phase 4: Context Window** - Display context window usage with stoplight colors
+- [x] **Phase 4: Context Window** - Display context window usage with stoplight colors
 - [ ] **Phase 5: Navigation** - Keyboard navigation and session selection
 - [ ] **Phase 6: Terminal Integration** - Jump to selected session in tmux or terminal
 
@@ -84,8 +84,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 04-01-PLAN.md — Context service for JSONL parsing and percentage calculation
-- [ ] 04-02-PLAN.md — ContextMeter UI component and SessionRow integration
+- [x] 04-01-PLAN.md — Context service for JSONL parsing and percentage calculation
+- [x] 04-02-PLAN.md — ContextMeter UI component and SessionRow integration
 
 ### Phase 5: Navigation
 **Goal**: Users can navigate the session list and access help using keyboard shortcuts
@@ -97,11 +97,11 @@ Plans:
   3. User can quit HUD with q key
   4. User can view keybindings help with ? key
   5. User can quick-jump to sessions 1-9 using number hotkeys
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 05-01: TBD
-- [ ] 05-02: TBD
+- [ ] 05-01-PLAN.md — Navigation keys (j/k/arrows, 1-9 hotkeys) and selection highlighting
+- [ ] 05-02-PLAN.md — Jump service and Enter key handler for tmux session switching
 
 ### Phase 6: Terminal Integration
 **Goal**: Users can jump from HUD directly to a selected Claude session in their terminal
@@ -128,10 +128,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6
 | 1. Foundation | 3/3 | Complete | 2026-01-22 |
 | 2. Session Detection | 3/3 | Complete | 2026-01-22 |
 | 3. Status Detection | 4/4 | Complete | 2026-01-23 |
-| 4. Context Window | 0/2 | Not started | - |
-| 5. Navigation | 0/2 | Not started | - |
+| 4. Context Window | 2/2 | Complete | 2026-01-25 |
+| 5. Navigation | 0/2 | Ready | - |
 | 6. Terminal Integration | 0/2 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-22*
-*Last updated: 2026-01-23*
+*Last updated: 2026-01-25*
