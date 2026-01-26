@@ -134,11 +134,11 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         ensureScratchWindow()
           .then((scratchWindow) => {
             // Create new pane in scratch, get its ID
-            return execAsync(`tmux split-window -t ${scratchWindow} -d -P -F '#{pane_id}' -c "${directory}"`)
+            return execAsync(`tmux split-window -t ${scratchWindow} -d -P -F '#{pane_id}'`)
               .then(({ stdout }) => {
                 const newPaneId = stdout.trim();
-                // Start Claude in the new pane
-                return execAsync(`tmux send-keys -t ${newPaneId} 'claude' Enter`)
+                // cd to directory and start Claude (explicit cd is more reliable than -c flag)
+                return execAsync(`tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`)
                   .then(() => {
                     // Get main pane ID
                     return execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
