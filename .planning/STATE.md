@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 9 of 11 (Pane Architecture)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-26 — Completed 09-01-PLAN.md
+Last activity: 2026-01-26 — Completed 09-02-PLAN.md
 
-Progress: [################....] 80% (v1.0 complete, Phases 7-8 complete, Phase 9: 1/3)
+Progress: [#################...] 85% (v1.0 complete, Phases 7-8 complete, Phase 9: 2/3)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [################....] 80% (v1.0 complete, Phases 7-8 complete, Phase 
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 7 complete (Phase 7: 3, Phase 8: 3, Phase 9: 1)
-- Completed: 7
-- Average duration: ~5.6 min/plan
+- Total plans: 8 complete (Phase 7: 3, Phase 8: 3, Phase 9: 2)
+- Completed: 8
+- Average duration: ~5.4 min/plan
 
 ## Accumulated Context
 
@@ -80,6 +80,9 @@ Progress: [################....] 80% (v1.0 complete, Phases 7-8 complete, Phase 
 - Sanitize session IDs for tmux env var names (non-alphanumeric -> underscore)
 - activeSessionId separate from selectedIndex (displayed vs cursor browsing)
 - Scratch window pattern for storing inactive session panes
+- Four visual states for tabs: blocked/active+selected/active/selected
+- Dual keybindings (C-g and C-h) for HUD focus with backward compatibility
+- Lazy pane creation on first switch (check existence, create if needed)
 
 ### Pending Todos
 
@@ -92,5 +95,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 09-01-PLAN.md
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
