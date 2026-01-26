@@ -232,10 +232,15 @@ export async function createHudLayout(
     `tmux set-environment CLAUDE_TERMINAL_HUD_PANE ${hudPane.trim()}`
   );
 
-  // Add keybinding to focus HUD pane (Ctrl+g for "go to HUD")
-  // Uses the stored environment variable to find the right pane
+  // Add keybindings to focus HUD pane
+  // Ctrl+g: legacy "go to HUD" binding
+  // Ctrl+h: new "H for HUD" mnemonic (easier to remember)
+  // Both work from any pane (-n = no prefix needed)
   await execAsync(
     `tmux bind-key -n C-g select-pane -t ${hudPane.trim()}`
+  );
+  await execAsync(
+    `tmux bind-key -n C-h select-pane -t ${hudPane.trim()}`
   );
 
   // Select the main pane so it's ready for user interaction
