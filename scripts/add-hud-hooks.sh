@@ -4,7 +4,9 @@
 
 set -e
 
-HUD_HOOK="/home/ssugar/claude/cc-tui-hud/src/hooks/status-hook.sh"
+# Get script directory to compute relative path to hook
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+HUD_HOOK="$SCRIPT_DIR/../src/hooks/status-hook.sh"
 SEARCH_DIR="${1:-$HOME/claude}"
 
 echo "Searching for Claude project settings in: $SEARCH_DIR"

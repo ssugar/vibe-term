@@ -8,6 +8,7 @@ export interface TmuxPane {
   windowIndex: number;
   paneIndex: number;
   panePid: number;
+  paneId: string; // Stable pane ID like "%10" (doesn't change on swap)
   target: string; // "session:window.pane" format for tmux commands
 }
 
@@ -17,6 +18,7 @@ export interface TmuxPane {
 export interface TmuxInfo {
   inTmux: boolean;
   tmuxTarget?: string;
+  paneId?: string; // Stable pane ID for swapping
 }
 
 /**
@@ -26,9 +28,9 @@ export interface TmuxInfo {
 export async function getTmuxPanes(): Promise<TmuxPane[]> {
   try {
     // tmux list-panes -a: list all panes across all sessions
-    // Format: "session:window.pane pane_pid"
+    // Format: "session:window.pane pane_pid pane_id"
     const { stdout } = await execAsync(
-      'tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_pid}"'
+      'tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_pid} #{pane_id}"'
     );
 
     return stdout
@@ -36,12 +38,13 @@ export async function getTmuxPanes(): Promise<TmuxPane[]> {
       .split('\n')
       .filter((line) => line.trim())
       .map((line) => {
-        // Parse "session:window.pane pid"
+        // Parse "session:window.pane pid pane_id"
         const parts = line.trim().split(' ');
-        if (parts.length < 2) return null;
+        if (parts.length < 3) return null;
 
         const target = parts[0];
         const panePid = parseInt(parts[1], 10);
+        const paneId = parts[2]; // Like "%10"
 
         // Parse target: "session:window.pane"
         const colonIdx = target.lastIndexOf(':');
@@ -58,6 +61,7 @@ export async function getTmuxPanes(): Promise<TmuxPane[]> {
           windowIndex,
           paneIndex,
           panePid,
+          paneId,
           target,
         };
       })
@@ -84,6 +88,7 @@ export function isProcessInTmux(ppid: number, panes: TmuxPane[]): TmuxInfo {
     return {
       inTmux: true,
       tmuxTarget: matchingPane.target,
+      paneId: matchingPane.paneId,
     };
   }
 

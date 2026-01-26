@@ -170,6 +170,7 @@ export async function buildSessions(
       lastActivity: new Date(),
       inTmux: tmuxInfo.inTmux,
       tmuxTarget: tmuxInfo.tmuxTarget,
+      paneId: tmuxInfo.paneId,
     };
   });
 

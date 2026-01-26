@@ -13,6 +13,7 @@ export interface Session {
   lastActivity: Date;
   inTmux: boolean;               // Whether running in tmux
   tmuxTarget?: string;           // e.g., "session:1.2" for navigation
+  paneId?: string;               // Stable pane ID like "%10" for swapping
 }
 
 // Application state
