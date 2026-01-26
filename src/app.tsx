@@ -112,6 +112,65 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       return;
     }
 
+    // Handle spawn mode input (before navigation to capture Enter key)
+    if (spawnMode) {
+      // Escape to cancel
+      if (key.escape) {
+        setSpawnMode(false);
+        setSpawnInput('');
+        return;
+      }
+
+      // Enter to spawn
+      if (key.return) {
+        const directory = spawnInput.trim() || process.cwd();
+        setSpawnMode(false);
+        setSpawnInput('');
+
+        // Spawn Claude in the specified directory
+        execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+          .then(({ stdout }) => {
+            const hudPaneId = stdout.split('=')[1]?.trim();
+            return execAsync(`tmux list-panes -F '#{pane_id}'`)
+              .then(({ stdout: paneList }) => {
+                const panes = paneList.trim().split('\n');
+                const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+
+                // cd to directory and run claude
+                return execAsync(`tmux send-keys -t ${mainPaneId} 'cd ${directory} && claude' Enter`)
+                  .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
+              });
+          })
+          .catch((err) => {
+            useAppStore.getState().setError(`Spawn failed: ${err.message}`);
+            setTimeout(() => {
+              useAppStore.getState().setError(null);
+            }, 5000);
+          });
+        return;
+      }
+
+      // Backspace to delete
+      if (key.backspace || key.delete) {
+        setSpawnInput(prev => prev.slice(0, -1));
+        return;
+      }
+
+      // Tab to expand ~ to home directory
+      if (key.tab) {
+        if (spawnInput.startsWith('~')) {
+          setSpawnInput(spawnInput.replace('~', process.env.HOME || '~'));
+        }
+        return;
+      }
+
+      // Regular character input
+      if (input && !key.ctrl && !key.meta) {
+        setSpawnInput(prev => prev + input);
+      }
+      return;
+    }
+
     // Navigation key handling (only when sessions exist)
     if (sessions.length > 0) {
       // j/k and arrow key navigation
@@ -254,65 +313,6 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
           }, 7000);
         }
       });
-      return;
-    }
-
-    // Handle spawn mode input
-    if (spawnMode) {
-      // Escape to cancel
-      if (key.escape) {
-        setSpawnMode(false);
-        setSpawnInput('');
-        return;
-      }
-
-      // Enter to spawn
-      if (key.return) {
-        const directory = spawnInput.trim() || process.cwd();
-        setSpawnMode(false);
-        setSpawnInput('');
-
-        // Spawn Claude in the specified directory
-        execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-          .then(({ stdout }) => {
-            const hudPaneId = stdout.split('=')[1]?.trim();
-            return execAsync(`tmux list-panes -F '#{pane_id}'`)
-              .then(({ stdout: paneList }) => {
-                const panes = paneList.trim().split('\n');
-                const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
-
-                // cd to directory and run claude
-                return execAsync(`tmux send-keys -t ${mainPaneId} 'cd ${directory} && claude' Enter`)
-                  .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
-              });
-          })
-          .catch((err) => {
-            useAppStore.getState().setError(`Spawn failed: ${err.message}`);
-            setTimeout(() => {
-              useAppStore.getState().setError(null);
-            }, 5000);
-          });
-        return;
-      }
-
-      // Backspace to delete
-      if (key.backspace || key.delete) {
-        setSpawnInput(prev => prev.slice(0, -1));
-        return;
-      }
-
-      // Tab to expand ~ to home directory
-      if (key.tab) {
-        if (spawnInput.startsWith('~')) {
-          setSpawnInput(spawnInput.replace('~', process.env.HOME || '~'));
-        }
-        return;
-      }
-
-      // Regular character input
-      if (input && !key.ctrl && !key.meta) {
-        setSpawnInput(prev => prev + input);
-      }
       return;
     }
 
