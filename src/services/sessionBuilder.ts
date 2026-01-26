@@ -4,6 +4,7 @@ import { isProcessInTmux, type TmuxPane } from './tmuxService.js';
 import { getHookBasedStatus } from './hookStateService.js';
 import { getContextUsage } from './contextService.js';
 import type { Session } from '../stores/types.js';
+import { TMUX_SESSION_NAME } from '../startup.js';
 
 /**
  * Extract display name from project path with disambiguation.
@@ -150,6 +151,13 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
+    // Classify as external if tmux target doesn't start with our session name
+    // A session is external if:
+    // - It IS in tmux (inTmux: true)
+    // - Its tmuxTarget does NOT start with "claude-terminal:"
+    const isExternal = tmuxInfo.inTmux &&
+      (!tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`));
+
     // Get status, model, subagent count, notification, and transcript path from hook state files
     const { status, model, subagentCount, notification, transcriptPath } = getHookBasedStatus(cwd);
 
@@ -171,6 +179,7 @@ export async function buildSessions(
       inTmux: tmuxInfo.inTmux,
       tmuxTarget: tmuxInfo.tmuxTarget,
       paneId: tmuxInfo.paneId,
+      isExternal,
     };
   });
 
