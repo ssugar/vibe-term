@@ -10,6 +10,9 @@ interface HudStripProps {
   isConfirmingExit: boolean;
   spawnMode?: boolean;
   spawnInput?: string;
+  showMkdirPrompt?: boolean;
+  mkdirPath?: string;
+  completionCount?: number;
 }
 
 /**
@@ -18,31 +21,57 @@ interface HudStripProps {
  * - Line 2: Quit prompt OR Ctrl+C confirm OR help text OR error message OR nothing
  *
  * Priority for line 2 (highest to lowest):
- * 1. Quit mode (q key) - shows detach/kill options
- * 2. Exit confirmation (Ctrl+C) - shows y/n
- * 3. Help text (? key)
- * 4. Error message
- * 5. Nothing (1-line mode)
+ * 1. Mkdir prompt (directory doesn't exist)
+ * 2. Spawn mode (n key)
+ * 3. Quit mode (q key) - shows detach/kill options
+ * 4. Exit confirmation (Ctrl+C) - shows y/n
+ * 5. Help text (? key)
+ * 6. Error message
+ * 7. Nothing (1-line mode)
  */
-export function HudStrip({ showHelp, error, quitMode, isConfirmingExit, spawnMode, spawnInput }: HudStripProps): React.ReactElement {
+export function HudStrip({
+  showHelp,
+  error,
+  quitMode,
+  isConfirmingExit,
+  spawnMode,
+  spawnInput,
+  showMkdirPrompt,
+  mkdirPath,
+  completionCount = 0,
+}: HudStripProps): React.ReactElement {
   // Determine what to show on line 2 (priority order)
-  const showSpawnPrompt = spawnMode;
-  const showQuitPrompt = !showSpawnPrompt && quitMode === 'confirming';
-  const showExitConfirm = !showSpawnPrompt && !showQuitPrompt && isConfirmingExit;
-  const showHelpText = !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
-  const showError = !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
+  const showMkdir = showMkdirPrompt;
+  const showSpawnPrompt = !showMkdir && spawnMode;
+  const showQuitPrompt = !showMkdir && !showSpawnPrompt && quitMode === 'confirming';
+  const showExitConfirm = !showMkdir && !showSpawnPrompt && !showQuitPrompt && isConfirmingExit;
+  const showHelpText = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
+  const showError = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
 
   return (
     <Box flexDirection="column" backgroundColor="#333333">
       <TabStrip />
 
-      {/* Spawn prompt (n key) - highest priority */}
+      {/* Mkdir prompt (directory doesn't exist) - highest priority */}
+      {showMkdir && (
+        <Text>
+          <Text color="yellow">Directory doesn't exist: </Text>
+          <Text>{mkdirPath}</Text>
+          <Text> Create? </Text>
+          <Text bold color="green">[y]</Text>
+          <Text>es / </Text>
+          <Text bold color="red">[n]</Text>
+          <Text>o</Text>
+        </Text>
+      )}
+
+      {/* Spawn prompt (n key) */}
       {showSpawnPrompt && (
         <Text>
           <Text color="cyan">Directory: </Text>
           <Text>{spawnInput || ''}</Text>
           <Text backgroundColor="white"> </Text>
-          <Text dimColor> (Enter: spawn | Esc: cancel)</Text>
+          <Text dimColor> (Tab: complete{completionCount > 0 ? ` [${completionCount}]` : ''} | Enter: spawn | Esc: cancel)</Text>
         </Text>
       )}
 
