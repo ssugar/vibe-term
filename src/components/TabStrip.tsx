@@ -125,12 +125,20 @@ export function TabStrip(): React.ReactElement {
       return;
     }
 
+    // Compute normal sessions here to avoid dependency on derived arrays
+    const normalSessions = sessions
+      .map((session, idx) => ({ session, originalIndex: idx + 1 }))
+      .filter(({ session }) => session.status !== 'blocked');
+
     // Find position in normal sessions
-    const normalPosition = normalWithIndices.findIndex(
+    const normalPosition = normalSessions.findIndex(
       ({ session }) => session.id === selectedSession.id
     );
 
     if (normalPosition === -1) return;
+
+    // Calculate visible count (simplified - recalculate to be safe)
+    const currentVisibleCount = Math.max(1, visibleNormalCount);
 
     // If selected is before visible range, scroll left
     if (normalPosition < scrollOffset) {
@@ -139,10 +147,10 @@ export function TabStrip(): React.ReactElement {
     }
 
     // If selected is after visible range, scroll right
-    if (normalPosition >= scrollOffset + visibleNormalCount) {
-      setScrollOffset(normalPosition - visibleNormalCount + 1);
+    if (normalPosition >= scrollOffset + currentVisibleCount) {
+      setScrollOffset(Math.max(0, normalPosition - currentVisibleCount + 1));
     }
-  }, [selectedIndex, sessions, normalWithIndices, scrollOffset, visibleNormalCount]);
+  }, [selectedIndex, sessions, scrollOffset, visibleNormalCount]);
 
   // Narrow terminal warning
   if (terminalWidth < 60) {
