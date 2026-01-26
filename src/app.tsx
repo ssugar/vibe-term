@@ -5,9 +5,15 @@ import { useAppStore } from './stores/appStore.js';
 import { useInterval } from './hooks/useInterval.js';
 import { useSessions } from './hooks/useSessions.js';
 import { HudStrip } from './components/HudStrip.js';
-import { jumpToSession } from './services/jumpService.js';
 import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
 import { TMUX_SESSION_NAME } from './startup.js';
+import { execAsync } from './services/platform.js';
+import {
+  switchToSession,
+  getSessionPane,
+  createSessionPane,
+  ensureScratchWindow,
+} from './services/paneSessionManager.js';
 
 interface AppProps {
   refreshInterval: number;
@@ -141,20 +147,61 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         return;
       }
 
-      // Enter to jump to selected session
+      // Enter to switch to selected session in main pane
       if (key.return) {
         const state = useAppStore.getState();
         const session = state.sessions[state.selectedIndex];
         if (session) {
-          jumpToSession(session).then((result) => {
-            if (!result.success) {
-              state.setError(result.message);
-              // Auto-clear error after 7 seconds (longer for focus hints)
+          // Check if session is in tmux (can only switch to tmux sessions)
+          if (!session.inTmux) {
+            state.setError('Cannot switch to non-tmux session');
+            setTimeout(() => {
+              useAppStore.getState().setError(null);
+            }, 3000);
+            return;
+          }
+
+          // Get HUD pane ID and find main pane
+          execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+            .then(({ stdout }) => {
+              const hudPaneId = stdout.split('=')[1]?.trim();
+              // Get all panes and find the main one (not HUD)
+              return execAsync(`tmux list-panes -F '#{pane_id}'`)
+                .then(({ stdout: paneList }) => {
+                  const panes = paneList.trim().split('\n');
+                  const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+
+                  // Check if session pane exists, create if not
+                  return getSessionPane(session.id)
+                    .then((sessionPaneId) => {
+                      if (!sessionPaneId) {
+                        // Pane doesn't exist yet - ensure scratch window and create pane
+                        return ensureScratchWindow()
+                          .then(() => createSessionPane(session.id, session.projectPath))
+                          .then(() => switchToSession(session.id, mainPaneId));
+                      }
+                      // Pane exists, just switch to it
+                      return switchToSession(session.id, mainPaneId);
+                    });
+                });
+            })
+            .then((result) => {
+              if (result.success) {
+                // Update active session in store
+                useAppStore.getState().setActiveSessionId(session.id);
+              } else {
+                useAppStore.getState().setError(result.error || 'Failed to switch session');
+                setTimeout(() => {
+                  useAppStore.getState().setError(null);
+                }, 5000);
+              }
+            })
+            .catch((err) => {
+              useAppStore.getState().setError(`Switch failed: ${err.message}`);
               setTimeout(() => {
                 useAppStore.getState().setError(null);
-              }, 7000);
-            }
-          });
+              }, 5000);
+            });
         }
         return;
       }
