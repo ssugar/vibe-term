@@ -52,6 +52,7 @@ export function TabStrip(): React.ReactElement {
   // Store subscriptions (selective to prevent unnecessary re-renders)
   const sessions = useAppStore((state) => state.sessions);
   const selectedIndex = useAppStore((state) => state.selectedIndex);
+  const activeSessionId = useAppStore((state) => state.activeSessionId);
 
   // Terminal width for overflow calculation
   const terminalWidth = useTerminalWidth();
@@ -194,6 +195,7 @@ export function TabStrip(): React.ReactElement {
             session={session}
             index={originalIndex}
             isSelected={selectedIndex === originalIndex - 1}
+            isActive={session.id === activeSessionId}
             maxNameWidth={MAX_NAME_WIDTH}
           />
         </Box>
@@ -206,6 +208,7 @@ export function TabStrip(): React.ReactElement {
             session={session}
             index={originalIndex}
             isSelected={selectedIndex === originalIndex - 1}
+            isActive={session.id === activeSessionId}
             maxNameWidth={MAX_NAME_WIDTH}
           />
         </Box>

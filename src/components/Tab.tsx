@@ -18,6 +18,7 @@ interface TabProps {
   session: Session;
   index: number;           // 1-based display index
   isSelected: boolean;
+  isActive: boolean;       // Session is currently displayed in main pane
   maxNameWidth?: number;   // Default 20
 }
 
@@ -34,12 +35,14 @@ function getContextColor(usage: number): 'green' | 'yellow' | 'red' {
  * Renders a single session as a compact horizontal tab.
  * Format: [index:name status context%]
  *
- * Visual states:
- * - Blocked: red background, white text, bold
- * - Selected (non-blocked): inverse colors
+ * Visual states (priority order):
+ * - Blocked: red background, white text, bold (highest priority)
+ * - Active + Selected: inverse + underline (in main pane, cursor here)
+ * - Active only: underline (in main pane, cursor elsewhere)
+ * - Selected only: inverse (cursor here, not in main pane)
  * - Normal: default colors
  */
-export function Tab({ session, index, isSelected, maxNameWidth = 20 }: TabProps): React.ReactElement {
+export function Tab({ session, index, isSelected, isActive, maxNameWidth = 20 }: TabProps): React.ReactElement {
   // Extract project name from projectPath (last directory)
   const rawName = session.projectPath.split('/').pop() || 'unknown';
 
@@ -62,7 +65,7 @@ export function Tab({ session, index, isSelected, maxNameWidth = 20 }: TabProps)
   const tabContent = `[${index}:${truncatedName} ${statusEmoji} `;
 
   if (isBlocked) {
-    // Blocked: red background, white bold text
+    // Blocked: red background, white bold text (highest priority, unchanged)
     return (
       <Text>
         <Text backgroundColor="red" color="white" bold>
@@ -76,8 +79,30 @@ export function Tab({ session, index, isSelected, maxNameWidth = 20 }: TabProps)
     );
   }
 
+  if (isActive && isSelected) {
+    // Active + Selected: inverse + underline (in main pane AND cursor here)
+    return (
+      <Text>
+        <Text inverse underline>{tabContent}</Text>
+        <Text inverse underline color={contextColor}>{contextPct}</Text>
+        <Text inverse underline>]</Text>
+      </Text>
+    );
+  }
+
+  if (isActive) {
+    // Active only: underline (shows "this is in main pane")
+    return (
+      <Text>
+        <Text underline>{tabContent}</Text>
+        <Text underline color={contextColor}>{contextPct}</Text>
+        <Text underline>]</Text>
+      </Text>
+    );
+  }
+
   if (isSelected) {
-    // Selected: inverse colors
+    // Selected only: inverse (cursor here, but not in main pane)
     return (
       <Text>
         <Text inverse>{tabContent}</Text>
