@@ -4,6 +4,7 @@ import { useInterval } from './useInterval.js';
 import { findClaudeProcesses } from '../services/processDetector.js';
 import { getTmuxPanes } from '../services/tmuxService.js';
 import { buildSessions } from '../services/sessionBuilder.js';
+import { cleanupSessionPane } from '../services/paneSessionManager.js';
 
 /**
  * Hook that manages session detection and polling.
@@ -16,6 +17,10 @@ export function useSessions(): void {
 
   // Track previous session order for stable sorting across refreshes
   const previousOrderRef = useRef<string[]>([]);
+
+  // Track previous sessions for removal detection
+  // Map of sessionId -> isExternal (to avoid cleaning up external session panes)
+  const previousSessionsRef = useRef<Map<string, boolean>>(new Map());
 
   // Track if initial load has happened
   const initialLoadRef = useRef(false);
@@ -32,6 +37,22 @@ export function useSessions(): void {
       // Build sessions with previous order for stability
       const previousOrder = previousOrderRef.current;
       const sessions = await buildSessions(processes, panes, previousOrder);
+
+      // Detect removed sessions (were in previous, not in current)
+      const currentIds = new Set(sessions.map(s => s.id));
+      const removedIds = [...previousSessionsRef.current.keys()].filter(id => !currentIds.has(id));
+
+      // Clean up panes for removed INTERNAL sessions only
+      // External sessions belong to other tmux sessions - do NOT kill their panes
+      for (const id of removedIds) {
+        const wasExternal = previousSessionsRef.current.get(id) ?? false;
+        if (!wasExternal) {
+          await cleanupSessionPane(id).catch(() => {});
+        }
+      }
+
+      // Update previous sessions for next cycle
+      previousSessionsRef.current = new Map(sessions.map(s => [s.id, s.isExternal]));
 
       // Update previous order for next cycle
       previousOrderRef.current = sessions.map((s) => s.id);
