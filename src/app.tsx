@@ -123,7 +123,11 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
       // Enter to spawn
       if (key.return) {
-        const directory = spawnInput.trim() || process.cwd();
+        // Expand ~ to home directory (tilde doesn't expand inside quotes in bash)
+        let directory = spawnInput.trim() || process.cwd();
+        if (directory.startsWith('~')) {
+          directory = directory.replace('~', process.env.HOME || '~');
+        }
         setSpawnMode(false);
         setSpawnInput('');
 
