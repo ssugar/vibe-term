@@ -145,26 +145,50 @@ Install with:
   }
 
   // 6. Handle case: outside tmux - create or attach to session
+  // Use absolute paths to ensure command works inside tmux
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  // Go up one level to project root (works for both src/ and dist/)
+  const projectRoot = dirname(__dirname);
+  const cliPath = join(projectRoot, 'dist', 'cli.js');
+
+  // Quote path if it contains spaces
+  const quotedCliPath = cliPath.includes(' ') ? `"${cliPath}"` : cliPath;
+  const fullCommand = `node ${quotedCliPath}`;
+
   if (!sessionExists) {
     // Create new session WITH our CLI running inside it
-    // Use absolute paths to ensure command works inside tmux
-    const __filename = fileURLToPath(import.meta.url);
-    const __dirname = dirname(__filename);
-    // Go up one level to project root (works for both src/ and dist/)
-    const projectRoot = dirname(__dirname);
-    const cliPath = join(projectRoot, 'dist', 'cli.js');
-
-    // Quote path if it contains spaces
-    const quotedCliPath = cliPath.includes(' ') ? `"${cliPath}"` : cliPath;
-    const fullCommand = `node ${quotedCliPath}`;
-
-    // Create session running our command and attach to it
     // Note: without -d, this creates AND attaches in one step
     spawnSync('tmux', ['new-session', '-s', TMUX_SESSION_NAME, fullCommand], {
       stdio: 'inherit',
     });
   } else {
-    // Session already exists - just attach to it
+    // Session already exists - check if HUD pane needs to be recreated
+    // Count panes in the session
+    const paneCountResult = spawnSync('tmux', [
+      'list-panes',
+      '-t',
+      TMUX_SESSION_NAME,
+      '-F',
+      '#{pane_index}',
+    ]);
+    const paneCount = paneCountResult.stdout.toString().trim().split('\n').filter(Boolean).length;
+
+    if (paneCount === 1) {
+      // Only one pane exists - HUD pane was closed
+      // Split to create HUD pane at top, then run HUD in it
+      spawnSync('tmux', [
+        'split-window',
+        '-t',
+        `${TMUX_SESSION_NAME}:0`,
+        '-b',  // Before (above)
+        '-l',
+        '3',   // 3 lines for compact HUD
+        fullCommand,
+      ]);
+    }
+
+    // Attach to session (HUD is now running or was already running)
     spawnSync('tmux', ['attach', '-t', TMUX_SESSION_NAME], {
       stdio: 'inherit',
     });
