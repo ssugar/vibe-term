@@ -151,6 +151,8 @@ export interface HudLayout {
  * Create the HUD pane layout within the current window.
  * The HUD (current process) stays in a small pane, main area is created for sessions.
  *
+ * If layout already exists (2+ panes), just ensures proper sizing and keybindings.
+ *
  * @param position - 'top' or 'bottom' for HUD placement
  * @param height - Number of lines for HUD pane (1-3)
  * @returns Pane IDs for HUD and main panes
@@ -164,22 +166,40 @@ export async function createHudLayout(
     `tmux display-message -p '#{pane_id}'`
   );
 
-  // Strategy: Create a new pane for the main area, then resize HUD pane to be small.
-  // The HUD stays in the current pane; the new pane becomes the main session area.
-
-  // Split to create main pane:
-  // -v: vertical split (top/bottom)
-  // For top HUD: split below us (no -b flag)
-  // For bottom HUD: split above us (-b flag)
-  const splitArgs = position === 'top' ? '-v' : '-v -b';
-
-  const { stdout: mainPane } = await execAsync(
-    `tmux split-window ${splitArgs} -P -F '#{pane_id}'`
+  // Check how many panes exist in current window
+  const { stdout: paneList } = await execAsync(
+    `tmux list-panes -F '#{pane_id}'`
   );
+  const panes = paneList.trim().split('\n').filter(Boolean);
 
-  // Now resize our pane (the HUD pane) to the desired height
-  // -t targets our pane, -y sets the height in lines
-  await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
+  let mainPane: string;
+
+  if (panes.length >= 2) {
+    // Layout already exists (e.g., from reattach) - find the other pane
+    mainPane = panes.find((p) => p !== hudPane.trim()) || panes[1];
+
+    // Just resize HUD pane to ensure correct height
+    await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
+  } else {
+    // Need to create the layout - split to create main pane
+    // Strategy: Create a new pane for the main area, then resize HUD pane to be small.
+    // The HUD stays in the current pane; the new pane becomes the main session area.
+
+    // Split to create main pane:
+    // -v: vertical split (top/bottom)
+    // For top HUD: split below us (no -b flag)
+    // For bottom HUD: split above us (-b flag)
+    const splitArgs = position === 'top' ? '-v' : '-v -b';
+
+    const { stdout: newPane } = await execAsync(
+      `tmux split-window ${splitArgs} -P -F '#{pane_id}'`
+    );
+    mainPane = newPane.trim();
+
+    // Now resize our pane (the HUD pane) to the desired height
+    // -t targets our pane, -y sets the height in lines
+    await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
+  }
 
   // Store HUD pane ID in tmux environment for keybindings
   await execAsync(
