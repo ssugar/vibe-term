@@ -5,6 +5,7 @@ import { findClaudeProcesses } from '../services/processDetector.js';
 import { getTmuxPanes } from '../services/tmuxService.js';
 import { buildSessions } from '../services/sessionBuilder.js';
 import { cleanupSessionPane } from '../services/paneSessionManager.js';
+import { execAsync } from '../services/platform.js';
 
 /**
  * Hook that manages session detection and polling.
@@ -49,6 +50,22 @@ export function useSessions(): void {
         if (!wasExternal) {
           await cleanupSessionPane(id).catch(() => {});
         }
+      }
+
+      // If active session was removed, clear it and focus HUD
+      const activeSessionId = useAppStore.getState().activeSessionId;
+      if (activeSessionId && removedIds.includes(activeSessionId)) {
+        useAppStore.getState().setActiveSessionId(null);
+
+        // Focus HUD pane
+        execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+          .then(({ stdout }) => {
+            const hudPaneId = stdout.split('=')[1]?.trim();
+            if (hudPaneId) {
+              return execAsync(`tmux select-pane -t ${hudPaneId}`);
+            }
+          })
+          .catch(() => {}); // Ignore errors - HUD pane might not exist
       }
 
       // Update previous sessions for next cycle
