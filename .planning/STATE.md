@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 8 (HUD Strip UI) complete
+**Current focus:** Milestone v2.0 — Phase 9 (Pane Architecture) in progress
 
 ## Current Position
 
-Phase: 8 of 11 (HUD Strip UI)
-Plan: 3 of 3 in current phase
-Status: Phase 8 complete, verified
-Last activity: 2026-01-26 — Completed 08-03-PLAN.md
+Phase: 9 of 11 (Pane Architecture)
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-26 — Completed 09-01-PLAN.md
 
-Progress: [###############.....] 75% (v1.0 complete, Phases 7-8 complete)
+Progress: [################....] 80% (v1.0 complete, Phases 7-8 complete, Phase 9: 1/3)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [###############.....] 75% (v1.0 complete, Phases 7-8 complete)
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 6 complete (Phase 7: 3, Phase 8: 3)
-- Completed: 6
-- Average duration: ~6 min/plan
+- Total plans: 7 complete (Phase 7: 3, Phase 8: 3, Phase 9: 1)
+- Completed: 7
+- Average duration: ~5.6 min/plan
 
 ## Accumulated Context
 
@@ -75,6 +75,12 @@ Progress: [###############.....] 75% (v1.0 complete, Phases 7-8 complete)
 - client-attached hook enables recovery on direct `tmux attach`
 - createHudLayout should check pane count to avoid duplicate splits
 
+*Phase 9 learnings:*
+
+- Sanitize session IDs for tmux env var names (non-alphanumeric -> underscore)
+- activeSessionId separate from selectedIndex (displayed vs cursor browsing)
+- Scratch window pattern for storing inactive session panes
+
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
@@ -86,5 +92,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed Phase 8, pending verification
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None
