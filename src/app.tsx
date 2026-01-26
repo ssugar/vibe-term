@@ -9,6 +9,12 @@ import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
 import { TMUX_SESSION_NAME } from './startup.js';
 import { execAsync } from './services/platform.js';
 import { ensureScratchWindow } from './services/paneSessionManager.js';
+import {
+  expandTilde,
+  directoryExists,
+  createDirectory,
+  getDirectoryCompletions,
+} from './services/directoryService.js';
 
 interface AppProps {
   refreshInterval: number;
@@ -24,6 +30,10 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   // Spawn mode state for creating new sessions
   const [spawnMode, setSpawnMode] = useState(false);
   const [spawnInput, setSpawnInput] = useState('');
+  const [completions, setCompletions] = useState<string[]>([]);
+  const [completionIndex, setCompletionIndex] = useState(0);
+  const [showMkdirPrompt, setShowMkdirPrompt] = useState(false);
+  const [mkdirPath, setMkdirPath] = useState('');
 
   // Session detection polling hook
   useSessions();
@@ -107,73 +117,133 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       return;
     }
 
+    // Helper function to execute spawn logic
+    const executeSpawn = (directory: string) => {
+      setSpawnMode(false);
+      setSpawnInput('');
+      setCompletions([]);
+      setCompletionIndex(0);
+      setShowMkdirPrompt(false);
+      setMkdirPath('');
+
+      // Spawn Claude using scratch window pattern:
+      // 1. Create new pane in scratch window
+      // 2. Start Claude there
+      // 3. Swap into main pane
+      ensureScratchWindow()
+        .then((scratchWindow) => {
+          // Create new pane in scratch, get its ID
+          return execAsync(`tmux split-window -t ${scratchWindow} -d -P -F '#{pane_id}'`)
+            .then(({ stdout }) => {
+              const newPaneId = stdout.trim();
+              // cd to directory and start Claude (explicit cd is more reliable than -c flag)
+              return execAsync(`tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`)
+                .then(() => {
+                  // Get main pane ID
+                  return execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+                    .then(({ stdout: hudEnv }) => {
+                      const hudPaneId = hudEnv.split('=')[1]?.trim();
+                      return execAsync(`tmux list-panes -F '#{pane_id}'`)
+                        .then(({ stdout: paneList }) => {
+                          const panes = paneList.trim().split('\n');
+                          const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+                          // Swap new pane into main position
+                          return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`)
+                            .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
+                        });
+                    });
+                });
+            });
+        })
+        .catch((err) => {
+          useAppStore.getState().setError(`Spawn failed: ${err.message}`);
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 5000);
+        });
+    };
+
+    // Handle mkdir prompt (y/n)
+    if (showMkdirPrompt) {
+      if (input === 'y' || input === 'Y') {
+        // Create directory and spawn
+        try {
+          createDirectory(mkdirPath);
+          executeSpawn(mkdirPath);
+        } catch (err) {
+          useAppStore.getState().setError(`Failed to create directory: ${err instanceof Error ? err.message : String(err)}`);
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 5000);
+          setShowMkdirPrompt(false);
+          setMkdirPath('');
+        }
+        return;
+      }
+      if (input === 'n' || input === 'N' || key.escape) {
+        // Cancel
+        setShowMkdirPrompt(false);
+        setMkdirPath('');
+        setSpawnMode(false);
+        setSpawnInput('');
+        setCompletions([]);
+        setCompletionIndex(0);
+        return;
+      }
+      return; // Ignore other keys during mkdir prompt
+    }
+
     // Handle spawn mode input (before navigation to capture Enter key)
     if (spawnMode) {
       // Escape to cancel
       if (key.escape) {
         setSpawnMode(false);
         setSpawnInput('');
+        setCompletions([]);
+        setCompletionIndex(0);
         return;
       }
 
       // Enter to spawn
       if (key.return) {
         // Expand ~ to home directory (tilde doesn't expand inside quotes in bash)
-        let directory = spawnInput.trim() || process.cwd();
-        if (directory.startsWith('~')) {
-          directory = directory.replace('~', process.env.HOME || '~');
-        }
-        setSpawnMode(false);
-        setSpawnInput('');
+        const directory = expandTilde(spawnInput.trim() || process.cwd());
 
-        // Spawn Claude using scratch window pattern:
-        // 1. Create new pane in scratch window
-        // 2. Start Claude there
-        // 3. Swap into main pane
-        ensureScratchWindow()
-          .then((scratchWindow) => {
-            // Create new pane in scratch, get its ID
-            return execAsync(`tmux split-window -t ${scratchWindow} -d -P -F '#{pane_id}'`)
-              .then(({ stdout }) => {
-                const newPaneId = stdout.trim();
-                // cd to directory and start Claude (explicit cd is more reliable than -c flag)
-                return execAsync(`tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`)
-                  .then(() => {
-                    // Get main pane ID
-                    return execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-                      .then(({ stdout: hudEnv }) => {
-                        const hudPaneId = hudEnv.split('=')[1]?.trim();
-                        return execAsync(`tmux list-panes -F '#{pane_id}'`)
-                          .then(({ stdout: paneList }) => {
-                            const panes = paneList.trim().split('\n');
-                            const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
-                            // Swap new pane into main position
-                            return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`)
-                              .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
-                          });
-                      });
-                  });
-              });
-          })
-          .catch((err) => {
-            useAppStore.getState().setError(`Spawn failed: ${err.message}`);
-            setTimeout(() => {
-              useAppStore.getState().setError(null);
-            }, 5000);
-          });
+        // Check if directory exists
+        if (directoryExists(directory)) {
+          executeSpawn(directory);
+        } else {
+          // Directory doesn't exist - show mkdir prompt
+          setMkdirPath(directory);
+          setShowMkdirPrompt(true);
+        }
         return;
       }
 
       // Backspace to delete
       if (key.backspace || key.delete) {
         setSpawnInput(prev => prev.slice(0, -1));
+        // Reset completions when input changes
+        setCompletions([]);
+        setCompletionIndex(0);
         return;
       }
 
-      // Tab to expand ~ to home directory
+      // Tab for directory completion
       if (key.tab) {
-        if (spawnInput.startsWith('~')) {
-          setSpawnInput(spawnInput.replace('~', process.env.HOME || '~'));
+        if (completions.length === 0) {
+          // First Tab press: get completions
+          const matches = getDirectoryCompletions(spawnInput || '~');
+          if (matches.length > 0) {
+            setCompletions(matches);
+            setCompletionIndex(0);
+            setSpawnInput(matches[0]);
+          }
+        } else {
+          // Subsequent Tab presses: cycle through completions
+          const nextIndex = (completionIndex + 1) % completions.length;
+          setCompletionIndex(nextIndex);
+          setSpawnInput(completions[nextIndex]);
         }
         return;
       }
@@ -181,6 +251,9 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       // Regular character input
       if (input && !key.ctrl && !key.meta) {
         setSpawnInput(prev => prev + input);
+        // Reset completions when input changes
+        setCompletions([]);
+        setCompletionIndex(0);
       }
       return;
     }
@@ -322,6 +395,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
     if (input === 'n') {
       setSpawnMode(true);
       setSpawnInput('');
+      setCompletions([]);
+      setCompletionIndex(0);
       return;
     }
 
@@ -343,6 +418,9 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         isConfirmingExit={isConfirmingExit}
         spawnMode={spawnMode}
         spawnInput={spawnInput}
+        showMkdirPrompt={showMkdirPrompt}
+        mkdirPath={mkdirPath}
+        completionCount={completions.length}
       />
     </Box>
   );
