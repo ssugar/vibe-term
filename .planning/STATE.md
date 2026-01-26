@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 8 (HUD Strip UI)
+**Current focus:** Milestone v2.0 — Phase 8 (HUD Strip UI) complete
 
 ## Current Position
 
 Phase: 8 of 11 (HUD Strip UI)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-26 — Completed 08-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase complete, pending verification
+Last activity: 2026-01-26 — Completed 08-03-PLAN.md
 
-Progress: [##############......] 70% (v1.0 complete, Phase 7 complete, 08-01, 08-02 complete)
+Progress: [###############.....] 75% (v1.0 complete, Phases 7-8 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [##############......] 70% (v1.0 complete, Phase 7 complete, 08-01, 08
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 5 complete (Phase 7 + 08-01, 08-02)
-- Completed: 5
-- Average duration: ~5 min/plan
+- Total plans: 6 complete (Phase 7: 3, Phase 8: 3)
+- Completed: 6
+- Average duration: ~6 min/plan
 
 ## Accumulated Context
 
@@ -61,7 +61,6 @@ Progress: [##############......] 70% (v1.0 complete, Phase 7 complete, 08-01, 08
 - spawnSync for startup (must be synchronous), execAsync after in tmux
 - HUD pane stays where CLI runs; create main pane below and resize HUD
 - Keybindings: Ctrl+g (focus HUD), Ctrl+\ (detach) work from any pane
-- HUD height 15 lines temporary until Phase 8 creates compact strip
 - Session options scoped to session (-t flag, no -g) to avoid affecting other tmux sessions
 
 *Phase 8 learnings:*
@@ -71,6 +70,10 @@ Progress: [##############......] 70% (v1.0 complete, Phase 7 complete, 08-01, 08
 - Blocked sessions pinned left (always visible regardless of scroll)
 - Auto-scroll keeps selected tab visible in overflow scenarios
 - Arrow indicators (figures.arrowLeft/Right) for overflow detection
+- React hooks must ALL be called before any conditional returns
+- Inline prompts instead of overlays for compact pane (3 lines)
+- client-attached hook enables recovery on direct `tmux attach`
+- createHudLayout should check pane count to avoid duplicate splits
 
 ### Pending Todos
 
@@ -83,5 +86,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 08-02-PLAN.md
+Stopped at: Completed Phase 8, pending verification
 Resume file: None
