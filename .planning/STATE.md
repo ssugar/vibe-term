@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 8 of 11 (HUD Strip UI)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-01-26 — Phase 7 complete
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-01-26 — Completed 08-01-PLAN.md
 
-Progress: [############........] 60% (v1.0 complete, Phase 7 complete)
+Progress: [#############.......] 65% (v1.0 complete, Phase 7 complete, 08-01 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [############........] 60% (v1.0 complete, Phase 7 complete)
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 3 complete (Phase 7)
-- Completed: 3
-- Average duration: ~7 min/plan (Phase 7)
+- Total plans: 4 complete (Phase 7 + 08-01)
+- Completed: 4
+- Average duration: ~6 min/plan
 
 ## Accumulated Context
 
@@ -64,6 +64,11 @@ Progress: [############........] 60% (v1.0 complete, Phase 7 complete)
 - HUD height 15 lines temporary until Phase 8 creates compact strip
 - Session options scoped to session (-t flag, no -g) to avoid affecting other tmux sessions
 
+*Phase 8 learnings:*
+
+- Unicode ellipsis (\u2026) for compact truncation (single char vs 3)
+- Context color thresholds: green (<30%), yellow (30-70%), red (>70%)
+
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
@@ -75,5 +80,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Phase 7 complete, ready to plan Phase 8
+Stopped at: Completed 08-01-PLAN.md
 Resume file: None
