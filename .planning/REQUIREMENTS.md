@@ -26,11 +26,11 @@ Requirements for Integrated Claude Terminal. Each maps to roadmap phases.
 
 ### Session Management
 
-- [ ] **SESS-01**: User can spawn new Claude session with `n` key
-- [ ] **SESS-02**: New session spawns in bottom pane with directory prompt
-- [ ] **SESS-03**: Externally-created tmux sessions running Claude are detected
-- [ ] **SESS-04**: Dead/orphaned sessions cleaned up automatically
-- [ ] **SESS-05**: Session list updates in real-time (existing polling)
+- [x] **SESS-01**: User can spawn new Claude session with `n` key
+- [x] **SESS-02**: New session spawns in bottom pane with directory prompt
+- [x] **SESS-03**: Externally-created tmux sessions running Claude are detected
+- [x] **SESS-04**: Dead/orphaned sessions cleaned up automatically
+- [x] **SESS-05**: Session list updates in real-time (existing polling)
 
 ### Navigation (Preserved from v1.0)
 
@@ -87,11 +87,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | STRIP-03 | Phase 8 | Pending |
 | STRIP-04 | Phase 8 | Pending |
 | STRIP-05 | Phase 8 | Pending |
-| SESS-01 | Phase 10 | Pending |
-| SESS-02 | Phase 10 | Pending |
-| SESS-03 | Phase 10 | Pending |
-| SESS-04 | Phase 10 | Pending |
-| SESS-05 | Phase 10 | Pending |
+| SESS-01 | Phase 10 | Complete |
+| SESS-02 | Phase 10 | Complete |
+| SESS-03 | Phase 10 | Complete |
+| SESS-04 | Phase 10 | Complete |
+| SESS-05 | Phase 10 | Complete |
 | NAV-01 | Phase 11 | Pending |
 | NAV-02 | Phase 11 | Pending |
 | NAV-03 | Phase 11 | Pending |

@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 10 (Session Lifecycle) in progress
+**Current focus:** Milestone v2.0 — Phase 10 (Session Lifecycle) complete
 
 ## Current Position
 
@@ -106,5 +106,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 10-02-PLAN.md
+Stopped at: Completed Phase 10
 Resume file: None

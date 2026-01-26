@@ -129,7 +129,7 @@ Plans:
 - [x] **Phase 7: tmux Foundation** - Create/attach managed tmux session, HUD pane setup, environment verification
 - [x] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
 - [x] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
-- [ ] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
+- [x] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
 - [ ] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
 
 ## Phase Details
@@ -196,9 +196,9 @@ Plans:
 **Plans**: 3 plans in 1 wave
 
 Plans:
-- [ ] 10-01-PLAN.md — Directory service with tab completion and enhanced spawn mode
-- [ ] 10-02-PLAN.md — External session classification and divided tab display
-- [ ] 10-03-PLAN.md — Dead session detection and pane cleanup
+- [x] 10-01-PLAN.md — Directory service with tab completion and enhanced spawn mode
+- [x] 10-02-PLAN.md — External session classification and divided tab display
+- [x] 10-03-PLAN.md — Dead session detection and pane cleanup
 
 ### Phase 11: Navigation Integration
 **Goal**: Keyboard navigation from v1.0 works correctly in the new tmux-integrated architecture
@@ -231,7 +231,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 7. tmux Foundation | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 8. HUD Strip UI | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 10. Session Lifecycle | v2.0 | 0/3 | Planned | - |
+| 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
 
 ---
