@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Text } from 'ink';
 import figures from 'figures';
 import { Tab } from './Tab.js';
@@ -45,6 +45,10 @@ function calculateTabWidth(session: Session, index: number, maxNameWidth: number
  * - Auto-scroll to keep selected tab visible
  */
 export function TabStrip(): React.ReactElement {
+  // ============================================================
+  // ALL HOOKS MUST BE CALLED BEFORE ANY CONDITIONAL RETURNS
+  // ============================================================
+
   // Store subscriptions (selective to prevent unnecessary re-renders)
   const sessions = useAppStore((state) => state.sessions);
   const selectedIndex = useAppStore((state) => state.selectedIndex);
@@ -55,67 +59,72 @@ export function TabStrip(): React.ReactElement {
   // Scroll offset for normal (non-blocked) sessions
   const [scrollOffset, setScrollOffset] = useState(0);
 
-  // Empty state
-  if (sessions.length === 0) {
-    return <EmptyState />;
-  }
+  // Memoize session categorization to avoid recreating on every render
+  const { blockedWithIndices, normalWithIndices } = useMemo(() => {
+    const blocked: Array<{ session: Session; originalIndex: number }> = [];
+    const normal: Array<{ session: Session; originalIndex: number }> = [];
 
-  // Separate blocked and normal sessions while preserving original indices
-  const blockedWithIndices: Array<{ session: Session; originalIndex: number }> = [];
-  const normalWithIndices: Array<{ session: Session; originalIndex: number }> = [];
+    sessions.forEach((session, idx) => {
+      const item = { session, originalIndex: idx + 1 }; // 1-based index
+      if (session.status === 'blocked') {
+        blocked.push(item);
+      } else {
+        normal.push(item);
+      }
+    });
 
-  sessions.forEach((session, idx) => {
-    const item = { session, originalIndex: idx + 1 }; // 1-based index
-    if (session.status === 'blocked') {
-      blockedWithIndices.push(item);
-    } else {
-      normalWithIndices.push(item);
+    return { blockedWithIndices: blocked, normalWithIndices: normal };
+  }, [sessions]);
+
+  // Calculate layout metrics (memoized)
+  const layoutMetrics = useMemo(() => {
+    if (sessions.length === 0) {
+      return { blockedWidth: 0, availableWidth: 0, visibleNormalCount: 0 };
     }
-  });
 
-  // Calculate width used by blocked tabs
-  const blockedWidth = blockedWithIndices.reduce(
-    (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH),
-    0
-  );
+    // Calculate width used by blocked tabs
+    const blockedWidth = blockedWithIndices.reduce(
+      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH),
+      0
+    );
 
-  // Arrow indicators width (3 chars each: symbol + space)
-  const leftArrowWidth = 3;
-  const rightArrowWidth = 3;
+    // Arrow indicators width (3 chars each: symbol + space)
+    const leftArrowWidth = 3;
+    const rightArrowWidth = 3;
 
-  // Calculate available width for normal tabs
-  // Reserve space for potential arrows (they'll only show if needed)
-  const availableWidth = terminalWidth - blockedWidth - leftArrowWidth - rightArrowWidth;
+    // Calculate available width for normal tabs
+    const availableWidth = terminalWidth - blockedWidth - leftArrowWidth - rightArrowWidth;
 
-  // Calculate how many normal tabs fit and which are visible
-  let visibleNormalCount = 0;
-  let accumulatedWidth = 0;
+    // Calculate how many normal tabs fit
+    let visibleNormalCount = 0;
+    let accumulatedWidth = 0;
 
-  for (let i = scrollOffset; i < normalWithIndices.length; i++) {
-    const { session, originalIndex } = normalWithIndices[i];
-    const tabWidth = calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH);
-    if (accumulatedWidth + tabWidth <= availableWidth) {
-      accumulatedWidth += tabWidth;
-      visibleNormalCount++;
-    } else {
-      break;
+    for (let i = scrollOffset; i < normalWithIndices.length; i++) {
+      const { session, originalIndex } = normalWithIndices[i];
+      const tabWidth = calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH);
+      if (accumulatedWidth + tabWidth <= availableWidth) {
+        accumulatedWidth += tabWidth;
+        visibleNormalCount++;
+      } else {
+        break;
+      }
     }
-  }
 
-  // Ensure at least 1 tab is visible if there are any
-  if (visibleNormalCount === 0 && normalWithIndices.length > 0) {
-    visibleNormalCount = 1;
-  }
+    // Ensure at least 1 tab is visible if there are any
+    if (visibleNormalCount === 0 && normalWithIndices.length > 0) {
+      visibleNormalCount = 1;
+    }
 
-  // Visible normal sessions
-  const visibleNormalSessions = normalWithIndices.slice(scrollOffset, scrollOffset + visibleNormalCount);
+    return { blockedWidth, availableWidth, visibleNormalCount };
+  }, [sessions.length, blockedWithIndices, normalWithIndices, terminalWidth, scrollOffset]);
 
-  // Arrow indicators
-  const showLeftArrow = scrollOffset > 0;
-  const showRightArrow = scrollOffset + visibleNormalCount < normalWithIndices.length;
+  const { visibleNormalCount } = layoutMetrics;
 
   // Auto-adjust scroll to keep selected tab visible
   useEffect(() => {
+    // Skip if no sessions
+    if (sessions.length === 0) return;
+
     // Find if selected is in blocked or normal
     const selectedSession = sessions[selectedIndex];
     if (!selectedSession) return;
@@ -125,19 +134,14 @@ export function TabStrip(): React.ReactElement {
       return;
     }
 
-    // Compute normal sessions here to avoid dependency on derived arrays
-    const normalSessions = sessions
-      .map((session, idx) => ({ session, originalIndex: idx + 1 }))
-      .filter(({ session }) => session.status !== 'blocked');
-
     // Find position in normal sessions
-    const normalPosition = normalSessions.findIndex(
+    const normalPosition = normalWithIndices.findIndex(
       ({ session }) => session.id === selectedSession.id
     );
 
     if (normalPosition === -1) return;
 
-    // Calculate visible count (simplified - recalculate to be safe)
+    // Calculate visible count (use at least 1)
     const currentVisibleCount = Math.max(1, visibleNormalCount);
 
     // If selected is before visible range, scroll left
@@ -150,7 +154,16 @@ export function TabStrip(): React.ReactElement {
     if (normalPosition >= scrollOffset + currentVisibleCount) {
       setScrollOffset(Math.max(0, normalPosition - currentVisibleCount + 1));
     }
-  }, [selectedIndex, sessions, scrollOffset, visibleNormalCount]);
+  }, [selectedIndex, sessions, normalWithIndices, scrollOffset, visibleNormalCount]);
+
+  // ============================================================
+  // CONDITIONAL RETURNS START HERE (after all hooks)
+  // ============================================================
+
+  // Empty state
+  if (sessions.length === 0) {
+    return <EmptyState />;
+  }
 
   // Narrow terminal warning
   if (terminalWidth < 60) {
@@ -160,6 +173,13 @@ export function TabStrip(): React.ReactElement {
       </Box>
     );
   }
+
+  // Visible normal sessions
+  const visibleNormalSessions = normalWithIndices.slice(scrollOffset, scrollOffset + visibleNormalCount);
+
+  // Arrow indicators
+  const showLeftArrow = scrollOffset > 0;
+  const showRightArrow = scrollOffset + visibleNormalCount < normalWithIndices.length;
 
   return (
     <Box flexDirection="row">
