@@ -160,11 +160,12 @@ Plans:
   3. Blocked sessions are prominently indicated (color/bold)
   4. Tab overflow is handled gracefully when many sessions exist (truncation or indicator)
   5. HUD strip occupies minimal space (1-2 terminal lines)
-**Plans**: TBD
+**Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01-PLAN.md — TBD
-- [ ] 08-02-PLAN.md — TBD
+- [ ] 08-01-PLAN.md — Foundation (useTerminalWidth hook, Tab component)
+- [ ] 08-02-PLAN.md — TabStrip component with scroll and overflow handling
+- [ ] 08-03-PLAN.md — App integration and visual verification
 
 ### Phase 9: Pane Architecture
 **Goal**: Users can switch between sessions using native tmux pane operations and return to HUD with one keypress
@@ -226,7 +227,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Navigation | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 7. tmux Foundation | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 8. HUD Strip UI | v2.0 | 0/TBD | Not started | - |
+| 8. HUD Strip UI | v2.0 | 0/3 | Planning complete | - |
 | 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
 | 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
 | 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
