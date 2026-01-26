@@ -161,47 +161,73 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             return;
           }
 
-          // Get HUD pane ID and find main pane
-          execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-            .then(({ stdout }) => {
-              const hudPaneId = stdout.split('=')[1]?.trim();
-              // Get all panes and find the main one (not HUD)
-              return execAsync(`tmux list-panes -F '#{pane_id}'`)
-                .then(({ stdout: paneList }) => {
-                  const panes = paneList.trim().split('\n');
-                  const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+          // Check if session is internal (in claude-terminal) or external (other tmux session)
+          const isInternalSession = session.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
 
-                  // Check if session pane exists, create if not
-                  return getSessionPane(session.id)
-                    .then((sessionPaneId) => {
-                      if (!sessionPaneId) {
-                        // Pane doesn't exist yet - ensure scratch window and create pane
-                        return ensureScratchWindow()
-                          .then(() => createSessionPane(session.id, session.projectPath))
-                          .then(() => switchToSession(session.id, mainPaneId));
-                      }
-                      // Pane exists, just switch to it
-                      return switchToSession(session.id, mainPaneId);
-                    });
-                });
-            })
-            .then((result) => {
-              if (result.success) {
-                // Update active session in store
-                useAppStore.getState().setActiveSessionId(session.id);
-              } else {
-                useAppStore.getState().setError(result.error || 'Failed to switch session');
+          if (isInternalSession) {
+            // Internal session: use pane swapping within claude-terminal
+            execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+              .then(({ stdout }) => {
+                const hudPaneId = stdout.split('=')[1]?.trim();
+                // Get all panes and find the main one (not HUD)
+                return execAsync(`tmux list-panes -F '#{pane_id}'`)
+                  .then(({ stdout: paneList }) => {
+                    const panes = paneList.trim().split('\n');
+                    const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+
+                    // Check if session pane exists, create if not
+                    return getSessionPane(session.id)
+                      .then((sessionPaneId) => {
+                        if (!sessionPaneId) {
+                          // Pane doesn't exist yet - ensure scratch window and create pane
+                          return ensureScratchWindow()
+                            .then(() => createSessionPane(session.id, session.projectPath))
+                            .then(() => switchToSession(session.id, mainPaneId));
+                        }
+                        // Pane exists, just switch to it
+                        return switchToSession(session.id, mainPaneId);
+                      });
+                  });
+              })
+              .then((result) => {
+                if (result.success) {
+                  // Update active session in store
+                  useAppStore.getState().setActiveSessionId(session.id);
+                } else {
+                  useAppStore.getState().setError(result.error || 'Failed to switch session');
+                  setTimeout(() => {
+                    useAppStore.getState().setError(null);
+                  }, 5000);
+                }
+              })
+              .catch((err) => {
+                useAppStore.getState().setError(`Switch failed: ${err.message}`);
                 setTimeout(() => {
                   useAppStore.getState().setError(null);
                 }, 5000);
-              }
-            })
-            .catch((err) => {
-              useAppStore.getState().setError(`Switch failed: ${err.message}`);
+              });
+          } else {
+            // External session: use tmux switch-client to jump to that session
+            if (!session.tmuxTarget) {
+              state.setError('No tmux target for session');
               setTimeout(() => {
                 useAppStore.getState().setError(null);
-              }, 5000);
-            });
+              }, 3000);
+              return;
+            }
+
+            execAsync(`tmux select-pane -t "${session.tmuxTarget}"`)
+              .then(() => {
+                // Update active session in store (external sessions still track as active)
+                useAppStore.getState().setActiveSessionId(session.id);
+              })
+              .catch((err) => {
+                useAppStore.getState().setError(`Jump failed: ${err.message}`);
+                setTimeout(() => {
+                  useAppStore.getState().setError(null);
+                }, 5000);
+              });
+          }
         }
         return;
       }
