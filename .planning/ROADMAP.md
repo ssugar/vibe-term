@@ -126,7 +126,7 @@ Plans:
 
 **Milestone Goal:** Transform the standalone HUD into a tmux-integrated terminal where sessions run inside managed panes with an always-visible status strip.
 
-- [ ] **Phase 7: tmux Foundation** - Create/attach managed tmux session, HUD pane setup, environment verification
+- [x] **Phase 7: tmux Foundation** - Create/attach managed tmux session, HUD pane setup, environment verification
 - [ ] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
 - [ ] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
 - [ ] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
@@ -146,9 +146,9 @@ Plans:
 **Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 07-01-PLAN.md — Startup infrastructure (tmux detection, config service)
-- [ ] 07-02-PLAN.md — CLI integration and session setup
-- [ ] 07-03-PLAN.md — Quit handler and verification
+- [x] 07-01-PLAN.md — Startup infrastructure (tmux detection, config service)
+- [x] 07-02-PLAN.md — CLI integration and session setup
+- [x] 07-03-PLAN.md — Quit handler and verification
 
 ### Phase 8: HUD Strip UI
 **Goal**: Users see all sessions as horizontal tabs with status and context in a compact 1-2 line display
@@ -225,7 +225,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 4. Context Window | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 5. Navigation | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
-| 7. tmux Foundation | v2.0 | 0/3 | Planned | - |
+| 7. tmux Foundation | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 8. HUD Strip UI | v2.0 | 0/TBD | Not started | - |
 | 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
 | 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
@@ -234,4 +234,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 ---
 *Roadmap created: 2026-01-22*
 *v2.0 phases added: 2026-01-25*
-*Last updated: 2026-01-25*
+*Last updated: 2026-01-26*

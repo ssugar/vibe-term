@@ -9,12 +9,12 @@ Requirements for Integrated Claude Terminal. Each maps to roadmap phases.
 
 ### tmux Integration
 
-- [ ] **TMUX-01**: HUD creates/attaches to managed tmux session on startup
-- [ ] **TMUX-02**: HUD runs in fixed-height top pane (2 lines)
+- [x] **TMUX-01**: HUD creates/attaches to managed tmux session on startup
+- [x] **TMUX-02**: HUD runs in fixed-height top pane (2 lines)
 - [ ] **TMUX-03**: Claude sessions run in bottom pane (main area)
 - [ ] **TMUX-04**: Session switching uses native tmux pane operations
 - [ ] **TMUX-05**: User can return to HUD view with `b` key
-- [ ] **TMUX-06**: Graceful error when launched outside tmux-capable environment
+- [x] **TMUX-06**: Graceful error when launched outside tmux-capable environment
 
 ### HUD Strip UI
 
@@ -76,12 +76,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TMUX-01 | Phase 7 | Pending |
-| TMUX-02 | Phase 7 | Pending |
+| TMUX-01 | Phase 7 | Complete |
+| TMUX-02 | Phase 7 | Complete |
 | TMUX-03 | Phase 9 | Pending |
 | TMUX-04 | Phase 9 | Pending |
 | TMUX-05 | Phase 9 | Pending |
-| TMUX-06 | Phase 7 | Pending |
+| TMUX-06 | Phase 7 | Complete |
 | STRIP-01 | Phase 8 | Pending |
 | STRIP-02 | Phase 8 | Pending |
 | STRIP-03 | Phase 8 | Pending |

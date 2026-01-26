@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 7 (tmux Foundation)
+**Current focus:** Milestone v2.0 — Phase 8 (HUD Strip UI)
 
 ## Current Position
 
-Phase: 7 of 11 (tmux Foundation)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-25 — Completed 07-02-PLAN.md
+Phase: 8 of 11 (HUD Strip UI)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-01-26 — Phase 7 complete
 
-Progress: [###########.........] 56% (v1.0 complete, v2.0 plan 2/~9 done)
+Progress: [############........] 60% (v1.0 complete, Phase 7 complete)
 
 ## Performance Metrics
 
@@ -24,10 +24,9 @@ Progress: [###########.........] 56% (v1.0 complete, v2.0 plan 2/~9 done)
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: TBD (estimated 9-11)
-- Completed: 2
-- Execution time: 5 min
-- Average duration: 2.5 min/plan
+- Total plans: 3 complete (Phase 7)
+- Completed: 3
+- Average duration: ~7 min/plan (Phase 7)
 
 ## Accumulated Context
 
@@ -55,12 +54,15 @@ Progress: [###########.........] 56% (v1.0 complete, v2.0 plan 2/~9 done)
 - Evolve v1.0 codebase (don't rewrite)
 - Minimal HUD strip (1-2 lines max)
 - No new npm dependencies (tmux CLI via execAsync)
-- **07-01:** spawnSync (not execAsync) for synchronous startup before Ink
-- **07-01:** stdio: 'inherit' for terminal handoff to tmux
-- **07-01:** No auto-create config file - users create manually
-- **07-01:** Config validation with type guards
-- **07-02:** Session options scoped to session (no -g flag) to avoid affecting other tmux sessions
-- **07-02:** HUD pane split created with -b flag for top position
+
+*Phase 7 learnings:*
+
+- Use absolute paths when running commands inside tmux (relative paths unreliable)
+- spawnSync for startup (must be synchronous), execAsync after in tmux
+- HUD pane stays where CLI runs; create main pane below and resize HUD
+- Keybindings: Ctrl+g (focus HUD), Ctrl+\ (detach) work from any pane
+- HUD height 15 lines temporary until Phase 8 creates compact strip
+- Session options scoped to session (-t flag, no -g) to avoid affecting other tmux sessions
 
 ### Pending Todos
 
@@ -72,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-25
-Stopped at: Completed 07-02-PLAN.md
+Last session: 2026-01-26
+Stopped at: Phase 7 complete, ready to plan Phase 8
 Resume file: None
