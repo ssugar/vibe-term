@@ -2,11 +2,18 @@
 import React from 'react';
 import { render } from 'ink';
 import meow from 'meow';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
 import App from './app.js';
 import { useAppStore } from './stores/appStore.js';
 import { ensureTmuxEnvironment, TMUX_SESSION_NAME } from './startup.js';
 import { loadConfig } from './services/configService.js';
 import { configureSession, createHudLayout } from './services/tmuxService.js';
+
+// Get absolute path to this CLI script (for tmux hooks)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const cliPath = join(__dirname, 'cli.js');
 
 const cli = meow(
   `
@@ -52,7 +59,8 @@ if (!startupResult.shouldRenderInk) {
 const config = loadConfig();
 
 // Step 3: Configure tmux session (async, but we're now inside tmux)
-await configureSession(TMUX_SESSION_NAME);
+// Pass cliPath so the attach hook can restart HUD if needed
+await configureSession(TMUX_SESSION_NAME, cliPath);
 
 // Step 4: Create HUD layout
 const layout = await createHudLayout(config.hudPosition, config.hudHeight);

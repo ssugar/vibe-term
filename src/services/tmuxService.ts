@@ -110,8 +110,14 @@ export function getTmuxTarget(
  * Configure tmux session options for claude-terminal.
  * Options are scoped to the specific session (not global).
  * Should be called after session creation/attachment.
+ *
+ * @param sessionName - The tmux session name
+ * @param cliPath - Absolute path to the CLI script (for attach hook)
  */
-export async function configureSession(sessionName: string): Promise<void> {
+export async function configureSession(
+  sessionName: string,
+  cliPath?: string
+): Promise<void> {
   const options = [
     // Disable status bar - HUD replaces it
     `set-option -t ${sessionName} status off`,
@@ -136,6 +142,26 @@ export async function configureSession(sessionName: string): Promise<void> {
 
   for (const bind of bindings) {
     await execAsync(`tmux ${bind}`);
+  }
+
+  // Set up client-attached hook to recreate HUD when someone uses `tmux attach`
+  // This ensures the HUD pane exists even if user attaches directly via tmux
+  if (cliPath) {
+    // Quote the path if it contains spaces
+    const quotedPath = cliPath.includes(' ') ? `"${cliPath}"` : cliPath;
+    const hudCommand = `node ${quotedPath}`;
+
+    // Hook: when client attaches, check if only 1 pane exists (HUD closed)
+    // If so, split to create HUD pane at top with 3 lines
+    // The if-shell checks pane count; only creates HUD if needed
+    const hookCmd = `set-hook -t ${sessionName} client-attached 'if-shell "[ #{window_panes} -eq 1 ]" "split-window -b -l 3 \\"${hudCommand}\\""'`;
+
+    try {
+      await execAsync(`tmux ${hookCmd}`);
+    } catch {
+      // Hook setup failed - not critical, manual attach just won't auto-create HUD
+      console.error('Warning: Failed to set up client-attached hook');
+    }
   }
 }
 
