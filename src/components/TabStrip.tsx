@@ -61,26 +61,30 @@ export function TabStrip(): React.ReactElement {
   const [scrollOffset, setScrollOffset] = useState(0);
 
   // Memoize session categorization to avoid recreating on every render
-  const { blockedWithIndices, normalWithIndices } = useMemo(() => {
+  // Three groups: blocked (pinned left), managed (scrollable middle), external (pinned right)
+  const { blockedWithIndices, managedWithIndices, externalWithIndices } = useMemo(() => {
     const blocked: Array<{ session: Session; originalIndex: number }> = [];
-    const normal: Array<{ session: Session; originalIndex: number }> = [];
+    const managed: Array<{ session: Session; originalIndex: number }> = [];
+    const external: Array<{ session: Session; originalIndex: number }> = [];
 
     sessions.forEach((session, idx) => {
       const item = { session, originalIndex: idx + 1 }; // 1-based index
       if (session.status === 'blocked') {
         blocked.push(item);
+      } else if (session.isExternal) {
+        external.push(item);
       } else {
-        normal.push(item);
+        managed.push(item);
       }
     });
 
-    return { blockedWithIndices: blocked, normalWithIndices: normal };
+    return { blockedWithIndices: blocked, managedWithIndices: managed, externalWithIndices: external };
   }, [sessions]);
 
   // Calculate layout metrics (memoized)
   const layoutMetrics = useMemo(() => {
     if (sessions.length === 0) {
-      return { blockedWidth: 0, availableWidth: 0, visibleNormalCount: 0 };
+      return { blockedWidth: 0, externalWidth: 0, dividerWidth: 0, availableWidth: 0, visibleManagedCount: 0 };
     }
 
     // Calculate width used by blocked tabs
@@ -89,73 +93,82 @@ export function TabStrip(): React.ReactElement {
       0
     );
 
+    // Calculate width used by external tabs (pinned right)
+    const externalWidth = externalWithIndices.reduce(
+      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH),
+      0
+    );
+
+    // Divider width (3 chars: " | ") - only if external sessions exist
+    const dividerWidth = externalWithIndices.length > 0 ? 3 : 0;
+
     // Arrow indicators width (3 chars each: symbol + space)
     const leftArrowWidth = 3;
     const rightArrowWidth = 3;
 
-    // Calculate available width for normal tabs
-    const availableWidth = terminalWidth - blockedWidth - leftArrowWidth - rightArrowWidth;
+    // Calculate available width for managed tabs
+    const availableWidth = terminalWidth - blockedWidth - externalWidth - dividerWidth - leftArrowWidth - rightArrowWidth;
 
-    // Calculate how many normal tabs fit
-    let visibleNormalCount = 0;
+    // Calculate how many managed tabs fit
+    let visibleManagedCount = 0;
     let accumulatedWidth = 0;
 
-    for (let i = scrollOffset; i < normalWithIndices.length; i++) {
-      const { session, originalIndex } = normalWithIndices[i];
+    for (let i = scrollOffset; i < managedWithIndices.length; i++) {
+      const { session, originalIndex } = managedWithIndices[i];
       const tabWidth = calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH);
       if (accumulatedWidth + tabWidth <= availableWidth) {
         accumulatedWidth += tabWidth;
-        visibleNormalCount++;
+        visibleManagedCount++;
       } else {
         break;
       }
     }
 
     // Ensure at least 1 tab is visible if there are any
-    if (visibleNormalCount === 0 && normalWithIndices.length > 0) {
-      visibleNormalCount = 1;
+    if (visibleManagedCount === 0 && managedWithIndices.length > 0) {
+      visibleManagedCount = 1;
     }
 
-    return { blockedWidth, availableWidth, visibleNormalCount };
-  }, [sessions.length, blockedWithIndices, normalWithIndices, terminalWidth, scrollOffset]);
+    return { blockedWidth, externalWidth, dividerWidth, availableWidth, visibleManagedCount };
+  }, [sessions.length, blockedWithIndices, managedWithIndices, externalWithIndices, terminalWidth, scrollOffset]);
 
-  const { visibleNormalCount } = layoutMetrics;
+  const { visibleManagedCount } = layoutMetrics;
 
-  // Auto-adjust scroll to keep selected tab visible
+  // Auto-adjust scroll to keep selected tab visible (only for managed sessions)
   useEffect(() => {
     // Skip if no sessions
     if (sessions.length === 0) return;
 
-    // Find if selected is in blocked or normal
+    // Find if selected is in blocked, managed, or external
     const selectedSession = sessions[selectedIndex];
     if (!selectedSession) return;
 
-    // Blocked sessions are always visible, no scroll adjustment needed
-    if (selectedSession.status === 'blocked') {
+    // Blocked and external sessions are always visible, no scroll adjustment needed
+    if (selectedSession.status === 'blocked' || selectedSession.isExternal) {
       return;
     }
 
-    // Find position in normal sessions
-    const normalPosition = normalWithIndices.findIndex(
+    // Find position in managed sessions
+    const managedPosition = managedWithIndices.findIndex(
       ({ session }) => session.id === selectedSession.id
     );
 
-    if (normalPosition === -1) return;
+    if (managedPosition === -1) return;
 
     // Calculate visible count (use at least 1)
-    const currentVisibleCount = Math.max(1, visibleNormalCount);
+    const currentVisibleCount = Math.max(1, visibleManagedCount);
 
     // If selected is before visible range, scroll left
-    if (normalPosition < scrollOffset) {
-      setScrollOffset(normalPosition);
+    if (managedPosition < scrollOffset) {
+      setScrollOffset(managedPosition);
       return;
     }
 
     // If selected is after visible range, scroll right
-    if (normalPosition >= scrollOffset + currentVisibleCount) {
-      setScrollOffset(Math.max(0, normalPosition - currentVisibleCount + 1));
+    if (managedPosition >= scrollOffset + currentVisibleCount) {
+      setScrollOffset(Math.max(0, managedPosition - currentVisibleCount + 1));
     }
-  }, [selectedIndex, sessions, normalWithIndices, scrollOffset, visibleNormalCount]);
+  }, [selectedIndex, sessions, managedWithIndices, scrollOffset, visibleManagedCount]);
 
   // ============================================================
   // CONDITIONAL RETURNS START HERE (after all hooks)
@@ -175,12 +188,12 @@ export function TabStrip(): React.ReactElement {
     );
   }
 
-  // Visible normal sessions
-  const visibleNormalSessions = normalWithIndices.slice(scrollOffset, scrollOffset + visibleNormalCount);
+  // Visible managed sessions (scrollable middle section)
+  const visibleManagedSessions = managedWithIndices.slice(scrollOffset, scrollOffset + visibleManagedCount);
 
-  // Arrow indicators
+  // Arrow indicators (only for managed sessions scrolling)
   const showLeftArrow = scrollOffset > 0;
-  const showRightArrow = scrollOffset + visibleNormalCount < normalWithIndices.length;
+  const showRightArrow = scrollOffset + visibleManagedCount < managedWithIndices.length;
 
   return (
     <Box flexDirection="row">
@@ -201,8 +214,8 @@ export function TabStrip(): React.ReactElement {
         </Box>
       ))}
 
-      {/* Normal sessions (scrollable) */}
-      {visibleNormalSessions.map(({ session, originalIndex }) => (
+      {/* Managed sessions (scrollable middle) */}
+      {visibleManagedSessions.map(({ session, originalIndex }) => (
         <Box key={session.id} marginRight={2}>
           <Tab
             session={session}
@@ -216,6 +229,24 @@ export function TabStrip(): React.ReactElement {
 
       {/* Right arrow indicator */}
       {showRightArrow && <Text dimColor>  {figures.arrowRight}</Text>}
+
+      {/* Divider between managed and external sessions */}
+      {externalWithIndices.length > 0 && (
+        <Text dimColor> | </Text>
+      )}
+
+      {/* External sessions (always visible, pinned right) */}
+      {externalWithIndices.map(({ session, originalIndex }) => (
+        <Box key={session.id} marginRight={2}>
+          <Tab
+            session={session}
+            index={originalIndex}
+            isSelected={selectedIndex === originalIndex - 1}
+            isActive={session.id === activeSessionId}
+            maxNameWidth={MAX_NAME_WIDTH}
+          />
+        </Box>
+      ))}
     </Box>
   );
 }
