@@ -8,6 +8,8 @@ interface HudStripProps {
   error: string | null;
   quitMode: 'none' | 'confirming';
   isConfirmingExit: boolean;
+  spawnMode?: boolean;
+  spawnInput?: string;
 }
 
 /**
@@ -22,18 +24,29 @@ interface HudStripProps {
  * 4. Error message
  * 5. Nothing (1-line mode)
  */
-export function HudStrip({ showHelp, error, quitMode, isConfirmingExit }: HudStripProps): React.ReactElement {
+export function HudStrip({ showHelp, error, quitMode, isConfirmingExit, spawnMode, spawnInput }: HudStripProps): React.ReactElement {
   // Determine what to show on line 2 (priority order)
-  const showQuitPrompt = quitMode === 'confirming';
-  const showExitConfirm = !showQuitPrompt && isConfirmingExit;
-  const showHelpText = !showQuitPrompt && !showExitConfirm && showHelp;
-  const showError = !showQuitPrompt && !showExitConfirm && !showHelpText && error;
+  const showSpawnPrompt = spawnMode;
+  const showQuitPrompt = !showSpawnPrompt && quitMode === 'confirming';
+  const showExitConfirm = !showSpawnPrompt && !showQuitPrompt && isConfirmingExit;
+  const showHelpText = !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
+  const showError = !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
 
   return (
     <Box flexDirection="column" backgroundColor="#333333">
       <TabStrip />
 
-      {/* Quit prompt (q key) - highest priority */}
+      {/* Spawn prompt (n key) - highest priority */}
+      {showSpawnPrompt && (
+        <Text>
+          <Text color="cyan">Directory: </Text>
+          <Text>{spawnInput || ''}</Text>
+          <Text backgroundColor="white"> </Text>
+          <Text dimColor> (Enter: spawn | Esc: cancel)</Text>
+        </Text>
+      )}
+
+      {/* Quit prompt (q key) */}
       {showQuitPrompt && (
         <Text>
           <Text color="yellow">Quit: </Text>

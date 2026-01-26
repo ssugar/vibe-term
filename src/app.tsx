@@ -26,6 +26,10 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   // Quit mode state: 'none' | 'confirming' (shows detach/kill prompt)
   const [quitMode, setQuitMode] = useState<'none' | 'confirming'>('none');
 
+  // Spawn mode state for creating new sessions
+  const [spawnMode, setSpawnMode] = useState(false);
+  const [spawnInput, setSpawnInput] = useState('');
+
   // Session detection polling hook
   useSessions();
 
@@ -253,29 +257,69 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       return;
     }
 
-    // n to spawn new Claude session in main pane
-    if (input === 'n') {
-      // Get main pane and spawn Claude there
-      execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-        .then(({ stdout }) => {
-          const hudPaneId = stdout.split('=')[1]?.trim();
-          return execAsync(`tmux list-panes -F '#{pane_id}'`)
-            .then(({ stdout: paneList }) => {
-              const panes = paneList.trim().split('\n');
-              const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+    // Handle spawn mode input
+    if (spawnMode) {
+      // Escape to cancel
+      if (key.escape) {
+        setSpawnMode(false);
+        setSpawnInput('');
+        return;
+      }
 
-              // Send claude command to main pane and focus it
-              // Using send-keys to run claude in the existing shell
-              return execAsync(`tmux send-keys -t ${mainPaneId} 'claude' Enter`)
-                .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
-            });
-        })
-        .catch((err) => {
-          useAppStore.getState().setError(`Spawn failed: ${err.message}`);
-          setTimeout(() => {
-            useAppStore.getState().setError(null);
-          }, 5000);
-        });
+      // Enter to spawn
+      if (key.return) {
+        const directory = spawnInput.trim() || process.cwd();
+        setSpawnMode(false);
+        setSpawnInput('');
+
+        // Spawn Claude in the specified directory
+        execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+          .then(({ stdout }) => {
+            const hudPaneId = stdout.split('=')[1]?.trim();
+            return execAsync(`tmux list-panes -F '#{pane_id}'`)
+              .then(({ stdout: paneList }) => {
+                const panes = paneList.trim().split('\n');
+                const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+
+                // cd to directory and run claude
+                return execAsync(`tmux send-keys -t ${mainPaneId} 'cd ${directory} && claude' Enter`)
+                  .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
+              });
+          })
+          .catch((err) => {
+            useAppStore.getState().setError(`Spawn failed: ${err.message}`);
+            setTimeout(() => {
+              useAppStore.getState().setError(null);
+            }, 5000);
+          });
+        return;
+      }
+
+      // Backspace to delete
+      if (key.backspace || key.delete) {
+        setSpawnInput(prev => prev.slice(0, -1));
+        return;
+      }
+
+      // Tab to expand ~ to home directory
+      if (key.tab) {
+        if (spawnInput.startsWith('~')) {
+          setSpawnInput(spawnInput.replace('~', process.env.HOME || '~'));
+        }
+        return;
+      }
+
+      // Regular character input
+      if (input && !key.ctrl && !key.meta) {
+        setSpawnInput(prev => prev + input);
+      }
+      return;
+    }
+
+    // n to enter spawn mode
+    if (input === 'n') {
+      setSpawnMode(true);
+      setSpawnInput('');
       return;
     }
 
@@ -295,6 +339,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         error={error}
         quitMode={quitMode}
         isConfirmingExit={isConfirmingExit}
+        spawnMode={spawnMode}
+        spawnInput={spawnInput}
       />
     </Box>
   );
