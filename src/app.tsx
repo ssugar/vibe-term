@@ -253,6 +253,32 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       return;
     }
 
+    // n to spawn new Claude session in main pane
+    if (input === 'n') {
+      // Get main pane and spawn Claude there
+      execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+        .then(({ stdout }) => {
+          const hudPaneId = stdout.split('=')[1]?.trim();
+          return execAsync(`tmux list-panes -F '#{pane_id}'`)
+            .then(({ stdout: paneList }) => {
+              const panes = paneList.trim().split('\n');
+              const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+
+              // Send claude command to main pane and focus it
+              // Using send-keys to run claude in the existing shell
+              return execAsync(`tmux send-keys -t ${mainPaneId} 'claude' Enter`)
+                .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
+            });
+        })
+        .catch((err) => {
+          useAppStore.getState().setError(`Spawn failed: ${err.message}`);
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 5000);
+        });
+      return;
+    }
+
     // Normal mode key handling
     if (input === 'q') {
       setQuitMode('confirming');
