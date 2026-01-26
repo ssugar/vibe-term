@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 9 (Pane Architecture) complete
+**Current focus:** Milestone v2.0 — Phase 10 (Session Lifecycle) in progress
 
 ## Current Position
 
-Phase: 9 of 11 (Pane Architecture)
+Phase: 10 of 11 (Session Lifecycle)
 Plan: 3 of 3 in current phase
-Status: Phase 9 complete, verified
-Last activity: 2026-01-26 — Completed Phase 9
+Status: Phase 10 complete, verified
+Last activity: 2026-01-26 — Completed 10-03-PLAN.md
 
-Progress: [##################..] 90% (v1.0 complete, Phases 7-9 complete)
+Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [##################..] 90% (v1.0 complete, Phases 7-9 complete)
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 9 complete (Phase 7: 3, Phase 8: 3, Phase 9: 3)
-- Completed: 9
-- Average duration: ~6 min/plan
+- Total plans: 12 complete (Phase 7: 3, Phase 8: 3, Phase 9: 3, Phase 10: 3)
+- Completed: 12
+- Average duration: ~5 min/plan
 
 ## Accumulated Context
 
@@ -88,12 +88,16 @@ Progress: [##################..] 90% (v1.0 complete, Phases 7-9 complete)
 - Tilde (~) must be expanded before quotes (bash doesn't expand in quotes)
 - Check internal vs external sessions for swap-pane vs select-pane
 
+*Phase 10 learnings:*
+
+- Only clean up internal session panes (external belong to other tmux sessions)
+- Track previous session isExternal flag for selective cleanup
+- Silent cleanup with error swallowing for graceful degradation
+- Active session death triggers HUD focus via CLAUDE_TERMINAL_HUD_PANE env var
+
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
-- Phase 10: Tab completion for directory input
-- Phase 10: mkdir -p for non-existing directories
-- Phase 10: Filter sessions (only show claude-terminal + manageable external tmux)
 
 ### Blockers/Concerns
 
@@ -102,5 +106,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed Phase 9
+Stopped at: Completed 10-03-PLAN.md (Phase 10 complete)
 Resume file: None
