@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 9 (Pane Architecture) in progress
+**Current focus:** Milestone v2.0 — Phase 9 (Pane Architecture) complete
 
 ## Current Position
 
 Phase: 9 of 11 (Pane Architecture)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-01-26 — Completed 09-02-PLAN.md
+Plan: 3 of 3 in current phase
+Status: Phase 9 complete, verified
+Last activity: 2026-01-26 — Completed Phase 9
 
-Progress: [#################...] 85% (v1.0 complete, Phases 7-8 complete, Phase 9: 2/3)
+Progress: [##################..] 90% (v1.0 complete, Phases 7-9 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [#################...] 85% (v1.0 complete, Phases 7-8 complete, Phase 
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 8 complete (Phase 7: 3, Phase 8: 3, Phase 9: 2)
-- Completed: 8
-- Average duration: ~5.4 min/plan
+- Total plans: 9 complete (Phase 7: 3, Phase 8: 3, Phase 9: 3)
+- Completed: 9
+- Average duration: ~6 min/plan
 
 ## Accumulated Context
 
@@ -82,11 +82,18 @@ Progress: [#################...] 85% (v1.0 complete, Phases 7-8 complete, Phase 
 - Scratch window pattern for storing inactive session panes
 - Four visual states for tabs: blocked/active+selected/active/selected
 - Dual keybindings (C-g and C-h) for HUD focus with backward compatibility
-- Lazy pane creation on first switch (check existence, create if needed)
+- Use stable paneId (like %10) not window.pane indices (change on swap)
+- tmux new-window needs colon suffix for auto-assign index
+- Explicit `cd dir && claude` more reliable than -c flag
+- Tilde (~) must be expanded before quotes (bash doesn't expand in quotes)
+- Check internal vs external sessions for swap-pane vs select-pane
 
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
+- Phase 10: Tab completion for directory input
+- Phase 10: mkdir -p for non-existing directories
+- Phase 10: Filter sessions (only show claude-terminal + manageable external tmux)
 
 ### Blockers/Concerns
 
@@ -95,5 +102,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 09-02-PLAN.md
+Stopped at: Completed Phase 9
 Resume file: None
