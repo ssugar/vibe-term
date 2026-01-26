@@ -21,6 +21,7 @@ export interface AppState {
   isConfirmingExit: boolean;
   showHelp: boolean;
   selectedIndex: number;
+  activeSessionId: string | null;  // Session currently displayed in main pane
   error: string | null;
 
   // Refresh state
@@ -34,6 +35,7 @@ export interface AppState {
   setConfirmingExit: (value: boolean) => void;
   setShowHelp: (value: boolean) => void;
   setSelectedIndex: (index: number) => void;
+  setActiveSessionId: (id: string | null) => void;
   setError: (error: string | null) => void;
   setLastRefresh: (date: Date) => void;
   setRefreshInterval: (interval: number) => void;

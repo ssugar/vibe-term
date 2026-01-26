@@ -6,6 +6,7 @@ export const useAppStore = create<AppState>()((set) => ({
   isConfirmingExit: false,
   showHelp: false,
   selectedIndex: 0,
+  activeSessionId: null,
   error: null,
 
   // Initial refresh state
@@ -19,6 +20,7 @@ export const useAppStore = create<AppState>()((set) => ({
   setConfirmingExit: (value) => set({ isConfirmingExit: value }),
   setShowHelp: (value) => set({ showHelp: value }),
   setSelectedIndex: (index) => set({ selectedIndex: index }),
+  setActiveSessionId: (id) => set({ activeSessionId: id }),
   setError: (error) => set({ error }),
   setLastRefresh: (date) => set({ lastRefresh: date }),
   setRefreshInterval: (interval) => set({ refreshInterval: interval }),
