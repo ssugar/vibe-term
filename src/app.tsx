@@ -4,9 +4,7 @@ import { spawnSync } from 'child_process';
 import { useAppStore } from './stores/appStore.js';
 import { useInterval } from './hooks/useInterval.js';
 import { useSessions } from './hooks/useSessions.js';
-import { Header } from './components/Header.js';
-import { Footer } from './components/Footer.js';
-import { SessionList } from './components/SessionList.js';
+import { HudStrip } from './components/HudStrip.js';
 import { jumpToSession } from './services/jumpService.js';
 import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
 import { TMUX_SESSION_NAME } from './startup.js';
@@ -120,6 +118,20 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         return;
       }
 
+      // Left/right arrow navigation for horizontal tab strip
+      if (key.leftArrow) {
+        useAppStore.getState().setSelectedIndex(
+          Math.max(selectedIndex - 1, 0)
+        );
+        return;
+      }
+      if (key.rightArrow) {
+        useAppStore.getState().setSelectedIndex(
+          Math.min(selectedIndex + 1, sessions.length - 1)
+        );
+        return;
+      }
+
       // Number hotkeys 1-9 for quick-jump
       if (/^[1-9]$/.test(input)) {
         const targetIndex = parseInt(input, 10) - 1;
@@ -178,20 +190,14 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   });
 
   return (
-    <Box flexDirection="column" padding={1}>
-      <Header />
-
-      <Box flexGrow={1} flexDirection="column" marginY={1}>
-        <SessionList />
-      </Box>
-
-      <Footer />
+    <Box flexDirection="column">
+      <HudStrip showHelp={showHelp} error={error} />
 
       {/* Exit confirmation overlay (for Ctrl+C emergency exit) */}
       {isConfirmingExit && (
         <Box
           position="absolute"
-          marginTop={3}
+          marginTop={2}
           marginLeft={2}
         >
           <Box borderStyle="round" borderColor="yellow" paddingX={1}>
@@ -207,7 +213,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       {quitMode === 'confirming' && (
         <Box
           position="absolute"
-          marginTop={3}
+          marginTop={2}
           marginLeft={2}
         >
           <Box borderStyle="round" borderColor="yellow" paddingX={1}>
@@ -220,49 +226,6 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             <Text dimColor>| </Text>
             <Text color="gray">[n/Esc]</Text>
             <Text> cancel</Text>
-          </Box>
-        </Box>
-      )}
-
-      {/* Help overlay */}
-      {showHelp && (
-        <Box
-          position="absolute"
-          marginTop={3}
-          marginLeft={2}
-        >
-          <Box
-            borderStyle="round"
-            borderColor="cyan"
-            flexDirection="column"
-            paddingX={2}
-            paddingY={1}
-          >
-            <Text bold color="cyan">Keyboard Shortcuts</Text>
-            <Text> </Text>
-            <Text><Text dimColor>j/k</Text>    Move down/up</Text>
-            <Text><Text dimColor>enter</Text>  Jump to session</Text>
-            <Text><Text dimColor>b</Text>      Back to HUD</Text>
-            <Text><Text dimColor>1-9</Text>    Quick select</Text>
-            <Text><Text dimColor>q</Text>      Quit</Text>
-            <Text><Text dimColor>?</Text>      Toggle help</Text>
-            <Text> </Text>
-            <Text dimColor>Press any key to close</Text>
-          </Box>
-        </Box>
-      )}
-
-      {/* Error banner */}
-      {error && (
-        <Box
-          position="absolute"
-          marginTop={0}
-          marginLeft={0}
-        >
-          <Box borderStyle="round" borderColor="red" paddingX={1}>
-            <Text color="red" bold>Error: </Text>
-            <Text color="red">{error}</Text>
-            <Text dimColor> (x to dismiss)</Text>
           </Box>
         </Box>
       )}
