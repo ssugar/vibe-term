@@ -127,7 +127,7 @@ Plans:
 **Milestone Goal:** Transform the standalone HUD into a tmux-integrated terminal where sessions run inside managed panes with an always-visible status strip.
 
 - [x] **Phase 7: tmux Foundation** - Create/attach managed tmux session, HUD pane setup, environment verification
-- [ ] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
+- [x] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
 - [ ] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
 - [ ] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
 - [ ] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
@@ -163,9 +163,9 @@ Plans:
 **Plans**: 3 plans in 2 waves
 
 Plans:
-- [ ] 08-01-PLAN.md — Foundation (useTerminalWidth hook, Tab component)
-- [ ] 08-02-PLAN.md — TabStrip component with scroll and overflow handling
-- [ ] 08-03-PLAN.md — App integration and visual verification
+- [x] 08-01-PLAN.md — Foundation (useTerminalWidth hook, Tab component)
+- [x] 08-02-PLAN.md — TabStrip component with scroll and overflow handling
+- [x] 08-03-PLAN.md — App integration and visual verification
 
 ### Phase 9: Pane Architecture
 **Goal**: Users can switch between sessions using native tmux pane operations and return to HUD with one keypress
@@ -227,7 +227,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 5. Navigation | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 7. tmux Foundation | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 8. HUD Strip UI | v2.0 | 0/3 | Planning complete | - |
+| 8. HUD Strip UI | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
 | 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
 | 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
