@@ -15,7 +15,7 @@ export interface Config {
  */
 export const DEFAULT_CONFIG: Config = {
   hudPosition: 'top',
-  hudHeight: 15, // Temporary: fits v1.0 HUD until Phase 8 creates compact strip
+  hudHeight: 3, // Compact strip: 1 line tabs + 1 line help/error + 1 buffer
 };
 
 /**
