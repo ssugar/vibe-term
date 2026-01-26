@@ -29,8 +29,9 @@ export async function ensureScratchWindow(): Promise<string> {
 
     if (!stdout.includes(SCRATCH_WINDOW)) {
       // Create scratch window (detached, won't switch to it)
+      // Use colon suffix to auto-assign window index
       await execAsync(
-        `tmux new-window -d -t ${TMUX_SESSION} -n ${SCRATCH_WINDOW}`
+        `tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`
       );
     }
 
@@ -39,7 +40,7 @@ export async function ensureScratchWindow(): Promise<string> {
     // If session doesn't exist or other error, try to create anyway
     try {
       await execAsync(
-        `tmux new-window -d -t ${TMUX_SESSION} -n ${SCRATCH_WINDOW}`
+        `tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`
       );
     } catch {
       // Window may already exist, ignore
