@@ -174,13 +174,14 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. Claude sessions run in the bottom pane (main terminal area)
   2. Pressing Enter on a session switches the bottom pane to that session
-  3. User can return to HUD view with b key from any pane
+  3. User can return to HUD view with Ctrl+h from any pane
   4. Session switching is reliable (no focus confusion or input routing errors)
-**Plans**: TBD
+**Plans**: 3 plans in 3 waves
 
 Plans:
-- [ ] 09-01-PLAN.md — TBD
-- [ ] 09-02-PLAN.md — TBD
+- [ ] 09-01-PLAN.md — Pane session manager and AppStore activeSessionId
+- [ ] 09-02-PLAN.md — Tab active marker, Ctrl+h binding, Enter key switching
+- [ ] 09-03-PLAN.md — Human verification of pane architecture
 
 ### Phase 10: Session Lifecycle
 **Goal**: Users can spawn new Claude sessions and the HUD automatically manages session lifecycle
@@ -228,7 +229,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 6. Terminal Integration | v1.0 | 2/2 | Complete | 2026-01-25 |
 | 7. tmux Foundation | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 8. HUD Strip UI | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 9. Pane Architecture | v2.0 | 0/TBD | Not started | - |
+| 9. Pane Architecture | v2.0 | 0/3 | Planned | - |
 | 10. Session Lifecycle | v2.0 | 0/TBD | Not started | - |
 | 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
 
