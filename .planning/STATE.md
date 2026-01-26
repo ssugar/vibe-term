@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-01-25)
 ## Current Position
 
 Phase: 8 of 11 (HUD Strip UI)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-01-26 — Completed 08-01-PLAN.md
+Last activity: 2026-01-26 — Completed 08-02-PLAN.md
 
-Progress: [#############.......] 65% (v1.0 complete, Phase 7 complete, 08-01 complete)
+Progress: [##############......] 70% (v1.0 complete, Phase 7 complete, 08-01, 08-02 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [#############.......] 65% (v1.0 complete, Phase 7 complete, 08-01 com
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 4 complete (Phase 7 + 08-01)
-- Completed: 4
-- Average duration: ~6 min/plan
+- Total plans: 5 complete (Phase 7 + 08-01, 08-02)
+- Completed: 5
+- Average duration: ~5 min/plan
 
 ## Accumulated Context
 
@@ -68,6 +68,9 @@ Progress: [#############.......] 65% (v1.0 complete, Phase 7 complete, 08-01 com
 
 - Unicode ellipsis (\u2026) for compact truncation (single char vs 3)
 - Context color thresholds: green (<30%), yellow (30-70%), red (>70%)
+- Blocked sessions pinned left (always visible regardless of scroll)
+- Auto-scroll keeps selected tab visible in overflow scenarios
+- Arrow indicators (figures.arrowLeft/Right) for overflow detection
 
 ### Pending Todos
 
@@ -80,5 +83,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-26
-Stopped at: Completed 08-01-PLAN.md
+Stopped at: Completed 08-02-PLAN.md
 Resume file: None
