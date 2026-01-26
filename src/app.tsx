@@ -191,44 +191,12 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
   return (
     <Box flexDirection="column">
-      <HudStrip showHelp={showHelp} error={error} />
-
-      {/* Exit confirmation overlay (for Ctrl+C emergency exit) */}
-      {isConfirmingExit && (
-        <Box
-          position="absolute"
-          marginTop={2}
-          marginLeft={2}
-        >
-          <Box borderStyle="round" borderColor="yellow" paddingX={1}>
-            <Text>Quit HUD? </Text>
-            <Text bold color="green">y</Text>
-            <Text>/</Text>
-            <Text bold color="red">n</Text>
-          </Box>
-        </Box>
-      )}
-
-      {/* Quit prompt overlay (for 'q' key with detach/kill options) */}
-      {quitMode === 'confirming' && (
-        <Box
-          position="absolute"
-          marginTop={2}
-          marginLeft={2}
-        >
-          <Box borderStyle="round" borderColor="yellow" paddingX={1}>
-            <Text>Quit: </Text>
-            <Text color="yellow">[d]</Text>
-            <Text>etach </Text>
-            <Text dimColor>| </Text>
-            <Text color="red">[k]</Text>
-            <Text>ill </Text>
-            <Text dimColor>| </Text>
-            <Text color="gray">[n/Esc]</Text>
-            <Text> cancel</Text>
-          </Box>
-        </Box>
-      )}
+      <HudStrip
+        showHelp={showHelp}
+        error={error}
+        quitMode={quitMode}
+        isConfirmingExit={isConfirmingExit}
+      />
     </Box>
   );
 }
