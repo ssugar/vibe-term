@@ -99,6 +99,7 @@ Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
 - Use respawn-pane -k instead of kill-pane (keeps pane structure, clears content)
 - Store paneId in tracking ref since spawned sessions don't set env var mapping
 - External sessions get ~ prefix and dimColor for visual distinction
+- External sessions always on right side, even if blocked (isExternal check first)
 
 ### Pending Todos
 
