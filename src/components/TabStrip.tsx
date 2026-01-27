@@ -73,10 +73,11 @@ export function TabStrip(): React.ReactElement {
 
     sessions.forEach((session, idx) => {
       const item = { session, originalIndex: idx + 1 }; // 1-based index
-      if (session.status === 'blocked') {
-        blocked.push(item);
-      } else if (session.isExternal) {
+      if (session.isExternal) {
+        // External sessions always go to the right, even if blocked
         external.push(item);
+      } else if (session.status === 'blocked') {
+        blocked.push(item);
       } else {
         managed.push(item);
       }
@@ -147,8 +148,9 @@ export function TabStrip(): React.ReactElement {
     const selectedSession = sessions[selectedIndex];
     if (!selectedSession) return;
 
-    // Blocked and external sessions are always visible, no scroll adjustment needed
-    if (selectedSession.status === 'blocked' || selectedSession.isExternal) {
+    // External sessions are always visible (pinned right), no scroll adjustment needed
+    // Blocked internal sessions are also always visible (pinned left)
+    if (selectedSession.isExternal || selectedSession.status === 'blocked') {
       return;
     }
 
