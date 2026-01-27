@@ -248,8 +248,42 @@ export async function createHudLayout(
     `tmux bind-key -n C-h select-pane -t ${hudPane.trim()}`
   );
 
-  // Select the main pane so it's ready for user interaction
-  await execAsync(`tmux select-pane -t ${mainPane.trim()}`);
+  // Display welcome message in main pane (only on fresh layout creation)
+  if (panes.length < 2) {
+    const welcomeArt = `
+  ╔═══════════════════════════════════════════════════════════════╗
+  ║                                                               ║
+  ║       ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗        ║
+  ║      ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝        ║
+  ║      ██║     ██║     ███████║██║   ██║██║  ██║█████╗          ║
+  ║      ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝          ║
+  ║      ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗        ║
+  ║       ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝        ║
+  ║                    ████████╗███████╗██████╗ ███╗   ███╗       ║
+  ║                    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║       ║
+  ║                       ██║   █████╗  ██████╔╝██╔████╔██║       ║
+  ║                       ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║       ║
+  ║                       ██║   ███████╗██║  ██║██║ ╚═╝ ██║       ║
+  ║                       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝       ║
+  ║                                                               ║
+  ║          Your AI-powered terminal session manager             ║
+  ║                                                               ║
+  ║   Press 'n' in HUD to spawn a new Claude session              ║
+  ║   Press '?' for help | 'q' to quit                            ║
+  ║                                                               ║
+  ╚═══════════════════════════════════════════════════════════════╝
+`;
+
+    // Send welcome art to main pane using printf for reliable multi-line output
+    // Escape special characters and use $'...' syntax for proper handling
+    const escapedArt = welcomeArt.replace(/'/g, "'\\''");
+    await execAsync(
+      `tmux send-keys -t ${mainPane} 'clear && echo '"'"'${escapedArt}'"'"'' Enter`
+    );
+  }
+
+  // Select the HUD pane so user starts with focus on navigation
+  await execAsync(`tmux select-pane -t ${hudPane.trim()}`);
 
   return {
     hudPaneId: hudPane.trim(),
