@@ -91,9 +91,14 @@ Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
 *Phase 10 learnings:*
 
 - Only clean up internal session panes (external belong to other tmux sessions)
-- Track previous session isExternal flag for selective cleanup
+- Track previous session {isExternal, paneId} for selective cleanup
 - Silent cleanup with error swallowing for graceful degradation
 - Active session death triggers HUD focus via CLAUDE_TERMINAL_HUD_PANE env var
+- isExternal = !inTmux || !tmuxTarget.startsWith("claude-terminal:")
+- Non-tmux sessions are also external (can't swap-pane to them)
+- Use respawn-pane -k instead of kill-pane (keeps pane structure, clears content)
+- Store paneId in tracking ref since spawned sessions don't set env var mapping
+- External sessions get ~ prefix and dimColor for visual distinction
 
 ### Pending Todos
 
