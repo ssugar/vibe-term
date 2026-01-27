@@ -232,9 +232,12 @@ export async function createHudLayout(
     await execAsync(`tmux resize-pane -t ${hudPane.trim()} -y ${height}`);
   }
 
-  // Store HUD pane ID in tmux environment for keybindings
+  // Store pane IDs in tmux environment for keybindings and session management
   await execAsync(
     `tmux set-environment CLAUDE_TERMINAL_HUD_PANE ${hudPane.trim()}`
+  );
+  await execAsync(
+    `tmux set-environment CLAUDE_TERMINAL_MAIN_PANE ${mainPane.trim()}`
   );
 
   // Add keybindings to focus HUD pane

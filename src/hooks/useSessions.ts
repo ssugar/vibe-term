@@ -60,20 +60,73 @@ export function useSessions(): void {
         }
       }
 
-      // If active session was removed, clear it and focus HUD
+      // If active session was removed, switch to another session or show welcome
       const activeSessionId = useAppStore.getState().activeSessionId;
       if (activeSessionId && removedIds.includes(activeSessionId)) {
         useAppStore.getState().setActiveSessionId(null);
 
-        // Focus HUD pane
-        execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-          .then(({ stdout }) => {
-            const hudPaneId = stdout.split('=')[1]?.trim();
-            if (hudPaneId) {
-              return execAsync(`tmux select-pane -t ${hudPaneId}`);
+        // Get HUD and main pane IDs
+        const getEnv = async (name: string) => {
+          try {
+            const { stdout } = await execAsync(`tmux show-environment ${name}`);
+            return stdout.split('=')[1]?.trim();
+          } catch {
+            return undefined;
+          }
+        };
+
+        (async () => {
+          const hudPaneId = await getEnv('CLAUDE_TERMINAL_HUD_PANE');
+          const mainPaneId = await getEnv('CLAUDE_TERMINAL_MAIN_PANE');
+
+          if (sessions.length > 0) {
+            // Switch to first remaining session
+            const nextSession = sessions[0];
+            const targetPaneId = nextSession.paneId;
+
+            if (targetPaneId && mainPaneId) {
+              // Swap the next session into the main pane
+              await execAsync(`tmux swap-pane -s ${targetPaneId} -t ${mainPaneId}`).catch(() => {});
+              await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${nextSession.id}`).catch(() => {});
+              useAppStore.getState().setActiveSessionId(nextSession.id);
             }
-          })
-          .catch(() => {}); // Ignore errors - HUD pane might not exist
+          } else if (mainPaneId) {
+            // No sessions left - show welcome screen in main pane
+            const welcomeArt = `
+  ╔═══════════════════════════════════════════════════════════════╗
+  ║                                                               ║
+  ║       ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗        ║
+  ║      ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝        ║
+  ║      ██║     ██║     ███████║██║   ██║██║  ██║█████╗          ║
+  ║      ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝          ║
+  ║      ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗        ║
+  ║       ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝        ║
+  ║                    ████████╗███████╗██████╗ ███╗   ███╗       ║
+  ║                    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║       ║
+  ║                       ██║   █████╗  ██████╔╝██╔████╔██║       ║
+  ║                       ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║       ║
+  ║                       ██║   ███████╗██║  ██║██║ ╚═╝ ██║       ║
+  ║                       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝       ║
+  ║                                                               ║
+  ║          Your AI-powered terminal session manager             ║
+  ║                                                               ║
+  ║   Press 'n' in HUD to spawn a new Claude session              ║
+  ║   Alt+1-9 to jump to session from any pane                    ║
+  ║   Press '?' for help | 'q' to quit                            ║
+  ║                                                               ║
+  ╚═══════════════════════════════════════════════════════════════╝
+`;
+            const escapedArt = welcomeArt.replace(/'/g, "'\\''");
+            await execAsync(
+              `tmux send-keys -t ${mainPaneId} 'clear && echo '"'"'${escapedArt}'"'"'' Enter`
+            ).catch(() => {});
+          }
+
+          // Focus HUD pane
+          if (hudPaneId) {
+            await execAsync(`tmux select-pane -t ${hudPaneId}`).catch(() => {});
+          }
+        })();
       }
 
       // Update previous sessions for next cycle

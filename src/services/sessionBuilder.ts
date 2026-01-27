@@ -183,6 +183,6 @@ export async function buildSessions(
     };
   });
 
-  // Sort with blocked at top, then stable ordering for rest
-  return sortSessionsWithBlocked(sessions, previousOrder);
+  // Sort with stable ordering (maintain creation order, no blocked-first reordering)
+  return sortSessions(sessions, previousOrder);
 }
