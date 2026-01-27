@@ -57,10 +57,7 @@ case "$HOOK_EVENT" in
     # Tool is about to execute - this means any prior permission request was resolved
     # (either approved, rejected, or Claude moved on). Clear blocked state.
     STATUS="tool"
-    # Clear any permission-related notification since the permission flow is done
-    if echo "$EXISTING_NOTIFICATION" | grep -qi "permission"; then
-      NOTIFICATION=""
-    fi
+    # Notification cleared in handling section below (PreToolUse always clears)
     ;;
   PermissionRequest)
     STATUS="blocked"
@@ -150,11 +147,12 @@ fi
 # Notification handling:
 # - New notification: use it
 # - UserPromptSubmit: clear old notification (user acknowledged)
+# - PreToolUse: clear notification (tool is running, permission was resolved)
 # - Otherwise: preserve existing notification
 if [ -n "$NOTIFICATION" ]; then
   : # Use new notification
-elif [ "$HOOK_EVENT" = "UserPromptSubmit" ]; then
-  NOTIFICATION=""  # Clear on new prompt
+elif [ "$HOOK_EVENT" = "UserPromptSubmit" ] || [ "$HOOK_EVENT" = "PreToolUse" ]; then
+  NOTIFICATION=""  # Clear on new prompt or when tool starts (permission resolved)
 else
   NOTIFICATION="$EXISTING_NOTIFICATION"  # Preserve existing
 fi
