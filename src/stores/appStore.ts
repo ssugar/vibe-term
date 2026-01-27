@@ -24,5 +24,10 @@ export const useAppStore = create<AppState>()((set) => ({
   setError: (error) => set({ error }),
   setLastRefresh: (date) => set({ lastRefresh: date }),
   setRefreshInterval: (interval) => set({ refreshInterval: interval }),
-  setSessions: (sessions) => set({ sessions }),
+  setSessions: (sessions) =>
+    set((state) => ({
+      sessions,
+      // Clamp selectedIndex to valid range when sessions change
+      selectedIndex: Math.min(state.selectedIndex, Math.max(0, sessions.length - 1)),
+    })),
 }));
