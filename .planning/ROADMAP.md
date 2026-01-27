@@ -210,10 +210,10 @@ Plans:
   3. User can switch to selected session with Enter key
   4. User can quit HUD with q key (cleans up tmux session properly)
   5. User can view help with ? key
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 11-01-PLAN.md — TBD
+- [ ] 11-01-PLAN.md — Fix selectedIndex bounds and validate navigation
 
 ## Progress
 
@@ -232,9 +232,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 8. HUD Strip UI | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 11. Navigation Integration | v2.0 | 0/TBD | Not started | - |
+| 11. Navigation Integration | v2.0 | 0/1 | Not started | - |
 
 ---
 *Roadmap created: 2026-01-22*
 *v2.0 phases added: 2026-01-25*
-*Last updated: 2026-01-26*
+*Last updated: 2026-01-27*
