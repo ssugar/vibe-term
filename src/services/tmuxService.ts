@@ -248,6 +248,16 @@ export async function createHudLayout(
     `tmux bind-key -n C-h select-pane -t ${hudPane.trim()}`
   );
 
+  // Alt+1-9: Quick jump to session N from any pane (including HUD)
+  // Sends number key + Enter to HUD, which triggers selection + switch
+  // The HUD's switchToSession will focus the main pane after swapping
+  // Uses M- (Meta) prefix for Alt key, run-shell to chain commands
+  for (let i = 1; i <= 9; i++) {
+    await execAsync(
+      `tmux bind-key -n M-${i} run-shell "tmux send-keys -t ${hudPane.trim()} ${i} && tmux send-keys -t ${hudPane.trim()} Enter"`
+    );
+  }
+
   // Display welcome message in main pane (only on fresh layout creation)
   if (panes.length < 2) {
     const welcomeArt = `
@@ -269,6 +279,7 @@ export async function createHudLayout(
   ║          Your AI-powered terminal session manager             ║
   ║                                                               ║
   ║   Press 'n' in HUD to spawn a new Claude session              ║
+  ║   Alt+1-9 to jump to session from any pane                    ║
   ║   Press '?' for help | 'q' to quit                            ║
   ║                                                               ║
   ╚═══════════════════════════════════════════════════════════════╝

@@ -102,7 +102,7 @@ export function HudStrip({
       {/* Help text */}
       {showHelpText && (
         <Text dimColor>
-          {figures.arrowLeft}/{figures.arrowRight}: scroll | Enter: jump | j/k: nav | 1-9: quick | q: quit | ?: help
+          j/k/←/→: nav | Enter: switch | 1-9/Alt+N: quick | n: new | q: quit
         </Text>
       )}
 
