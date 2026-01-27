@@ -188,7 +188,8 @@ function sanitizeEnvKey(sessionId: string): string {
 
 /**
  * Clean up the tmux pane associated with a dead session.
- * Kills the pane and removes the environment variable mapping.
+ * Respawns the pane with an empty shell (keeps pane structure, clears content).
+ * Removes the environment variable mapping.
  *
  * @param sessionId - The session ID to clean up
  */
@@ -197,12 +198,13 @@ export async function cleanupSessionPane(sessionId: string): Promise<void> {
     const paneId = await getSessionPane(sessionId);
     if (!paneId) return;
 
-    // Check if pane still exists before trying to kill
+    // Check if pane still exists before trying to respawn
     const { stdout } = await execAsync(`tmux list-panes -a -F '#{pane_id}'`);
     if (!stdout.includes(paneId)) return;
 
-    // Kill the pane
-    await execAsync(`tmux kill-pane -t ${paneId}`);
+    // Respawn the pane with a fresh shell (clears content, keeps pane structure)
+    // -k flag kills the current command first
+    await execAsync(`tmux respawn-pane -k -t ${paneId}`);
   } catch {
     // Pane may already be gone - that's fine
   } finally {

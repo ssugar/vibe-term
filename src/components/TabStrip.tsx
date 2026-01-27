@@ -12,8 +12,9 @@ const MAX_NAME_WIDTH = 20;
 /**
  * Calculate the rendered width of a tab including separator.
  *
- * Tab format: [index:name emoji pct]
+ * Tab format: [~index:name emoji pct] (~ prefix for external)
  * - [ = 1 char
+ * - ~ = 1 char (only for external sessions)
  * - index = varies (1-9 = 1 char, 10+ = 2 chars)
  * - : = 1 char
  * - name = truncated to maxNameWidth
@@ -24,7 +25,7 @@ const MAX_NAME_WIDTH = 20;
  * - ] = 1 char
  * - separator = 2 chars (double space after tab)
  */
-function calculateTabWidth(session: Session, index: number, maxNameWidth: number): number {
+function calculateTabWidth(session: Session, index: number, maxNameWidth: number, isExternal = false): number {
   // Get display name (last directory from path)
   const projectName = session.projectPath.split('/').pop() || session.projectPath;
 
@@ -34,8 +35,11 @@ function calculateTabWidth(session: Session, index: number, maxNameWidth: number
   // Index width (1-9 = 1 char, 10+ = 2 chars, etc.)
   const indexWidth = String(index).length;
 
-  // Total: [ + index + : + name + space + emoji(2) + space + pct(4) + ] + separator(2)
-  return 1 + indexWidth + 1 + nameLen + 1 + 2 + 1 + 4 + 1 + 2;
+  // External prefix width (~ = 1 char)
+  const externalPrefixWidth = isExternal ? 1 : 0;
+
+  // Total: [ + ~? + index + : + name + space + emoji(2) + space + pct(4) + ] + separator(2)
+  return 1 + externalPrefixWidth + indexWidth + 1 + nameLen + 1 + 2 + 1 + 4 + 1 + 2;
 }
 
 /**
@@ -95,7 +99,7 @@ export function TabStrip(): React.ReactElement {
 
     // Calculate width used by external tabs (pinned right)
     const externalWidth = externalWithIndices.reduce(
-      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH),
+      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH, true),
       0
     );
 
@@ -243,6 +247,7 @@ export function TabStrip(): React.ReactElement {
             index={originalIndex}
             isSelected={selectedIndex === originalIndex - 1}
             isActive={session.id === activeSessionId}
+            isExternal={true}
             maxNameWidth={MAX_NAME_WIDTH}
           />
         </Box>

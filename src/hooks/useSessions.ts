@@ -4,8 +4,15 @@ import { useInterval } from './useInterval.js';
 import { findClaudeProcesses } from '../services/processDetector.js';
 import { getTmuxPanes } from '../services/tmuxService.js';
 import { buildSessions } from '../services/sessionBuilder.js';
-import { cleanupSessionPane } from '../services/paneSessionManager.js';
 import { execAsync } from '../services/platform.js';
+
+/**
+ * Session info stored for removal detection
+ */
+interface PreviousSessionInfo {
+  isExternal: boolean;
+  paneId?: string;
+}
 
 /**
  * Hook that manages session detection and polling.
@@ -20,8 +27,8 @@ export function useSessions(): void {
   const previousOrderRef = useRef<string[]>([]);
 
   // Track previous sessions for removal detection
-  // Map of sessionId -> isExternal (to avoid cleaning up external session panes)
-  const previousSessionsRef = useRef<Map<string, boolean>>(new Map());
+  // Map of sessionId -> { isExternal, paneId }
+  const previousSessionsRef = useRef<Map<string, PreviousSessionInfo>>(new Map());
 
   // Track if initial load has happened
   const initialLoadRef = useRef(false);
@@ -46,9 +53,10 @@ export function useSessions(): void {
       // Clean up panes for removed INTERNAL sessions only
       // External sessions belong to other tmux sessions - do NOT kill their panes
       for (const id of removedIds) {
-        const wasExternal = previousSessionsRef.current.get(id) ?? false;
-        if (!wasExternal) {
-          await cleanupSessionPane(id).catch(() => {});
+        const prevInfo = previousSessionsRef.current.get(id);
+        if (prevInfo && !prevInfo.isExternal && prevInfo.paneId) {
+          // Respawn the pane with a fresh shell (keeps pane structure, clears content)
+          execAsync(`tmux respawn-pane -k -t ${prevInfo.paneId}`).catch(() => {});
         }
       }
 
@@ -69,7 +77,9 @@ export function useSessions(): void {
       }
 
       // Update previous sessions for next cycle
-      previousSessionsRef.current = new Map(sessions.map(s => [s.id, s.isExternal]));
+      previousSessionsRef.current = new Map(
+        sessions.map(s => [s.id, { isExternal: s.isExternal, paneId: s.paneId }])
+      );
 
       // Update previous order for next cycle
       previousOrderRef.current = sessions.map((s) => s.id);

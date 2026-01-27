@@ -19,6 +19,7 @@ interface TabProps {
   index: number;           // 1-based display index
   isSelected: boolean;
   isActive: boolean;       // Session is currently displayed in main pane
+  isExternal?: boolean;    // Session is in external tmux session
   maxNameWidth?: number;   // Default 20
 }
 
@@ -42,7 +43,7 @@ function getContextColor(usage: number): 'green' | 'yellow' | 'red' {
  * - Selected only: inverse (cursor here, not in main pane)
  * - Normal: default colors
  */
-export function Tab({ session, index, isSelected, isActive, maxNameWidth = 20 }: TabProps): React.ReactElement {
+export function Tab({ session, index, isSelected, isActive, isExternal = false, maxNameWidth = 20 }: TabProps): React.ReactElement {
   // Extract project name from projectPath (last directory)
   const rawName = session.projectPath.split('/').pop() || 'unknown';
 
@@ -62,7 +63,9 @@ export function Tab({ session, index, isSelected, isActive, maxNameWidth = 20 }:
   const isBlocked = session.status === 'blocked';
 
   // Build tab content: [index:name status context%]
-  const tabContent = `[${index}:${truncatedName} ${statusEmoji} `;
+  // External sessions get a ~ prefix to distinguish them
+  const externalPrefix = isExternal ? '~' : '';
+  const tabContent = `[${externalPrefix}${index}:${truncatedName} ${statusEmoji} `;
 
   if (isBlocked) {
     // Blocked: red background, white bold text (highest priority, unchanged)
@@ -113,6 +116,17 @@ export function Tab({ session, index, isSelected, isActive, maxNameWidth = 20 }:
   }
 
   // Normal: default colors with context color
+  // External sessions are dimmed to show they're not managed by claude-terminal
+  if (isExternal) {
+    return (
+      <Text>
+        <Text dimColor>{tabContent}</Text>
+        <Text dimColor color={contextColor}>{contextPct}</Text>
+        <Text dimColor>]</Text>
+      </Text>
+    );
+  }
+
   return (
     <Text>
       <Text>{tabContent}</Text>
