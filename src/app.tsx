@@ -311,10 +311,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             return;
           }
 
-          // Check if session is internal (in claude-terminal) or external (other tmux session)
-          const isInternalSession = session.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
-
-          if (isInternalSession && session.paneId) {
+          // Check if session is internal (managed by claude-terminal) or external
+          if (!session.isExternal && session.paneId) {
             // Internal session: swap pane into main position using stable paneId
             execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
               .then(({ stdout }) => {

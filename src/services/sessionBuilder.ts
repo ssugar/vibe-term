@@ -151,12 +151,12 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
-    // Classify as external if tmux target doesn't start with our session name
+    // Classify as external if not managed by claude-terminal
     // A session is external if:
-    // - It IS in tmux (inTmux: true)
-    // - Its tmuxTarget does NOT start with "claude-terminal:"
-    const isExternal = tmuxInfo.inTmux &&
-      (!tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`));
+    // - It's NOT in tmux at all (standalone terminal), OR
+    // - It IS in tmux but in a different session (not "claude-terminal:")
+    const isExternal = !tmuxInfo.inTmux ||
+      !tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
 
     // Get status, model, subagent count, notification, and transcript path from hook state files
     const { status, model, subagentCount, notification, transcriptPath } = getHookBasedStatus(cwd);
