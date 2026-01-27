@@ -63,9 +63,10 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
   const isBlocked = session.status === 'blocked';
 
   // Build tab content: [index:name status context%]
-  // External sessions get a ~ prefix to distinguish them
-  const externalPrefix = isExternal ? '~' : '';
-  const tabContent = `[${externalPrefix}${index}:${truncatedName} ${statusEmoji} `;
+  // External sessions show ~E: instead of number (can't quick-jump to them)
+  // Internal sessions show their number for quick-jump with 1-9 or Alt+N
+  const indexDisplay = isExternal ? '~E' : String(index);
+  const tabContent = `[${indexDisplay}:${truncatedName} ${statusEmoji} `;
 
   if (isBlocked) {
     // Blocked: red background, white bold text (highest priority, unchanged)

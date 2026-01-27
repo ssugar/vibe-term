@@ -32,14 +32,11 @@ function calculateTabWidth(session: Session, index: number, maxNameWidth: number
   // Truncated name length (if truncated, add 1 for ellipsis)
   const nameLen = Math.min(projectName.length, maxNameWidth);
 
-  // Index width (1-9 = 1 char, 10+ = 2 chars, etc.)
-  const indexWidth = String(index).length;
+  // Index display width: external shows "~E" (2 chars), internal shows number (1-2 chars)
+  const indexDisplayWidth = isExternal ? 2 : String(index).length;
 
-  // External prefix width (~ = 1 char)
-  const externalPrefixWidth = isExternal ? 1 : 0;
-
-  // Total: [ + ~? + index + : + name + space + emoji(2) + space + pct(4) + ] + separator(2)
-  return 1 + externalPrefixWidth + indexWidth + 1 + nameLen + 1 + 2 + 1 + 4 + 1 + 2;
+  // Total: [ + indexDisplay + : + name + space + emoji(2) + space + pct(4) + ] + separator(2)
+  return 1 + indexDisplayWidth + 1 + nameLen + 1 + 2 + 1 + 4 + 1 + 2;
 }
 
 /**
