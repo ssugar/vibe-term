@@ -104,7 +104,7 @@ export function HudStrip({
       {/* Help text */}
       {showHelpText && (
         <Text dimColor>
-          j/k/←/→: nav | Enter: switch | 1-9/Alt+N: quick | n: new | q: quit
+          ←/→/j/k: nav | Enter: switch | 1-9: jump | n: new | q: quit | Ctrl+h: focus HUD
         </Text>
       )}
 
