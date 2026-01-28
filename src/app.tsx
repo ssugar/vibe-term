@@ -343,11 +343,13 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
               .then(() => {
                 useAppStore.getState().setActiveSessionId(session.id);
               })
-              .catch((err) => {
-                useAppStore.getState().setError(`Switch failed: ${err.message}`);
+              .catch(() => {
+                // Session likely died - remove it and show error
+                useAppStore.getState().removeSession(session.id);
+                useAppStore.getState().setError(`Session ended - removed from list`);
                 setTimeout(() => {
                   useAppStore.getState().setError(null);
-                }, 5000);
+                }, 3000);
               });
           } else {
             // External session or no paneId: use select-pane to focus directly
@@ -364,11 +366,13 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
               .then(() => {
                 useAppStore.getState().setActiveSessionId(session.id);
               })
-              .catch((err) => {
-                useAppStore.getState().setError(`Jump failed: ${err.message}`);
+              .catch(() => {
+                // Session likely died - remove it and show error
+                useAppStore.getState().removeSession(session.id);
+                useAppStore.getState().setError(`Session ended - removed from list`);
                 setTimeout(() => {
                   useAppStore.getState().setError(null);
-                }, 5000);
+                }, 3000);
               });
           }
         }

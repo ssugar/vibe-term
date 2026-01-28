@@ -44,4 +44,5 @@ export interface AppState {
   setRefreshInterval: (interval: number) => void;
   setSessions: (sessions: Session[]) => void;
   setHudFocused: (focused: boolean) => void;
+  removeSession: (sessionId: string) => void;
 }

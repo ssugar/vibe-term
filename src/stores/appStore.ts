@@ -32,4 +32,15 @@ export const useAppStore = create<AppState>()((set) => ({
       selectedIndex: Math.min(state.selectedIndex, Math.max(0, sessions.length - 1)),
     })),
   setHudFocused: (focused) => set({ hudFocused: focused }),
+  removeSession: (sessionId) =>
+    set((state) => {
+      const newSessions = state.sessions.filter((s) => s.id !== sessionId);
+      return {
+        sessions: newSessions,
+        // Clamp selectedIndex to valid range
+        selectedIndex: Math.min(state.selectedIndex, Math.max(0, newSessions.length - 1)),
+        // Clear activeSessionId if it was the removed session
+        activeSessionId: state.activeSessionId === sessionId ? null : state.activeSessionId,
+      };
+    }),
 }));
