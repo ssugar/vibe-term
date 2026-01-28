@@ -18,7 +18,7 @@ export function Header(): React.ReactElement {
 
   return (
     <Box borderStyle="round" borderColor="blue" paddingX={1}>
-      <Text bold color="cyan">Claude Code HUD</Text>
+      <Text bold color="cyan">vibe-term</Text>
       <Text> - </Text>
       {hasAny ? (
         <>

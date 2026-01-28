@@ -1,4 +1,4 @@
-// Session represents a Claude Code instance
+// Session represents an AI coding assistant instance
 export interface Session {
   id: string;                    // `claude-${pid}` for stability
   pid: number;                   // Process ID for detection
@@ -14,7 +14,7 @@ export interface Session {
   inTmux: boolean;               // Whether running in tmux
   tmuxTarget?: string;           // e.g., "session:1.2" for navigation
   paneId?: string;               // Stable pane ID like "%10" for swapping
-  isExternal: boolean;           // true if running in non-claude-terminal tmux session
+  isExternal: boolean;           // true if running in non-vibe-term tmux session
 }
 
 // Application state

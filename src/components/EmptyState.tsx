@@ -10,12 +10,12 @@ export function EmptyState(): React.ReactElement {
     >
       <Text>
         {`  ╭──────────────────╮
-  │  No Claude Code  │
-  │    sessions      │
+  │   No sessions    │
+  │    detected      │
   ╰──────────────────╯`}
       </Text>
       <Box marginTop={1}>
-        <Text dimColor>Start a Claude session to see it here</Text>
+        <Text dimColor>Start an AI coding session to see it here</Text>
       </Box>
     </Box>
   );

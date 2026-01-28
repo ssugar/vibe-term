@@ -11,14 +11,14 @@ import { execAsync } from './platform.js';
  * for persistence across process restarts.
  */
 
-const TMUX_SESSION = 'claude-terminal';
+const TMUX_SESSION = 'vibe-term';
 const SCRATCH_WINDOW = 'scratch';
 
 /**
  * Ensure the scratch window exists for storing inactive session panes.
  * Creates the window if it doesn't exist.
  *
- * @returns The window target "claude-terminal:scratch"
+ * @returns The window target "vibe-term:scratch"
  */
 export async function ensureScratchWindow(): Promise<string> {
   try {

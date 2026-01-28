@@ -18,14 +18,14 @@ const cliPath = join(__dirname, 'cli.js');
 const cli = meow(
   `
   Usage
-    $ claude-terminal
+    $ vibe-term
 
   Options
     --refresh, -r  Refresh interval in seconds (default: 2)
 
   Examples
-    $ claude-terminal
-    $ claude-terminal --refresh 5
+    $ vibe-term
+    $ vibe-term --refresh 5
 `,
   {
     importMeta: import.meta,

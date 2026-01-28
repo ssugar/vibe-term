@@ -1,11 +1,11 @@
 {
-  "name": "claude-terminal",
+  "name": "vibe-term",
   "version": "1.0.0",
-  "description": "Claude Terminal - Manage multiple Claude Code instances in tmux",
+  "description": "Manage multiple AI coding assistant sessions in a unified terminal HUD",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
-    "claude-terminal": "dist/cli.js"
+    "vibe-term": "dist/cli.js"
   },
   "scripts": {
     "dev": "tsx src/cli.tsx",
@@ -17,21 +17,24 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ssugar/claude-terminal.git"
+    "url": "git+https://github.com/ssugar/vibe-term.git"
   },
   "keywords": [
-    "claude",
-    "cli",
-    "tui",
+    "vibe-term",
     "terminal",
-    "hud"
+    "tui",
+    "hud",
+    "ai",
+    "coding",
+    "multiplexer",
+    "tmux"
   ],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ssugar/claude-terminal/issues"
+    "url": "https://github.com/ssugar/vibe-term/issues"
   },
-  "homepage": "https://github.com/ssugar/claude-terminal#readme",
+  "homepage": "https://github.com/ssugar/vibe-term#readme",
   "dependencies": {
     "figures": "^6.1.0",
     "ink": "^6.6.0",

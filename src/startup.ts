@@ -3,9 +3,9 @@ import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
 /**
- * The managed tmux session name for claude-terminal
+ * The managed tmux session name for vibe-term
  */
-export const TMUX_SESSION_NAME = 'claude-terminal';
+export const TMUX_SESSION_NAME = 'vibe-term';
 
 /**
  * Result of startup orchestration
@@ -53,13 +53,13 @@ export function getTmuxEnvironment(): TmuxEnvironment {
 
 /**
  * Main startup orchestration function.
- * Ensures the application is running inside the managed `claude-terminal` tmux session.
+ * Ensures the application is running inside the managed `vibe-term` tmux session.
  *
  * Handles four scenarios:
  * 1. tmux not installed - returns error with install instructions
- * 2. Already in claude-terminal session - proceed to render Ink
- * 3. Inside tmux but different session - switch-client to claude-terminal
- * 4. Outside tmux - create/attach to claude-terminal session
+ * 2. Already in vibe-term session - proceed to render Ink
+ * 3. Inside tmux but different session - switch-client to vibe-term
+ * 4. Outside tmux - create/attach to vibe-term session
  *
  * @returns StartupResult indicating success/failure and whether to render Ink
  */
@@ -81,12 +81,12 @@ Install with:
   // 2. Get current tmux environment
   const tmuxEnv = getTmuxEnvironment();
 
-  // 3. If already in the claude-terminal session, proceed to Ink
+  // 3. If already in the vibe-term session, proceed to Ink
   if (tmuxEnv.inTmux && tmuxEnv.sessionName === TMUX_SESSION_NAME) {
     return { success: true, shouldRenderInk: true };
   }
 
-  // 4. Check if claude-terminal session already exists
+  // 4. Check if vibe-term session already exists
   const hasSessionResult = spawnSync('tmux', [
     'has-session',
     '-t',
@@ -97,7 +97,7 @@ Install with:
   // 5. Handle case: inside tmux but in a different session
   if (tmuxEnv.inTmux) {
     if (sessionExists) {
-      // Switch to existing claude-terminal session
+      // Switch to existing vibe-term session
       const switchResult = spawnSync('tmux', [
         'switch-client',
         '-t',

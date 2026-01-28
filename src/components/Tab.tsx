@@ -117,7 +117,7 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
   }
 
   // Normal: default colors with context color
-  // External sessions are dimmed to show they're not managed by claude-terminal
+  // External sessions are dimmed to show they're not managed by vibe-term
   if (isExternal) {
     return (
       <Text>

@@ -151,10 +151,10 @@ export async function buildSessions(
     // Check tmux context using parent PID
     const tmuxInfo = isProcessInTmux(process.ppid, panes);
 
-    // Classify as external if not managed by claude-terminal
+    // Classify as external if not managed by vibe-term
     // A session is external if:
     // - It's NOT in tmux at all (standalone terminal), OR
-    // - It IS in tmux but in a different session (not "claude-terminal:")
+    // - It IS in tmux but in a different session (not "vibe-term:")
     const isExternal = !tmuxInfo.inTmux ||
       !tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
 

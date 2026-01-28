@@ -3,7 +3,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 
 /**
- * User configuration for claude-terminal
+ * User configuration for vibe-term
  */
 export interface Config {
   hudPosition: 'top' | 'bottom';
@@ -21,7 +21,7 @@ export const DEFAULT_CONFIG: Config = {
 /**
  * Path to user configuration file
  */
-const CONFIG_PATH = join(homedir(), '.config', 'claude-terminal', 'config.json');
+const CONFIG_PATH = join(homedir(), '.config', 'vibe-term', 'config.json');
 
 /**
  * Validate that hudPosition is a valid value
@@ -38,7 +38,7 @@ function isValidHudHeight(value: unknown): value is number {
 }
 
 /**
- * Load user configuration from ~/.config/claude-terminal/config.json
+ * Load user configuration from ~/.config/vibe-term/config.json
  * Returns DEFAULT_CONFIG when file is missing or invalid.
  *
  * Behavior:
