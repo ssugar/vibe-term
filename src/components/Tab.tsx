@@ -14,13 +14,23 @@ const STATUS_EMOJI: Record<Session['status'], string> = {
   ended: '\u274C',     // X mark
 };
 
+/**
+ * Display mode determines tab format based on available terminal width.
+ * - wide: Full format [1:project-name ✅ 45%]
+ * - medium: Compact [1:proj ✅ 45%] (8 char name max)
+ * - narrow: No name [1 ✅ 45%]
+ * - minimal: Compressed 1✅45 (no brackets, no %)
+ */
+export type DisplayMode = 'wide' | 'medium' | 'narrow' | 'minimal';
+
 interface TabProps {
   session: Session;
   index: number;           // 1-based display index
   isSelected: boolean;
   isActive: boolean;       // Session is currently displayed in main pane
   isExternal?: boolean;    // Session is in external tmux session
-  maxNameWidth?: number;   // Default 20
+  maxNameWidth?: number;   // Default 20 (for wide mode)
+  displayMode?: DisplayMode; // Responsive display mode
 }
 
 /**
@@ -43,27 +53,60 @@ function getContextColor(usage: number): 'green' | 'yellow' | 'red' {
  * - Normal: default colors
  * - Blocked status is indicated by the stop sign emoji only, no background change
  */
-export function Tab({ session, index, isSelected, isActive, isExternal = false, maxNameWidth = 20 }: TabProps): React.ReactElement {
+export function Tab({ session, index, isSelected, isActive, isExternal = false, maxNameWidth = 20, displayMode = 'wide' }: TabProps): React.ReactElement {
   // Extract project name from projectPath (last directory)
   const rawName = session.projectPath.split('/').pop() || 'unknown';
-
-  // Truncate to maxNameWidth with ellipsis if needed
-  const truncatedName = rawName.length > maxNameWidth
-    ? rawName.slice(0, maxNameWidth - 1) + '\u2026'  // Unicode ellipsis
-    : rawName;
 
   // Status emoji
   const statusEmoji = STATUS_EMOJI[session.status];
 
-  // Context percentage (pad to 4 chars for consistent width: " 0%" to "100%")
-  const contextPct = `${Math.round(session.contextUsage)}%`.padStart(4);
+  // Context percentage - format varies by display mode
+  const contextValue = Math.round(session.contextUsage);
+  const contextPct = displayMode === 'minimal'
+    ? String(contextValue) // Just the number, no %
+    : `${contextValue}%`.padStart(4); // Padded with %
   const contextColor = getContextColor(session.contextUsage);
 
-  // Build tab content: [index:name status context%]
   // External sessions show ~E: instead of number (can't quick-jump to them)
   // Internal sessions show their number for quick-jump with 1-9 or Alt+N
   const indexDisplay = isExternal ? '~E' : String(index);
-  const tabContent = `[${indexDisplay}:${truncatedName} ${statusEmoji} `;
+
+  // Build tab content based on display mode
+  let tabContent: string;
+  let closingBracket: string;
+
+  switch (displayMode) {
+    case 'minimal':
+      // Compressed: 1✅45 (no brackets, no %, no spaces)
+      tabContent = `${indexDisplay}${statusEmoji}`;
+      closingBracket = '';
+      break;
+    case 'narrow':
+      // No name: [1 ✅ 45%]
+      tabContent = `[${indexDisplay} ${statusEmoji} `;
+      closingBracket = ']';
+      break;
+    case 'medium': {
+      // Compact: [1:proj ✅ 45%] (8 char name max)
+      const mediumMaxWidth = 8;
+      const truncatedName = rawName.length > mediumMaxWidth
+        ? rawName.slice(0, mediumMaxWidth - 1) + '\u2026'
+        : rawName;
+      tabContent = `[${indexDisplay}:${truncatedName} ${statusEmoji} `;
+      closingBracket = ']';
+      break;
+    }
+    case 'wide':
+    default: {
+      // Full format: [1:project-name ✅ 45%]
+      const truncatedName = rawName.length > maxNameWidth
+        ? rawName.slice(0, maxNameWidth - 1) + '\u2026'
+        : rawName;
+      tabContent = `[${indexDisplay}:${truncatedName} ${statusEmoji} `;
+      closingBracket = ']';
+      break;
+    }
+  }
 
   // Selected tabs (whether active or not) get underline - no background colors
   if (isSelected) {
@@ -71,7 +114,7 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
       <Text>
         <Text underline>{tabContent}</Text>
         <Text underline color={contextColor}>{contextPct}</Text>
-        <Text underline>]</Text>
+        {closingBracket && <Text underline>{closingBracket}</Text>}
       </Text>
     );
   }
@@ -82,7 +125,7 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
       <Text>
         <Text underline>{tabContent}</Text>
         <Text underline color={contextColor}>{contextPct}</Text>
-        <Text underline>]</Text>
+        {closingBracket && <Text underline>{closingBracket}</Text>}
       </Text>
     );
   }
@@ -94,7 +137,7 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
       <Text>
         <Text dimColor>{tabContent}</Text>
         <Text dimColor color={contextColor}>{contextPct}</Text>
-        <Text dimColor>]</Text>
+        {closingBracket && <Text dimColor>{closingBracket}</Text>}
       </Text>
     );
   }
@@ -103,7 +146,7 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
     <Text>
       <Text>{tabContent}</Text>
       <Text color={contextColor}>{contextPct}</Text>
-      <Text>]</Text>
+      {closingBracket && <Text>{closingBracket}</Text>}
     </Text>
   );
 }
