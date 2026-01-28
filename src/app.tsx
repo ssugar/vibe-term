@@ -293,6 +293,12 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         const targetIndex = parseInt(input, 10) - 1;
         if (targetIndex < sessions.length) {
           useAppStore.getState().setSelectedIndex(targetIndex);
+        } else {
+          // Show error for invalid session number
+          useAppStore.getState().setError(`No session ${input}`);
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 1500);
         }
         return;
       }
