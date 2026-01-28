@@ -81,11 +81,13 @@ export function HudStrip({
           <Text color="yellow">Quit: </Text>
           <Text color="yellow" bold>[d]</Text>
           <Text>etach </Text>
+          <Text dimColor>(sessions stay) </Text>
           <Text dimColor>| </Text>
           <Text color="red" bold>[k]</Text>
           <Text>ill </Text>
+          <Text dimColor>(ends all sessions) </Text>
           <Text dimColor>| </Text>
-          <Text dimColor>[n/Esc] cancel</Text>
+          <Text dimColor>[n/Esc]</Text>
         </Text>
       )}
 
