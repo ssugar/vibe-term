@@ -41,7 +41,8 @@ function calculateTabWidth(session: Session, index: number, maxNameWidth: number
 
 /**
  * TabStrip renders sessions as horizontal tabs with:
- * - Blocked sessions pinned to the left (always visible)
+ * - Internal sessions in stable order (1, 2, 3...) regardless of status
+ * - External sessions pinned to the right
  * - Arrow indicators when tabs overflow
  * - Auto-scroll to keep selected tab visible
  */
@@ -58,42 +59,35 @@ export function TabStrip(): React.ReactElement {
   // Terminal width for overflow calculation
   const terminalWidth = useTerminalWidth();
 
-  // Scroll offset for normal (non-blocked) sessions
+  // Scroll offset for managed (internal) sessions
   const [scrollOffset, setScrollOffset] = useState(0);
 
   // Memoize session categorization to avoid recreating on every render
-  // Three groups: blocked (pinned left), managed (scrollable middle), external (pinned right)
-  const { blockedWithIndices, managedWithIndices, externalWithIndices } = useMemo(() => {
-    const blocked: Array<{ session: Session; originalIndex: number }> = [];
+  // Two groups: managed (scrollable, maintains order), external (pinned right)
+  // Blocked sessions stay in their original position - no reordering
+  const { managedWithIndices, externalWithIndices } = useMemo(() => {
     const managed: Array<{ session: Session; originalIndex: number }> = [];
     const external: Array<{ session: Session; originalIndex: number }> = [];
 
     sessions.forEach((session, idx) => {
       const item = { session, originalIndex: idx + 1 }; // 1-based index
       if (session.isExternal) {
-        // External sessions always go to the right, even if blocked
+        // External sessions always go to the right
         external.push(item);
-      } else if (session.status === 'blocked') {
-        blocked.push(item);
       } else {
+        // All internal sessions (including blocked) stay in order
         managed.push(item);
       }
     });
 
-    return { blockedWithIndices: blocked, managedWithIndices: managed, externalWithIndices: external };
+    return { managedWithIndices: managed, externalWithIndices: external };
   }, [sessions]);
 
   // Calculate layout metrics (memoized)
   const layoutMetrics = useMemo(() => {
     if (sessions.length === 0) {
-      return { blockedWidth: 0, externalWidth: 0, dividerWidth: 0, availableWidth: 0, visibleManagedCount: 0 };
+      return { externalWidth: 0, dividerWidth: 0, availableWidth: 0, visibleManagedCount: 0 };
     }
-
-    // Calculate width used by blocked tabs
-    const blockedWidth = blockedWithIndices.reduce(
-      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, MAX_NAME_WIDTH),
-      0
-    );
 
     // Calculate width used by external tabs (pinned right)
     const externalWidth = externalWithIndices.reduce(
@@ -109,7 +103,7 @@ export function TabStrip(): React.ReactElement {
     const rightArrowWidth = 3;
 
     // Calculate available width for managed tabs
-    const availableWidth = terminalWidth - blockedWidth - externalWidth - dividerWidth - leftArrowWidth - rightArrowWidth;
+    const availableWidth = terminalWidth - externalWidth - dividerWidth - leftArrowWidth - rightArrowWidth;
 
     // Calculate how many managed tabs fit
     let visibleManagedCount = 0;
@@ -131,8 +125,8 @@ export function TabStrip(): React.ReactElement {
       visibleManagedCount = 1;
     }
 
-    return { blockedWidth, externalWidth, dividerWidth, availableWidth, visibleManagedCount };
-  }, [sessions.length, blockedWithIndices, managedWithIndices, externalWithIndices, terminalWidth, scrollOffset]);
+    return { externalWidth, dividerWidth, availableWidth, visibleManagedCount };
+  }, [sessions.length, managedWithIndices, externalWithIndices, terminalWidth, scrollOffset]);
 
   const { visibleManagedCount } = layoutMetrics;
 
@@ -141,13 +135,12 @@ export function TabStrip(): React.ReactElement {
     // Skip if no sessions
     if (sessions.length === 0) return;
 
-    // Find if selected is in blocked, managed, or external
+    // Find if selected is managed or external
     const selectedSession = sessions[selectedIndex];
     if (!selectedSession) return;
 
     // External sessions are always visible (pinned right), no scroll adjustment needed
-    // Blocked internal sessions are also always visible (pinned left)
-    if (selectedSession.isExternal || selectedSession.status === 'blocked') {
+    if (selectedSession.isExternal) {
       return;
     }
 
@@ -204,20 +197,7 @@ export function TabStrip(): React.ReactElement {
       {showLeftArrow && <Text dimColor>{figures.arrowLeft}  </Text>}
       {!showLeftArrow && <Text>   </Text>}
 
-      {/* Blocked sessions (always visible, pinned left) */}
-      {blockedWithIndices.map(({ session, originalIndex }) => (
-        <Box key={session.id} marginRight={2}>
-          <Tab
-            session={session}
-            index={originalIndex}
-            isSelected={selectedIndex === originalIndex - 1}
-            isActive={session.id === activeSessionId}
-            maxNameWidth={MAX_NAME_WIDTH}
-          />
-        </Box>
-      ))}
-
-      {/* Managed sessions (scrollable middle) */}
+      {/* Managed sessions (scrollable, includes all internal sessions in order) */}
       {visibleManagedSessions.map(({ session, originalIndex }) => (
         <Box key={session.id} marginRight={2}>
           <Tab

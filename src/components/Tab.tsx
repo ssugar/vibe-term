@@ -37,11 +37,11 @@ function getContextColor(usage: number): 'green' | 'yellow' | 'red' {
  * Format: [index:name status context%]
  *
  * Visual states (priority order):
- * - Blocked: red background, white text, bold (highest priority)
- * - Active + Selected: inverse + underline (in main pane, cursor here)
+ * - Active + Selected: underline (in main pane, cursor here)
  * - Active only: underline (in main pane, cursor elsewhere)
- * - Selected only: inverse (cursor here, not in main pane)
+ * - Selected only: underline (cursor here, not in main pane)
  * - Normal: default colors
+ * - Blocked status is indicated by the stop sign emoji only, no background change
  */
 export function Tab({ session, index, isSelected, isActive, isExternal = false, maxNameWidth = 20 }: TabProps): React.ReactElement {
   // Extract project name from projectPath (last directory)
@@ -59,37 +59,19 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
   const contextPct = `${Math.round(session.contextUsage)}%`.padStart(4);
   const contextColor = getContextColor(session.contextUsage);
 
-  // Check states
-  const isBlocked = session.status === 'blocked';
-
   // Build tab content: [index:name status context%]
   // External sessions show ~E: instead of number (can't quick-jump to them)
   // Internal sessions show their number for quick-jump with 1-9 or Alt+N
   const indexDisplay = isExternal ? '~E' : String(index);
   const tabContent = `[${indexDisplay}:${truncatedName} ${statusEmoji} `;
 
-  if (isBlocked) {
-    // Blocked: red background, white bold text (highest priority, unchanged)
+  // Selected tabs (whether active or not) get underline - no background colors
+  if (isSelected) {
     return (
       <Text>
-        <Text backgroundColor="red" color="white" bold>
-          {tabContent}
-        </Text>
-        <Text backgroundColor="red" color="white" bold>
-          {contextPct}
-        </Text>
-        <Text backgroundColor="red" color="white" bold>]</Text>
-      </Text>
-    );
-  }
-
-  if (isActive && isSelected) {
-    // Active + Selected: inverse + underline (in main pane AND cursor here)
-    return (
-      <Text>
-        <Text inverse underline>{tabContent}</Text>
-        <Text inverse underline color={contextColor}>{contextPct}</Text>
-        <Text inverse underline>]</Text>
+        <Text underline>{tabContent}</Text>
+        <Text underline color={contextColor}>{contextPct}</Text>
+        <Text underline>]</Text>
       </Text>
     );
   }
@@ -101,17 +83,6 @@ export function Tab({ session, index, isSelected, isActive, isExternal = false, 
         <Text underline>{tabContent}</Text>
         <Text underline color={contextColor}>{contextPct}</Text>
         <Text underline>]</Text>
-      </Text>
-    );
-  }
-
-  if (isSelected) {
-    // Selected only: inverse (cursor here, but not in main pane)
-    return (
-      <Text>
-        <Text inverse>{tabContent}</Text>
-        <Text inverse color={contextColor}>{contextPct}</Text>
-        <Text inverse>]</Text>
       </Text>
     );
   }
