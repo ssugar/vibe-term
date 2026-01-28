@@ -141,6 +141,24 @@ export function useSessions(): void {
       useAppStore.getState().setSessions(sessions);
       useAppStore.getState().setLastRefresh(new Date());
       useAppStore.getState().setError(null);
+
+      // Check if HUD pane is focused
+      execAsync('tmux display-message -p "#{pane_id}"')
+        .then(({ stdout: currentPaneId }) => {
+          execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
+            .then(({ stdout: hudEnv }) => {
+              const hudPaneId = hudEnv.split('=')[1]?.trim();
+              const isFocused = currentPaneId.trim() === hudPaneId;
+              useAppStore.getState().setHudFocused(isFocused);
+            })
+            .catch(() => {
+              // If we can't determine focus, assume focused
+              useAppStore.getState().setHudFocused(true);
+            });
+        })
+        .catch(() => {
+          useAppStore.getState().setHudFocused(true);
+        });
     } catch (err) {
       useAppStore.getState().setError(
         err instanceof Error ? err.message : 'Failed to detect sessions'

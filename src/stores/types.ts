@@ -25,6 +25,7 @@ export interface AppState {
   selectedIndex: number;
   activeSessionId: string | null;  // Session currently displayed in main pane
   error: string | null;
+  hudFocused: boolean;
 
   // Refresh state
   lastRefresh: Date | null;
@@ -42,4 +43,5 @@ export interface AppState {
   setLastRefresh: (date: Date) => void;
   setRefreshInterval: (interval: number) => void;
   setSessions: (sessions: Session[]) => void;
+  setHudFocused: (focused: boolean) => void;
 }

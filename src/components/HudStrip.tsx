@@ -13,6 +13,7 @@ interface HudStripProps {
   showMkdirPrompt?: boolean;
   mkdirPath?: string;
   completionCount?: number;
+  hudFocused?: boolean;
 }
 
 /**
@@ -39,6 +40,7 @@ export function HudStrip({
   showMkdirPrompt,
   mkdirPath,
   completionCount = 0,
+  hudFocused = true,
 }: HudStripProps): React.ReactElement {
   // Determine what to show on line 2 (priority order)
   const showMkdir = showMkdirPrompt;
@@ -48,8 +50,11 @@ export function HudStrip({
   const showHelpText = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
   const showError = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
 
+  // Show keybinding hints when focused and no modal state active
+  const showHints = hudFocused && !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
+
   return (
-    <Box flexDirection="column" backgroundColor="#333333">
+    <Box flexDirection="column" backgroundColor={hudFocused ? "#333333" : "#222222"}>
       <TabStrip />
 
       {/* Mkdir prompt (directory doesn't exist) - highest priority */}
@@ -114,6 +119,13 @@ export function HudStrip({
           <Text color="red">{error}</Text>
           <Text dimColor> (x to dismiss)</Text>
         </Box>
+      )}
+
+      {/* Keybinding hints - only when focused and no modal state */}
+      {showHints && (
+        <Text dimColor>
+          ←/→: nav | Enter: switch | n: new | q: quit | ?: help
+        </Text>
       )}
     </Box>
   );

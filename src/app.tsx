@@ -44,6 +44,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const error = useAppStore((state) => state.error);
   const sessions = useAppStore((state) => state.sessions);
   const selectedIndex = useAppStore((state) => state.selectedIndex);
+  const hudFocused = useAppStore((state) => state.hudFocused);
 
   // Store actions - get directly from store to avoid dependency issues
   const setConfirmingExit = useAppStore((state) => state.setConfirmingExit);
@@ -425,6 +426,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         showMkdirPrompt={showMkdirPrompt}
         mkdirPath={mkdirPath}
         completionCount={completions.length}
+        hudFocused={hudFocused}
       />
     </Box>
   );

@@ -8,6 +8,7 @@ export const useAppStore = create<AppState>()((set) => ({
   selectedIndex: 0,
   activeSessionId: null,
   error: null,
+  hudFocused: true,
 
   // Initial refresh state
   lastRefresh: null,
@@ -30,4 +31,5 @@ export const useAppStore = create<AppState>()((set) => ({
       // Clamp selectedIndex to valid range when sessions change
       selectedIndex: Math.min(state.selectedIndex, Math.max(0, sessions.length - 1)),
     })),
+  setHudFocused: (focused) => set({ hudFocused: focused }),
 }));
