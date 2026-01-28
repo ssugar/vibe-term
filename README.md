@@ -25,15 +25,58 @@ One keypress switches between sessions. The HUD stays visible while you work.
 
 ## Installation
 
-```bash
-npm install -g vibe-term
-```
-
-Or run directly:
+Clone the repository and build:
 
 ```bash
-npx vibe-term
+git clone https://github.com/ssugar/vibe-term.git
+cd vibe-term
+npm install
+npm run build
 ```
+
+Run directly:
+
+```bash
+npm run dev
+```
+
+Or link globally:
+
+```bash
+npm link
+vibe-term
+```
+
+## Hooks Setup
+
+vibe-term relies on Claude Code hooks to track session status. Add the status hook to your global Claude settings (`~/.claude/settings.json`):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
+    "PreToolUse": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
+    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }]
+  }
+}
+```
+
+Replace `/path/to/vibe-term` with the actual path where you cloned the repository.
+
+### Project-Level Settings Override
+
+Claude Code settings don't merge between global and project-level configs. If a project has its own `.claude/settings.json` or `.claude/settings.local.json`, the global hooks won't run for that project. See [#17017](https://github.com/anthropics/claude-code/issues/17017) and [#19487](https://github.com/anthropics/claude-code/issues/19487).
+
+To add the HUD hook to all your existing projects:
+
+```bash
+./scripts/add-hud-hooks.sh ~/path/to/your/projects
+```
+
+This script finds all project-level Claude settings and adds the status hook to each one.
 
 ## Usage
 
