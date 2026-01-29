@@ -54,7 +54,11 @@ export function HudStrip({
   const showHints = hudFocused && !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
 
   return (
-    <Box flexDirection="column" backgroundColor={hudFocused ? "#333333" : "#222222"}>
+    <Box
+      flexDirection="column"
+      borderStyle={hudFocused ? "round" : undefined}
+      borderColor={hudFocused ? "cyan" : undefined}
+    >
       <TabStrip />
 
       {/* Mkdir prompt (directory doesn't exist) - highest priority */}
