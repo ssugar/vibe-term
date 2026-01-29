@@ -262,16 +262,20 @@ export async function createHudLayout(
   }
 
   // Display welcome message in main pane (only on fresh layout creation)
+  // Uses a command that displays the welcome and waits silently (hiding bash prompt)
   if (panes.length < 2) {
-    const welcomeArt = `
+    // Welcome script: clear, show art, then wait silently with read
+    // When a session is spawned, this pane gets swapped out
+    const welcomeScript = `clear; cat << 'WELCOME'
+
   ╔═══════════════════════════════════════════════════════════════╗
   ║                                                               ║
-  ║       ██████╗██╗      █████╗ ██╗   ██╗██████╗ ███████╗        ║
-  ║      ██╔════╝██║     ██╔══██╗██║   ██║██╔══██╗██╔════╝        ║
-  ║      ██║     ██║     ███████║██║   ██║██║  ██║█████╗          ║
-  ║      ██║     ██║     ██╔══██║██║   ██║██║  ██║██╔══╝          ║
-  ║      ╚██████╗███████╗██║  ██║╚██████╔╝██████╔╝███████╗        ║
-  ║       ╚═════╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚═════╝ ╚══════╝        ║
+  ║         ██╗   ██╗██╗██████╗ ███████╗                          ║
+  ║         ██║   ██║██║██╔══██╗██╔════╝                          ║
+  ║         ██║   ██║██║██████╔╝█████╗                            ║
+  ║         ╚██╗ ██╔╝██║██╔══██╗██╔══╝                            ║
+  ║          ╚████╔╝ ██║██████╔╝███████╗                          ║
+  ║           ╚═══╝  ╚═╝╚═════╝ ╚══════╝                          ║
   ║                    ████████╗███████╗██████╗ ███╗   ███╗       ║
   ║                    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║       ║
   ║                       ██║   █████╗  ██████╔╝██╔████╔██║       ║
@@ -282,17 +286,19 @@ export async function createHudLayout(
   ║          Your AI-powered terminal session manager             ║
   ║                                                               ║
   ║   Press 'n' in HUD to spawn a new Claude session              ║
-  ║   Alt+1-9 to jump to session from any pane                    ║
+  ║   1-9 to jump to session | Ctrl+h to focus HUD                ║
   ║   Press '?' for help | 'q' to quit                            ║
   ║                                                               ║
   ╚═══════════════════════════════════════════════════════════════╝
-`;
 
-    // Send welcome art to main pane using printf for reliable multi-line output
-    // Escape special characters and use $'...' syntax for proper handling
-    const escapedArt = welcomeArt.replace(/'/g, "'\\''");
+WELCOME
+read -s`;
+
+    // Send welcome script to main pane
+    // Use bash -c to run the multi-line script
+    const escapedScript = welcomeScript.replace(/'/g, "'\\''");
     await execAsync(
-      `tmux send-keys -t ${mainPane} 'clear && echo '"'"'${escapedArt}'"'"'' Enter`
+      `tmux send-keys -t ${mainPane} 'bash -c '"'"'${escapedScript}'"'"'' Enter`
     );
   }
 
