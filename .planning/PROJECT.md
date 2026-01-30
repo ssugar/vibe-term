@@ -8,23 +8,22 @@ A tmux-integrated terminal multiplexer for managing multiple Claude Code session
 
 Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
 
-## Current Milestone: v2.0 Integrated Claude Terminal
+## Current Milestone: v3.0 Hook Management & Distribution
 
-**Goal:** Transform the standalone HUD into a tmux-integrated terminal where sessions run inside managed panes with an always-visible status strip.
+**Goal:** Make vibe-term easy to install and self-managing for Claude hooks
 
 **Target features:**
-- Horizontal HUD strip showing sessions as tabs (always visible)
-- tmux split architecture (HUD top, active session bottom)
-- Reliable session switching via native tmux operations
-- Spawn new Claude sessions from within HUD
-- Detect and integrate externally-created sessions
-- Quick return to HUD view with `b` key
+- Discover all Claude projects from `~/.claude/projects/`
+- Global hook setup with automatic backup
+- Audit projects for conflicting hook settings
+- Intelligent hook merging (preserve project hooks, add vibe-term)
+- npm global install support (`npm install -g vibe-term`)
 
 ## Requirements
 
 ### Validated
 
-*Shipped in v1.0 and confirmed working:*
+*Shipped in v1.0:*
 
 - ✓ Detect all running Claude Code instances — v1.0
 - ✓ Show working vs idle vs blocked status — v1.0
@@ -35,43 +34,57 @@ Never miss a blocked Claude. See everything at a glance, get to any Claude in on
 - ✓ Project/directory identification — v1.0
 - ✓ Real-time status refresh — v1.0
 
+*Shipped in v2.0:*
+
+- ✓ Horizontal HUD strip with session tabs — v2.0
+- ✓ tmux split pane architecture — v2.0
+- ✓ Reliable session switching (native tmux) — v2.0
+- ✓ Return to HUD with Ctrl+h key — v2.0
+- ✓ Spawn new sessions from HUD (`n` key) — v2.0
+- ✓ Detect externally-created tmux sessions — v2.0
+- ✓ Minimal tab format with status and context — v2.0
+
 ### Active
 
-*v2.0 scope:*
+*v3.0 scope:*
 
-- [ ] Horizontal HUD strip with session tabs
-- [ ] tmux split pane architecture
-- [ ] Reliable session switching (native tmux)
-- [ ] Return to HUD with `b` key
-- [ ] Spawn new sessions from HUD (`n` key)
-- [ ] Detect externally-created tmux sessions
-- [ ] Minimal tab format: `[index:name status context%]`
+- [ ] Discover Claude projects from ~/.claude/projects/
+- [ ] ~/.vibe-term/ directory for hooks script and config
+- [ ] Global hook setup command with backup
+- [ ] Audit projects for conflicting settings
+- [ ] Fix/merge conflicting hooks with backup
+- [ ] npm global install packaging
+- [ ] CLI commands for hook management (setup, audit, fix)
+- [ ] Update GitHub README with installation and usage docs
 
 ### Out of Scope
 
 - Embedded terminal (node-pty) — Using tmux splits instead, proven reliability
 - Native Windows support — WSL2 is primary
-- Non-tmux session management — v2.0 is tmux-integrated by design
-- Session preview pane — Defer to v3
-- Cost/token tracking — Defer to v3
+- Non-tmux session management — tmux-integrated by design
+- Session preview pane — Defer to v4
+- Cost/token tracking — Defer to v4
 - Multi-machine monitoring — Massive complexity
+- GUI installer — CLI-first for developer audience
 
 ## Context
 
-**Evolution from v1.0:**
-- v1.0 standalone HUD works but has jumping limitations for non-tmux sessions
-- User runs 5-10 concurrent Claude sessions
-- Alt-tabbing to find blocked sessions is the core pain point
-- tmux integration solves jumping reliability completely
+**Evolution through v2.0:**
+- v1.0 standalone HUD → v2.0 tmux-integrated terminal
+- Core UX is solid: HUD strip, session tabs, one-keypress switching
+- Status tracking relies on hooks configured in Claude settings
+
+**v3.0 focus — adoption friction:**
+- Users must manually configure hooks for status tracking to work
+- Project-level `.claude/settings.json` can conflict with global hooks
+- No easy install path (`npm install -g` not supported yet)
+- Hook script location tied to dev environment, not portable
 
 **Technical approach:**
-- Evolve existing v1.0 codebase (don't rewrite)
-- Refactor full-screen list UI into horizontal strip component
-- Add tmux session/pane management layer
-- Existing session detection, status parsing, context tracking all reusable
-
-**Key insight:**
-By making tmux the container, we get reliable jumping for free. The HUD becomes a thin status layer on top of native tmux pane management.
+- Add CLI commands: `vibe-term setup`, `vibe-term audit`, `vibe-term fix`
+- `~/.vibe-term/` as persistent home for hooks script and future config
+- Project discovery via `~/.claude/projects/` directory structure
+- Intelligent hook merging preserves project hooks while adding vibe-term's
 
 ## Constraints
 
@@ -86,9 +99,11 @@ By making tmux the container, we get reliable jumping for free. The HUD becomes 
 |----------|-----------|---------|
 | Ink (React TUI) | Proven in v1.0, familiar patterns | ✓ Good |
 | Hooks over JSONL | JSONL format unreliable, hooks authoritative | ✓ Good |
-| tmux splits over embedded terminal | Native reliability, less complexity | — Pending |
-| Evolve v1.0 codebase | Reuse session detection, status parsing, context tracking | — Pending |
-| Minimal HUD strip | Maximize space for active session | — Pending |
+| tmux splits over embedded terminal | Native reliability, less complexity | ✓ Good |
+| Evolve v1.0 codebase | Reuse session detection, status parsing, context tracking | ✓ Good |
+| Minimal HUD strip | Maximize space for active session | ✓ Good |
+| ~/.vibe-term/ for user config | Persistent location independent of npm install path | — Pending |
+| Intelligent hook merging | Preserve project hooks while adding vibe-term's | — Pending |
 
 ---
-*Last updated: 2026-01-25 after v2.0 milestone initialization*
+*Last updated: 2026-01-30 after v3.0 milestone initialization*

@@ -2,19 +2,19 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-25)
+See: .planning/PROJECT.md (updated 2026-01-30)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Complete
+**Current focus:** Milestone v3.0 — Hook Management & Distribution
 
 ## Current Position
 
-Phase: 11 of 11 (Navigation Integration)
-Plan: 1 of 1 in current phase
-Status: v2.0 milestone complete
-Last activity: 2026-01-30 — Completed Phase 11, v2.0 done
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-01-30 — Milestone v3.0 started
 
-Progress: [####################] 100% (v1.0 complete, v2.0 complete)
+Progress: [....................] 0% (v3.0 in progress)
 
 ## Performance Metrics
 
