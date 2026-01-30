@@ -122,9 +122,9 @@ export function useSessions(): void {
   ║                                                               ║
   ║          Your AI-powered terminal session manager             ║
   ║                                                               ║
-  ║   Press 'n' in HUD to spawn a new Claude session              ║
+  ║   Press n in HUD to spawn a new Claude session                ║
   ║   1-9 to jump to session | Ctrl+h to focus HUD                ║
-  ║   Press '?' for help | 'q' to quit                            ║
+  ║   Press ? for help | q to quit                                ║
   ║                                                               ║
   ╚═══════════════════════════════════════════════════════════════╝
 `;
