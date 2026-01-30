@@ -65,7 +65,7 @@ export function useSessions(): void {
       if (activeSessionId && removedIds.includes(activeSessionId)) {
         useAppStore.getState().setActiveSessionId(null);
 
-        // Get HUD and main pane IDs
+        // Get HUD pane ID from environment
         const getEnv = async (name: string) => {
           try {
             const { stdout } = await execAsync(`tmux show-environment ${name}`);
@@ -75,9 +75,21 @@ export function useSessions(): void {
           }
         };
 
+        // Dynamically find main pane (the pane in current window that isn't HUD)
+        // This is necessary because pane IDs change positions after swap-pane operations
+        const findMainPane = async (hudPaneId: string | undefined): Promise<string | undefined> => {
+          try {
+            const { stdout: paneList } = await execAsync(`tmux list-panes -F '#{pane_id}'`);
+            const panes = paneList.trim().split('\n');
+            return panes.find(p => p !== hudPaneId) || panes[1];
+          } catch {
+            return undefined;
+          }
+        };
+
         (async () => {
           const hudPaneId = await getEnv('CLAUDE_TERMINAL_HUD_PANE');
-          const mainPaneId = await getEnv('CLAUDE_TERMINAL_MAIN_PANE');
+          const mainPaneId = await findMainPane(hudPaneId);
 
           if (sessions.length > 0) {
             // Switch to first remaining session
