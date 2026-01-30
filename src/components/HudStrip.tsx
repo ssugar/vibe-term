@@ -14,6 +14,7 @@ interface HudStripProps {
   mkdirPath?: string;
   completionCount?: number;
   hudFocused?: boolean;
+  hasSessions?: boolean; // Whether any sessions exist (affects hint display)
 }
 
 /**
@@ -41,6 +42,7 @@ export function HudStrip({
   mkdirPath,
   completionCount = 0,
   hudFocused = true,
+  hasSessions = false,
 }: HudStripProps): React.ReactElement {
   // Determine what to show on line 2 (priority order)
   const showMkdir = showMkdirPrompt;
@@ -50,8 +52,9 @@ export function HudStrip({
   const showHelpText = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
   const showError = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
 
-  // Show keybinding hints when focused and no modal state active
-  const showHints = hudFocused && !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
+  // Show keybinding hints when focused, no modal state active, AND sessions exist
+  // (EmptyState already includes spawn hint when no sessions)
+  const showHints = hudFocused && hasSessions && !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
 
   return (
     <Box

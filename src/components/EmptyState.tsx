@@ -1,22 +1,18 @@
 import React from 'react';
 import { Box, Text } from 'ink';
 
+/**
+ * EmptyState renders a compact single-line message when no sessions are detected.
+ * Designed to fit within the 3-line HUD pane (which includes border when focused).
+ */
 export function EmptyState(): React.ReactElement {
   return (
-    <Box
-      flexDirection="column"
-      alignItems="center"
-      paddingY={2}
-    >
-      <Text>
-        {`  ╭──────────────────╮
-  │   No sessions    │
-  │    detected      │
-  ╰──────────────────╯`}
-      </Text>
-      <Box marginTop={1}>
-        <Text dimColor>Start an AI coding session to see it here</Text>
-      </Box>
+    <Box>
+      <Text dimColor>No sessions </Text>
+      <Text dimColor>{'·'} </Text>
+      <Text dimColor>Press </Text>
+      <Text color="cyan">n</Text>
+      <Text dimColor> to spawn new Claude session</Text>
     </Box>
   );
 }

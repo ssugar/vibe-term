@@ -431,6 +431,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         mkdirPath={mkdirPath}
         completionCount={completions.length}
         hudFocused={hudFocused}
+        hasSessions={sessions.length > 0}
       />
     </Box>
   );
