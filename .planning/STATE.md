@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-25)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Milestone v2.0 — Phase 10 (Session Lifecycle) complete
+**Current focus:** Milestone v2.0 — Complete
 
 ## Current Position
 
-Phase: 10 of 11 (Session Lifecycle)
-Plan: 3 of 3 in current phase
-Status: Phase 10 complete, verified
-Last activity: 2026-01-26 — Completed 10-03-PLAN.md
+Phase: 11 of 11 (Navigation Integration)
+Plan: 1 of 1 in current phase
+Status: v2.0 milestone complete
+Last activity: 2026-01-30 — Completed Phase 11, v2.0 done
 
-Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
+Progress: [####################] 100% (v1.0 complete, v2.0 complete)
 
 ## Performance Metrics
 
@@ -24,9 +24,9 @@ Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
 - Average duration: ~7.3 min/plan
 
 **v2.0:**
-- Total plans: 12 complete (Phase 7: 3, Phase 8: 3, Phase 9: 3, Phase 10: 3)
-- Completed: 12
-- Average duration: ~5 min/plan
+- Total plans: 13 complete (Phase 7: 3, Phase 8: 3, Phase 9: 3, Phase 10: 3, Phase 11: 1)
+- Completed: 13
+- Average duration: ~6 min/plan
 
 ## Accumulated Context
 
@@ -101,6 +101,14 @@ Progress: [###################.] 95% (v1.0 complete, Phases 7-10 complete)
 - External sessions get ~ prefix and dimColor for visual distinction
 - External sessions always on right side, even if blocked (isExternal check first)
 
+*Phase 11 learnings:*
+
+- Cyan border more visible than background color for focus indication
+- Dynamic HUD resize (5 lines focused, 3 unfocused) maximizes main pane space
+- Error auto-dismiss with setTimeout (1.5s for minor, 3s for important)
+- removeSession action must clamp selectedIndex to valid range
+- Focus polling via tmux pane ID comparison
+
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
@@ -111,6 +119,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-26
-Stopped at: Completed Phase 10
+Last session: 2026-01-30
+Stopped at: v2.0 milestone complete
 Resume file: None

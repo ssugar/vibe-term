@@ -130,7 +130,7 @@ Plans:
 - [x] **Phase 8: HUD Strip UI** - Transform full-screen list to horizontal tab strip
 - [x] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
 - [x] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
-- [ ] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
+- [x] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
 
 ## Phase Details
 
@@ -213,7 +213,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 11-01-PLAN.md — Fix selectedIndex bounds and validate navigation
+- [x] 11-01-PLAN.md — Fix selectedIndex bounds and validate navigation
 
 ## Progress
 
@@ -232,9 +232,9 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 8. HUD Strip UI | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
-| 11. Navigation Integration | v2.0 | 0/1 | Not started | - |
+| 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
 
 ---
 *Roadmap created: 2026-01-22*
 *v2.0 phases added: 2026-01-25*
-*Last updated: 2026-01-27*
+*v2.0 complete: 2026-01-30*
