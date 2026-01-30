@@ -6,6 +6,7 @@ import { useInterval } from './hooks/useInterval.js';
 import { useSessions } from './hooks/useSessions.js';
 import { HudStrip } from './components/HudStrip.js';
 import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
+import { resizeHudPane } from './services/tmuxService.js';
 import { TMUX_SESSION_NAME } from './startup.js';
 import { execAsync } from './services/platform.js';
 import { ensureScratchWindow } from './services/paneSessionManager.js';
@@ -66,6 +67,12 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   useInterval(() => {
     useAppStore.getState().setLastRefresh(new Date());
   }, refreshInterval);
+
+  // Resize HUD pane based on focus state
+  // Expand to 5 lines when focused for better visibility, shrink to 3 when unfocused
+  useEffect(() => {
+    resizeHudPane(hudFocused ? 5 : 3);
+  }, [hudFocused]);
 
   // Handle keyboard input
   useInput((input, key) => {

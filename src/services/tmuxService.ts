@@ -310,3 +310,21 @@ read -s`;
     mainPaneId: mainPane.trim(),
   };
 }
+
+/**
+ * Resize the HUD pane to the specified height.
+ * Used for dynamic height changes (e.g., expand when focused).
+ *
+ * @param height - Number of lines for HUD pane
+ */
+export async function resizeHudPane(height: number): Promise<void> {
+  try {
+    const { stdout } = await execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE');
+    const hudPaneId = stdout.split('=')[1]?.trim();
+    if (hudPaneId) {
+      await execAsync(`tmux resize-pane -t ${hudPaneId} -y ${height}`);
+    }
+  } catch {
+    // Silently ignore resize failures (e.g., pane doesn't exist)
+  }
+}
