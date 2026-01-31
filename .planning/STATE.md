@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-30)
 ## Current Position
 
 Phase: 13 of 17 (CLI Router & Setup Command)
-Plan: 1 of 3 complete
+Plan: 2 of 3 complete
 Status: In progress
-Last activity: 2026-01-31 — Completed 13-01-PLAN.md
+Last activity: 2026-01-31 — Completed 13-02-PLAN.md
 
 Progress: [######################........] 71% (12/17 phases complete)
 
@@ -29,7 +29,7 @@ Progress: [######################........] 71% (12/17 phases complete)
 
 **v3.0:**
 - Total plans: TBD (5 phases remaining to plan)
-- Completed: 3 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min)
+- Completed: 4 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min)
 
 ## Accumulated Context
 
@@ -51,6 +51,9 @@ Progress: [######################........] 71% (12/17 phases complete)
 - CLI subcommands before TUI initialization (command-or-TUI router pattern)
 - picocolors for CLI colored output (lightweight, no dependencies)
 - figures for cross-platform status symbols
+- node: prefix required for Node.js built-in imports with tsup bundler
+- Dynamic import for CLI subcommands (code splitting)
+- EXIT_CODES constant pattern: SUCCESS=0, ERROR=1, USER_ABORT=2
 
 ### Pending Todos
 
@@ -64,5 +67,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-31
-Stopped at: Completed 13-01-PLAN.md
+Stopped at: Completed 13-02-PLAN.md
 Resume file: None
