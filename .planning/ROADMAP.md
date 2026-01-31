@@ -239,7 +239,11 @@ Plans:
   2. settingsService can read/write/backup Claude settings.json files with error handling
   3. CLI output utilities support colored text (green/yellow/red) and status symbols
   4. Backup files use human-readable timestamps (settings.json.vibe-term-backup.TIMESTAMP)
-**Plans**: TBD
+**Plans**: 2 plans in 1 wave
+
+Plans:
+- [ ] 12-01-PLAN.md — CLI output utilities and vibe-term directory service
+- [ ] 12-02-PLAN.md — Settings service for Claude settings.json management
 
 ### Phase 13: CLI Router & Setup Command
 **Goal**: Users can run `vibe-term setup` to install global hooks with automatic backup
@@ -317,7 +321,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
-| 12. Foundation Services | v3.0 | 0/TBD | Not started | - |
+| 12. Foundation Services | v3.0 | 0/2 | Planned | - |
 | 13. CLI Router & Setup | v3.0 | 0/TBD | Not started | - |
 | 14. Audit Command | v3.0 | 0/TBD | Not started | - |
 | 15. Fix Command | v3.0 | 0/TBD | Not started | - |
