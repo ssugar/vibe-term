@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-01-30)
 ## Current Position
 
 Phase: 14 of 17 (Audit Command)
-Plan: — (not yet planned)
-Status: Ready to plan
-Last activity: 2026-01-31 — Phase 13 complete
+Plan: 01 of TBD (services complete)
+Status: In progress
+Last activity: 2026-01-31 — Completed 14-01-PLAN.md
 
 Progress: [#########################.....] 76% (13/17 phases complete)
 
@@ -29,7 +29,7 @@ Progress: [#########################.....] 76% (13/17 phases complete)
 
 **v3.0:**
 - Total plans: TBD (5 phases remaining to plan)
-- Completed: 4 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min)
+- Completed: 5 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min)
 
 ## Accumulated Context
 
@@ -54,6 +54,8 @@ Progress: [#########################.....] 76% (13/17 phases complete)
 - node: prefix required for Node.js built-in imports with tsup bundler
 - Dynamic import for CLI subcommands (code splitting)
 - EXIT_CODES constant pattern: SUCCESS=0, ERROR=1, USER_ABORT=2
+- micromatch for glob pattern matching (faster than minimatch)
+- Sessions-index.json resolution for project paths (never decode from directory name)
 
 ### Pending Todos
 
@@ -67,5 +69,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-01-31
-Stopped at: Phase 13 complete, ready for Phase 14 planning
+Stopped at: Completed 14-01-PLAN.md (projectScanner and conflictDetector services)
 Resume file: None
