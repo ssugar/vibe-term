@@ -1,61 +1,73 @@
-# Requirements: Claude Code TUI HUD v2.0
+# Requirements: vibe-term v3.0
 
-**Defined:** 2026-01-25
+**Defined:** 2026-01-30
 **Core Value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
 
-## v2.0 Requirements
-
-Requirements for Integrated Claude Terminal. Each maps to roadmap phases.
-
-### tmux Integration
-
-- [x] **TMUX-01**: HUD creates/attaches to managed tmux session on startup
-- [x] **TMUX-02**: HUD runs in fixed-height top pane (2 lines)
-- [ ] **TMUX-03**: Claude sessions run in bottom pane (main area)
-- [ ] **TMUX-04**: Session switching uses native tmux pane operations
-- [ ] **TMUX-05**: User can return to HUD view with `b` key
-- [x] **TMUX-06**: Graceful error when launched outside tmux-capable environment
-
-### HUD Strip UI
-
-- [ ] **STRIP-01**: Sessions displayed as horizontal tabs
-- [ ] **STRIP-02**: Each tab shows `[index:name status context%]`
-- [ ] **STRIP-03**: Active/selected session visually indicated
-- [ ] **STRIP-04**: Blocked sessions highlighted (color/bold)
-- [ ] **STRIP-05**: Tab overflow handled gracefully (truncation or scroll indicator)
-
-### Session Management
-
-- [x] **SESS-01**: User can spawn new Claude session with `n` key
-- [x] **SESS-02**: New session spawns in bottom pane with directory prompt
-- [x] **SESS-03**: Externally-created tmux sessions running Claude are detected
-- [x] **SESS-04**: Dead/orphaned sessions cleaned up automatically
-- [x] **SESS-05**: Session list updates in real-time (existing polling)
-
-### Navigation (Preserved from v1.0)
-
-- [ ] **NAV-01**: Navigate sessions with j/k or arrow keys
-- [ ] **NAV-02**: Quick-jump with 1-9 number keys
-- [ ] **NAV-03**: Switch to session with Enter key
-- [ ] **NAV-04**: Quit with q key
-- [ ] **NAV-05**: Help overlay with ? key
-
 ## v3.0 Requirements
+
+Requirements for Hook Management & Distribution. Each maps to roadmap phases.
+
+### Setup Command
+
+- [ ] **SETUP-01**: User can run `vibe-term setup` to install global hooks
+- [ ] **SETUP-02**: Setup creates ~/.vibe-term/ directory with hooks script
+- [ ] **SETUP-03**: Setup backs up existing ~/.claude/settings.json before modification
+- [ ] **SETUP-04**: Setup is idempotent (safe to run multiple times)
+- [ ] **SETUP-05**: Setup shows clear success/failure output with colored status
+- [ ] **SETUP-06**: Setup shows what files were changed
+- [ ] **SETUP-07**: Setup supports `--yes` flag for non-interactive mode
+
+### Audit Command
+
+- [ ] **AUDIT-01**: User can run `vibe-term audit` to scan for hook conflicts
+- [ ] **AUDIT-02**: Audit discovers projects from ~/.claude/projects/ directory
+- [ ] **AUDIT-03**: Audit shows pass/warn/fail status per project
+- [ ] **AUDIT-04**: Audit shows count of issues found
+- [ ] **AUDIT-05**: Audit returns exit code 0 for clean, 1 for issues found
+- [ ] **AUDIT-06**: Audit lists specific conflicts found per project
+- [ ] **AUDIT-07**: Audit filters to only show projects with conflicts
+- [ ] **AUDIT-08**: Audit groups projects by conflict type
+
+### Fix Command
+
+- [ ] **FIX-01**: User can run `vibe-term fix` to preview hook fixes (dry-run)
+- [ ] **FIX-02**: User can run `vibe-term fix --apply` to execute hook fixes
+- [ ] **FIX-03**: Fix backs up project settings before modification
+- [ ] **FIX-04**: Fix reports what would change before applying
+- [ ] **FIX-05**: Fix merges hooks intelligently (add vibe-term alongside existing)
+- [ ] **FIX-06**: User can fix a single project with `vibe-term fix /path/to/project`
+
+### CLI/UX
+
+- [ ] **CLI-01**: All commands use colored output (green/yellow/red)
+- [ ] **CLI-02**: All commands use status symbols (checkmarks, X, warning)
+- [ ] **CLI-03**: All commands support `--json` flag for machine-readable output
+- [ ] **CLI-04**: Commands suggest next action after completion
+
+### Distribution
+
+- [ ] **DIST-01**: User can install with `npm install -g vibe-term`
+- [ ] **DIST-02**: Binary entry point `vibe-term` works after global install
+- [ ] **DIST-03**: Package includes proper `files` array for minimal install size
+- [ ] **DIST-04**: Global install works without sudo on standard npm setup
+
+### Documentation
+
+- [ ] **DOCS-01**: GitHub README includes installation instructions
+- [ ] **DOCS-02**: GitHub README documents setup/audit/fix commands
+- [ ] **DOCS-03**: GitHub README explains hook management workflow
+
+## v4.0 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
 
 ### Enhanced Features
 
-- **ADV-01**: Session preview pane (see last message without switching)
-- **ADV-02**: Cost tracking per session
-- **ADV-03**: Token usage breakdown (input/output/cache)
-- **ADV-04**: Long-blocked alerts (visual/audio)
+- **ADV-01**: Interactive setup wizard for first-time users
+- **ADV-02**: Per-project fix confirmation prompts
+- **ADV-03**: Session preview pane in HUD
+- **ADV-04**: Cost/token tracking per session
 - **ADV-05**: Subagent model breakdown display
-
-### Additional Platforms
-
-- **PLAT-01**: Non-tmux fallback mode (v1.0 standalone)
-- **PLAT-02**: Native Windows support
 
 ## Out of Scope
 
@@ -63,12 +75,12 @@ Explicitly excluded. Documented to prevent scope creep.
 
 | Feature | Reason |
 |---------|--------|
-| Embedded terminal (node-pty) | tmux splits are more reliable, per PROJECT.md |
-| Fuzzy finding/search | Overkill for 5-10 sessions |
-| Config files for layouts | Single-process sessions don't need complex layouts |
-| Session persistence/resurrect | tmux-resurrect handles this already |
-| Mouse interface | TUI users expect keyboard-first |
-| Plugin system | Premature abstraction |
+| Auto-fix without confirmation | Dangerous - config modification needs explicit consent |
+| Complex merge strategies UI | Over-engineering - simple add-if-missing is sufficient |
+| Backup management commands | Scope creep - users can manage backups manually |
+| Hook editor/configurator | Complexity explosion - JSON editing is fine for power users |
+| Watch mode for conflicts | Overkill - conflicts don't appear dynamically |
+| Global undo command | Complex state tracking - backups are simpler |
 
 ## Traceability
 
@@ -76,33 +88,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TMUX-01 | Phase 7 | Complete |
-| TMUX-02 | Phase 7 | Complete |
-| TMUX-03 | Phase 9 | Pending |
-| TMUX-04 | Phase 9 | Pending |
-| TMUX-05 | Phase 9 | Pending |
-| TMUX-06 | Phase 7 | Complete |
-| STRIP-01 | Phase 8 | Pending |
-| STRIP-02 | Phase 8 | Pending |
-| STRIP-03 | Phase 8 | Pending |
-| STRIP-04 | Phase 8 | Pending |
-| STRIP-05 | Phase 8 | Pending |
-| SESS-01 | Phase 10 | Complete |
-| SESS-02 | Phase 10 | Complete |
-| SESS-03 | Phase 10 | Complete |
-| SESS-04 | Phase 10 | Complete |
-| SESS-05 | Phase 10 | Complete |
-| NAV-01 | Phase 11 | Pending |
-| NAV-02 | Phase 11 | Pending |
-| NAV-03 | Phase 11 | Pending |
-| NAV-04 | Phase 11 | Pending |
-| NAV-05 | Phase 11 | Pending |
+| SETUP-01 | TBD | Pending |
+| SETUP-02 | TBD | Pending |
+| SETUP-03 | TBD | Pending |
+| SETUP-04 | TBD | Pending |
+| SETUP-05 | TBD | Pending |
+| SETUP-06 | TBD | Pending |
+| SETUP-07 | TBD | Pending |
+| AUDIT-01 | TBD | Pending |
+| AUDIT-02 | TBD | Pending |
+| AUDIT-03 | TBD | Pending |
+| AUDIT-04 | TBD | Pending |
+| AUDIT-05 | TBD | Pending |
+| AUDIT-06 | TBD | Pending |
+| AUDIT-07 | TBD | Pending |
+| AUDIT-08 | TBD | Pending |
+| FIX-01 | TBD | Pending |
+| FIX-02 | TBD | Pending |
+| FIX-03 | TBD | Pending |
+| FIX-04 | TBD | Pending |
+| FIX-05 | TBD | Pending |
+| FIX-06 | TBD | Pending |
+| CLI-01 | TBD | Pending |
+| CLI-02 | TBD | Pending |
+| CLI-03 | TBD | Pending |
+| CLI-04 | TBD | Pending |
+| DIST-01 | TBD | Pending |
+| DIST-02 | TBD | Pending |
+| DIST-03 | TBD | Pending |
+| DIST-04 | TBD | Pending |
+| DOCS-01 | TBD | Pending |
+| DOCS-02 | TBD | Pending |
+| DOCS-03 | TBD | Pending |
 
 **Coverage:**
-- v2.0 requirements: 21 total
-- Mapped to phases: 21
-- Unmapped: 0
+- v3.0 requirements: 32 total
+- Mapped to phases: 0 (pending roadmap)
+- Unmapped: 32
 
 ---
-*Requirements defined: 2026-01-25*
-*Last updated: 2026-01-25 after roadmap creation*
+*Requirements defined: 2026-01-30*
+*Last updated: 2026-01-30 after initial definition*
