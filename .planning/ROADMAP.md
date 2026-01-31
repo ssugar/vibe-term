@@ -258,8 +258,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 13-01-PLAN.md — Hook merger service for installation detection and merging
-- [ ] 13-02-PLAN.md — CLI router and setup command implementation
+- [x] 13-01-PLAN.md — Hook merger service for installation detection and merging
+- [x] 13-02-PLAN.md — CLI router and setup command implementation
 
 ### Phase 14: Audit Command
 **Goal**: Users can discover all Claude projects and scan for hook conflicts
@@ -326,7 +326,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
 | 12. Foundation Services | v3.0 | 2/2 | Complete | 2026-01-30 |
-| 13. CLI Router & Setup | v3.0 | 0/2 | Not started | - |
+| 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 14. Audit Command | v3.0 | 0/TBD | Not started | - |
 | 15. Fix Command | v3.0 | 0/TBD | Not started | - |
 | 16. CLI Polish | v3.0 | 0/TBD | Not started | - |

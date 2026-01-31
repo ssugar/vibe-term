@@ -9,13 +9,13 @@ Requirements for Hook Management & Distribution. Each maps to roadmap phases.
 
 ### Setup Command
 
-- [ ] **SETUP-01**: User can run `vibe-term setup` to install global hooks
+- [x] **SETUP-01**: User can run `vibe-term setup` to install global hooks
 - [ ] **SETUP-02**: Setup creates ~/.vibe-term/ directory with hooks script
-- [ ] **SETUP-03**: Setup backs up existing ~/.claude/settings.json before modification
-- [ ] **SETUP-04**: Setup is idempotent (safe to run multiple times)
-- [ ] **SETUP-05**: Setup shows clear success/failure output with colored status
-- [ ] **SETUP-06**: Setup shows what files were changed
-- [ ] **SETUP-07**: Setup supports `--yes` flag for non-interactive mode
+- [x] **SETUP-03**: Setup backs up existing ~/.claude/settings.json before modification
+- [x] **SETUP-04**: Setup is idempotent (safe to run multiple times)
+- [x] **SETUP-05**: Setup shows clear success/failure output with colored status
+- [x] **SETUP-06**: Setup shows what files were changed
+- [x] **SETUP-07**: Setup supports `--yes` flag for non-interactive mode
 
 ### Audit Command
 
@@ -88,13 +88,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | Phase 13 | Pending |
+| SETUP-01 | Phase 13 | Complete |
 | SETUP-02 | Phase 12 | Complete |
-| SETUP-03 | Phase 13 | Pending |
-| SETUP-04 | Phase 13 | Pending |
-| SETUP-05 | Phase 13 | Pending |
-| SETUP-06 | Phase 13 | Pending |
-| SETUP-07 | Phase 13 | Pending |
+| SETUP-03 | Phase 13 | Complete |
+| SETUP-04 | Phase 13 | Complete |
+| SETUP-05 | Phase 13 | Complete |
+| SETUP-06 | Phase 13 | Complete |
+| SETUP-07 | Phase 13 | Complete |
 | AUDIT-01 | Phase 14 | Pending |
 | AUDIT-02 | Phase 14 | Pending |
 | AUDIT-03 | Phase 14 | Pending |
