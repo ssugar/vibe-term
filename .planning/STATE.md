@@ -55,6 +55,7 @@ Progress: [######################........] 71% (12/17 phases complete)
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
+- Add kill tab functionality (close specific session from HUD)
 
 ### Blockers/Concerns
 
