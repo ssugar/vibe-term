@@ -5,17 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-30)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Phase 12 - Foundation Services (v3.0 Hook Management & Distribution)
+**Current focus:** Phase 13 - CLI Router & Setup Command (v3.0 Hook Management & Distribution)
 
 ## Current Position
 
-Phase: 12 of 17 (Foundation Services)
-Plan: 02 of 03 (Settings Service)
-Status: In progress
-Last activity: 2026-01-31 — Completed 12-01-PLAN.md
-Note: 12-01 and 12-02 both complete (executed out of order)
+Phase: 13 of 17 (CLI Router & Setup Command)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-01-30 — Phase 12 complete
 
-Progress: [####################..........] 65% (11/17 phases complete, 12-01 and 12-02 done)
+Progress: [######################........] 71% (12/17 phases complete)
 
 ## Performance Metrics
 
@@ -29,8 +28,8 @@ Progress: [####################..........] 65% (11/17 phases complete, 12-01 and
 - Average duration: ~6 min/plan
 
 **v3.0:**
-- Total plans: TBD (6 phases to plan)
-- Completed: 2 (12-01: 3min, 12-02: 2min)
+- Total plans: TBD (5 phases remaining to plan)
+- Completed: 2 (Phase 12: 12-01 3min, 12-02 2min)
 
 ## Accumulated Context
 
@@ -45,11 +44,13 @@ Progress: [####################..........] 65% (11/17 phases complete, 12-01 and
 - tmux splits over embedded terminal (native reliability)
 - Minimal HUD strip (1-2 lines max)
 
-*New for v3.0 (pending):*
+*New for v3.0:*
 
 - ~/.vibe-term/ for hooks script and config (persistent, portable)
 - Intelligent hook merging (preserve project hooks while adding vibe-term's)
 - CLI subcommands before TUI initialization (command-or-TUI router pattern)
+- picocolors for CLI colored output (lightweight, no dependencies)
+- figures for cross-platform status symbols
 
 ### Pending Todos
 
@@ -61,6 +62,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: Completed 12-01-PLAN.md (CLI Output & Directory Service)
+Last session: 2026-01-30
+Stopped at: Phase 12 complete, ready for Phase 13 planning
 Resume file: None

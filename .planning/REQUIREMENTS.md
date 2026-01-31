@@ -89,7 +89,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SETUP-01 | Phase 13 | Pending |
-| SETUP-02 | Phase 12 | Pending |
+| SETUP-02 | Phase 12 | Complete |
 | SETUP-03 | Phase 13 | Pending |
 | SETUP-04 | Phase 13 | Pending |
 | SETUP-05 | Phase 13 | Pending |
@@ -109,8 +109,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-04 | Phase 15 | Pending |
 | FIX-05 | Phase 15 | Pending |
 | FIX-06 | Phase 15 | Pending |
-| CLI-01 | Phase 12 | Pending |
-| CLI-02 | Phase 12 | Pending |
+| CLI-01 | Phase 12 | Complete |
+| CLI-02 | Phase 12 | Complete |
 | CLI-03 | Phase 16 | Pending |
 | CLI-04 | Phase 16 | Pending |
 | DIST-01 | Phase 17 | Pending |

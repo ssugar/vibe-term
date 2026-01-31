@@ -221,7 +221,7 @@ Plans:
 
 **Milestone Goal:** Make vibe-term easy to install and self-managing for Claude hooks. Users can install globally, set up hooks automatically, audit for conflicts, and fix them intelligently.
 
-- [ ] **Phase 12: Foundation Services** - Core infrastructure for settings management and vibe-term directory
+- [x] **Phase 12: Foundation Services** - Core infrastructure for settings management and vibe-term directory
 - [ ] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
 - [ ] **Phase 14: Audit Command** - Project discovery and conflict detection
 - [ ] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
@@ -242,8 +242,8 @@ Plans:
 **Plans**: 2 plans in 1 wave
 
 Plans:
-- [ ] 12-01-PLAN.md — CLI output utilities and vibe-term directory service
-- [ ] 12-02-PLAN.md — Settings service for Claude settings.json management
+- [x] 12-01-PLAN.md — CLI output utilities and vibe-term directory service
+- [x] 12-02-PLAN.md — Settings service for Claude settings.json management
 
 ### Phase 13: CLI Router & Setup Command
 **Goal**: Users can run `vibe-term setup` to install global hooks with automatic backup
@@ -321,7 +321,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
-| 12. Foundation Services | v3.0 | 0/2 | Planned | - |
+| 12. Foundation Services | v3.0 | 2/2 | Complete | 2026-01-30 |
 | 13. CLI Router & Setup | v3.0 | 0/TBD | Not started | - |
 | 14. Audit Command | v3.0 | 0/TBD | Not started | - |
 | 15. Fix Command | v3.0 | 0/TBD | Not started | - |
