@@ -3,7 +3,8 @@
 ## Milestones
 
 - v1.0 Standalone HUD - Phases 1-6 (shipped 2026-01-25)
-- **v2.0 Integrated Claude Terminal** - Phases 7-11 (in progress)
+- v2.0 Integrated Claude Terminal - Phases 7-11 (shipped 2026-01-30)
+- **v3.0 Hook Management & Distribution** - Phases 12-17 (in progress)
 
 ## Phases
 
@@ -122,7 +123,8 @@ Plans:
 
 </details>
 
-### v2.0 Integrated Claude Terminal (In Progress)
+<details>
+<summary>v2.0 Integrated Claude Terminal (Phases 7-11) - SHIPPED 2026-01-30</summary>
 
 **Milestone Goal:** Transform the standalone HUD into a tmux-integrated terminal where sessions run inside managed panes with an always-visible status strip.
 
@@ -131,8 +133,6 @@ Plans:
 - [x] **Phase 9: Pane Architecture** - Session panes, native tmux switching, return-to-HUD
 - [x] **Phase 10: Session Lifecycle** - Spawn new sessions, detect external sessions, cleanup
 - [x] **Phase 11: Navigation Integration** - Re-validate keyboard navigation in tmux context
-
-## Phase Details
 
 ### Phase 7: tmux Foundation
 **Goal**: HUD runs inside a managed tmux session with proper environment for reliable rendering
@@ -215,10 +215,94 @@ Plans:
 Plans:
 - [x] 11-01-PLAN.md — Fix selectedIndex bounds and validate navigation
 
+</details>
+
+### v3.0 Hook Management & Distribution (In Progress)
+
+**Milestone Goal:** Make vibe-term easy to install and self-managing for Claude hooks. Users can install globally, set up hooks automatically, audit for conflicts, and fix them intelligently.
+
+- [ ] **Phase 12: Foundation Services** - Core infrastructure for settings management and vibe-term directory
+- [ ] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
+- [ ] **Phase 14: Audit Command** - Project discovery and conflict detection
+- [ ] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
+- [ ] **Phase 16: CLI Polish** - JSON output mode and action suggestions
+- [ ] **Phase 17: Distribution & Documentation** - npm packaging and README updates
+
+## Phase Details
+
+### Phase 12: Foundation Services
+**Goal**: Core services for file operations that all CLI commands depend on
+**Depends on**: Phase 11 (v2.0 complete)
+**Requirements**: SETUP-02, CLI-01, CLI-02
+**Success Criteria** (what must be TRUE):
+  1. vibeTermDirService can create ~/.vibe-term/ directory and install hook scripts
+  2. settingsService can read/write/backup Claude settings.json files with error handling
+  3. CLI output utilities support colored text (green/yellow/red) and status symbols
+  4. Backup files use human-readable timestamps (settings.json.vibe-term-backup.TIMESTAMP)
+**Plans**: TBD
+
+### Phase 13: CLI Router & Setup Command
+**Goal**: Users can run `vibe-term setup` to install global hooks with automatic backup
+**Depends on**: Phase 12
+**Requirements**: SETUP-01, SETUP-03, SETUP-04, SETUP-05, SETUP-06, SETUP-07
+**Success Criteria** (what must be TRUE):
+  1. User can run `vibe-term setup` to install hooks to ~/.claude/settings.json
+  2. Running setup creates backup of existing settings before modification
+  3. Running setup multiple times is safe (idempotent, no duplicate hooks)
+  4. Setup displays colored success/failure output showing what files changed
+  5. Setup supports `--yes` flag for non-interactive mode
+**Plans**: TBD
+
+### Phase 14: Audit Command
+**Goal**: Users can discover all Claude projects and scan for hook conflicts
+**Depends on**: Phase 13
+**Requirements**: AUDIT-01, AUDIT-02, AUDIT-03, AUDIT-04, AUDIT-05, AUDIT-06, AUDIT-07, AUDIT-08
+**Success Criteria** (what must be TRUE):
+  1. User can run `vibe-term audit` to scan ~/.claude/projects/ for conflicts
+  2. Audit shows pass/warn/fail status per project with colored output
+  3. Audit lists specific conflicts found per project (e.g., "hooks override global")
+  4. Audit returns exit code 0 when clean, 1 when conflicts found
+  5. Audit can filter to only show projects with conflicts
+**Plans**: TBD
+
+### Phase 15: Fix Command
+**Goal**: Users can fix hook conflicts with intelligent merging that preserves existing hooks
+**Depends on**: Phase 14
+**Requirements**: FIX-01, FIX-02, FIX-03, FIX-04, FIX-05, FIX-06
+**Success Criteria** (what must be TRUE):
+  1. User can run `vibe-term fix` to preview what would change (dry-run default)
+  2. User can run `vibe-term fix --apply` to execute changes
+  3. Fix creates backup before modifying any project settings
+  4. Fix merges hooks intelligently (adds vibe-term alongside existing, no clobbering)
+  5. User can fix a single project with `vibe-term fix /path/to/project`
+**Plans**: TBD
+
+### Phase 16: CLI Polish
+**Goal**: CLI commands support machine-readable output and guide users to next steps
+**Depends on**: Phase 15
+**Requirements**: CLI-03, CLI-04
+**Success Criteria** (what must be TRUE):
+  1. All commands support `--json` flag for machine-readable output
+  2. Setup suggests running audit after completion
+  3. Audit with issues suggests running fix
+  4. Fix suggests verifying with audit after applying
+**Plans**: TBD
+
+### Phase 17: Distribution & Documentation
+**Goal**: Users can install vibe-term globally via npm and have clear documentation
+**Depends on**: Phase 16
+**Requirements**: DIST-01, DIST-02, DIST-03, DIST-04, DOCS-01, DOCS-02, DOCS-03
+**Success Criteria** (what must be TRUE):
+  1. User can install with `npm install -g vibe-term` without sudo
+  2. `vibe-term` command works after global install (correct path resolution)
+  3. Package includes only necessary files (minimal install size)
+  4. README documents installation steps, setup/audit/fix commands, and hook workflow
+**Plans**: TBD
+
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10 -> 11
+Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 16 -> 17
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -233,8 +317,15 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9 -> 10
 | 9. Pane Architecture | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 10. Session Lifecycle | v2.0 | 3/3 | Complete | 2026-01-26 |
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
+| 12. Foundation Services | v3.0 | 0/TBD | Not started | - |
+| 13. CLI Router & Setup | v3.0 | 0/TBD | Not started | - |
+| 14. Audit Command | v3.0 | 0/TBD | Not started | - |
+| 15. Fix Command | v3.0 | 0/TBD | Not started | - |
+| 16. CLI Polish | v3.0 | 0/TBD | Not started | - |
+| 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-01-22*
 *v2.0 phases added: 2026-01-25*
 *v2.0 complete: 2026-01-30*
+*v3.0 phases added: 2026-01-30*

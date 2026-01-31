@@ -88,44 +88,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SETUP-01 | TBD | Pending |
-| SETUP-02 | TBD | Pending |
-| SETUP-03 | TBD | Pending |
-| SETUP-04 | TBD | Pending |
-| SETUP-05 | TBD | Pending |
-| SETUP-06 | TBD | Pending |
-| SETUP-07 | TBD | Pending |
-| AUDIT-01 | TBD | Pending |
-| AUDIT-02 | TBD | Pending |
-| AUDIT-03 | TBD | Pending |
-| AUDIT-04 | TBD | Pending |
-| AUDIT-05 | TBD | Pending |
-| AUDIT-06 | TBD | Pending |
-| AUDIT-07 | TBD | Pending |
-| AUDIT-08 | TBD | Pending |
-| FIX-01 | TBD | Pending |
-| FIX-02 | TBD | Pending |
-| FIX-03 | TBD | Pending |
-| FIX-04 | TBD | Pending |
-| FIX-05 | TBD | Pending |
-| FIX-06 | TBD | Pending |
-| CLI-01 | TBD | Pending |
-| CLI-02 | TBD | Pending |
-| CLI-03 | TBD | Pending |
-| CLI-04 | TBD | Pending |
-| DIST-01 | TBD | Pending |
-| DIST-02 | TBD | Pending |
-| DIST-03 | TBD | Pending |
-| DIST-04 | TBD | Pending |
-| DOCS-01 | TBD | Pending |
-| DOCS-02 | TBD | Pending |
-| DOCS-03 | TBD | Pending |
+| SETUP-01 | Phase 13 | Pending |
+| SETUP-02 | Phase 12 | Pending |
+| SETUP-03 | Phase 13 | Pending |
+| SETUP-04 | Phase 13 | Pending |
+| SETUP-05 | Phase 13 | Pending |
+| SETUP-06 | Phase 13 | Pending |
+| SETUP-07 | Phase 13 | Pending |
+| AUDIT-01 | Phase 14 | Pending |
+| AUDIT-02 | Phase 14 | Pending |
+| AUDIT-03 | Phase 14 | Pending |
+| AUDIT-04 | Phase 14 | Pending |
+| AUDIT-05 | Phase 14 | Pending |
+| AUDIT-06 | Phase 14 | Pending |
+| AUDIT-07 | Phase 14 | Pending |
+| AUDIT-08 | Phase 14 | Pending |
+| FIX-01 | Phase 15 | Pending |
+| FIX-02 | Phase 15 | Pending |
+| FIX-03 | Phase 15 | Pending |
+| FIX-04 | Phase 15 | Pending |
+| FIX-05 | Phase 15 | Pending |
+| FIX-06 | Phase 15 | Pending |
+| CLI-01 | Phase 12 | Pending |
+| CLI-02 | Phase 12 | Pending |
+| CLI-03 | Phase 16 | Pending |
+| CLI-04 | Phase 16 | Pending |
+| DIST-01 | Phase 17 | Pending |
+| DIST-02 | Phase 17 | Pending |
+| DIST-03 | Phase 17 | Pending |
+| DIST-04 | Phase 17 | Pending |
+| DOCS-01 | Phase 17 | Pending |
+| DOCS-02 | Phase 17 | Pending |
+| DOCS-03 | Phase 17 | Pending |
 
 **Coverage:**
 - v3.0 requirements: 32 total
-- Mapped to phases: 0 (pending roadmap)
-- Unmapped: 32
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-01-30*
-*Last updated: 2026-01-30 after initial definition*
+*Last updated: 2026-01-30 after roadmap creation*
