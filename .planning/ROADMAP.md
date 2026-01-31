@@ -222,7 +222,7 @@ Plans:
 **Milestone Goal:** Make vibe-term easy to install and self-managing for Claude hooks. Users can install globally, set up hooks automatically, audit for conflicts, and fix them intelligently.
 
 - [x] **Phase 12: Foundation Services** - Core infrastructure for settings management and vibe-term directory
-- [ ] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
+- [x] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
 - [ ] **Phase 14: Audit Command** - Project discovery and conflict detection
 - [ ] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
 - [ ] **Phase 16: CLI Polish** - JSON output mode and action suggestions
@@ -271,7 +271,11 @@ Plans:
   3. Audit lists specific conflicts found per project (e.g., "hooks override global")
   4. Audit returns exit code 0 when clean, 1 when conflicts found
   5. Audit can filter to only show projects with conflicts
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 14-01-PLAN.md — Project scanner and conflict detector services
+- [ ] 14-02-PLAN.md — Audit CLI command and router integration
 
 ### Phase 15: Fix Command
 **Goal**: Users can fix hook conflicts with intelligent merging that preserves existing hooks
@@ -327,7 +331,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
 | 12. Foundation Services | v3.0 | 2/2 | Complete | 2026-01-30 |
 | 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
-| 14. Audit Command | v3.0 | 0/TBD | Not started | - |
+| 14. Audit Command | v3.0 | 0/2 | Not started | - |
 | 15. Fix Command | v3.0 | 0/TBD | Not started | - |
 | 16. CLI Polish | v3.0 | 0/TBD | Not started | - |
 | 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
