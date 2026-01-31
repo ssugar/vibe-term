@@ -274,8 +274,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 14-01-PLAN.md — Project scanner and conflict detector services
-- [ ] 14-02-PLAN.md — Audit CLI command and router integration
+- [x] 14-01-PLAN.md — Project scanner and conflict detector services
+- [x] 14-02-PLAN.md — Audit CLI command and router integration
 
 ### Phase 15: Fix Command
 **Goal**: Users can fix hook conflicts with intelligent merging that preserves existing hooks
@@ -331,7 +331,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 11. Navigation Integration | v2.0 | 1/1 | Complete | 2026-01-30 |
 | 12. Foundation Services | v3.0 | 2/2 | Complete | 2026-01-30 |
 | 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
-| 14. Audit Command | v3.0 | 0/2 | Not started | - |
+| 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 15. Fix Command | v3.0 | 0/TBD | Not started | - |
 | 16. CLI Polish | v3.0 | 0/TBD | Not started | - |
 | 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |

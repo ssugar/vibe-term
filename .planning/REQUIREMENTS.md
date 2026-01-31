@@ -19,14 +19,14 @@ Requirements for Hook Management & Distribution. Each maps to roadmap phases.
 
 ### Audit Command
 
-- [ ] **AUDIT-01**: User can run `vibe-term audit` to scan for hook conflicts
-- [ ] **AUDIT-02**: Audit discovers projects from ~/.claude/projects/ directory
-- [ ] **AUDIT-03**: Audit shows pass/warn/fail status per project
-- [ ] **AUDIT-04**: Audit shows count of issues found
-- [ ] **AUDIT-05**: Audit returns exit code 0 for clean, 1 for issues found
-- [ ] **AUDIT-06**: Audit lists specific conflicts found per project
-- [ ] **AUDIT-07**: Audit filters to only show projects with conflicts
-- [ ] **AUDIT-08**: Audit groups projects by conflict type
+- [x] **AUDIT-01**: User can run `vibe-term audit` to scan for hook conflicts
+- [x] **AUDIT-02**: Audit discovers projects from ~/.claude/projects/ directory
+- [x] **AUDIT-03**: Audit shows pass/warn/fail status per project
+- [x] **AUDIT-04**: Audit shows count of issues found
+- [x] **AUDIT-05**: Audit returns exit code 0 for clean, 1 for issues found
+- [x] **AUDIT-06**: Audit lists specific conflicts found per project
+- [x] **AUDIT-07**: Audit filters to only show projects with conflicts
+- [x] **AUDIT-08**: Audit groups projects by conflict type
 
 ### Fix Command
 
@@ -95,14 +95,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SETUP-05 | Phase 13 | Complete |
 | SETUP-06 | Phase 13 | Complete |
 | SETUP-07 | Phase 13 | Complete |
-| AUDIT-01 | Phase 14 | Pending |
-| AUDIT-02 | Phase 14 | Pending |
-| AUDIT-03 | Phase 14 | Pending |
-| AUDIT-04 | Phase 14 | Pending |
-| AUDIT-05 | Phase 14 | Pending |
-| AUDIT-06 | Phase 14 | Pending |
-| AUDIT-07 | Phase 14 | Pending |
-| AUDIT-08 | Phase 14 | Pending |
+| AUDIT-01 | Phase 14 | Complete |
+| AUDIT-02 | Phase 14 | Complete |
+| AUDIT-03 | Phase 14 | Complete |
+| AUDIT-04 | Phase 14 | Complete |
+| AUDIT-05 | Phase 14 | Complete |
+| AUDIT-06 | Phase 14 | Complete |
+| AUDIT-07 | Phase 14 | Complete |
+| AUDIT-08 | Phase 14 | Complete |
 | FIX-01 | Phase 15 | Pending |
 | FIX-02 | Phase 15 | Pending |
 | FIX-03 | Phase 15 | Pending |
