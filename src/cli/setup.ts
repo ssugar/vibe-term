@@ -8,8 +8,8 @@
  * - Confirmation prompt (skippable with --yes)
  */
 
-import { createInterface } from 'readline/promises';
-import { stdin, stdout } from 'process';
+import { createInterface } from 'node:readline/promises';
+import { stdin, stdout } from 'node:process';
 import {
   success,
   error,
