@@ -18,14 +18,21 @@ const cliPath = join(__dirname, 'cli.js');
 const cli = meow(
   `
   Usage
-    $ vibe-term
+    $ vibe-term           Launch TUI (default)
+    $ vibe-term setup     Install global hooks
+
+  Commands
+    setup     Install hooks to ~/.claude/settings.json
 
   Options
     --refresh, -r  Refresh interval in seconds (default: 2)
+    --yes          Skip confirmation prompts (setup only)
+    --verbose, -v  Show detailed output (setup only)
 
   Examples
     $ vibe-term
     $ vibe-term --refresh 5
+    $ vibe-term setup --yes
 `,
   {
     importMeta: import.meta,
@@ -35,9 +42,32 @@ const cli = meow(
         shortFlag: 'r',
         default: 2,
       },
+      yes: {
+        type: 'boolean',
+        default: false,
+      },
+      verbose: {
+        type: 'boolean',
+        shortFlag: 'v',
+        default: false,
+      },
     },
   }
 );
+
+// Route based on first positional argument
+const command = cli.input[0];
+
+if (command === 'setup') {
+  const { runSetup } = await import('./cli/setup.js');
+  const exitCode = await runSetup({
+    yes: cli.flags.yes,
+    verbose: cli.flags.verbose,
+  });
+  process.exit(exitCode);
+}
+
+// Default: proceed to TUI initialization
 
 // Convert seconds to milliseconds
 const refreshInterval = cli.flags.refresh * 1000;
