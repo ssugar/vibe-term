@@ -1,585 +1,722 @@
-# Pitfalls Research: v2.0 tmux Integration
+# Pitfalls Research: v3.0 Hook Management and npm Distribution
 
-**Domain:** tmux-integrated terminal application (Ink HUD + managed session panes)
-**Researched:** 2026-01-25
-**Confidence:** HIGH (verified with official sources, GitHub issues, and codebase analysis)
+**Domain:** CLI tool with npm global install, hook management, and user config directory
+**Researched:** 2026-01-30
+**Confidence:** HIGH (verified with npm docs, Claude Code issue trackers, and ecosystem best practices)
+
+---
 
 ## Critical Pitfalls
 
-### Pitfall 1: HUD Pane Resizing Breaks Layout
+### Pitfall 1: Claude Code Settings Replace Instead of Merge
 
-**Symptom:** After terminal window resize, the HUD strip (top pane) becomes too large or too small, or pane ratio resets to 50%.
+**Symptom:** After adding hooks to a project's `.claude/settings.json`, the global hooks from `~/.claude/settings.json` stop running for that project.
 
-**Cause:** When using `split-window -p <percentage>`, tmux may reset pane ratios to 50% after window resize operations. The percentage is calculated at split time, not maintained dynamically.
-
-**Warning Signs:**
-- HUD strip grows to consume half the screen after resize
-- User resizes their terminal and HUD becomes unusable
-- Layout looks correct initially but breaks when terminal dimensions change
-
-**Prevention:**
-- Use fixed line count (`split-window -l 2`) instead of percentage for HUD strip
-- Listen for terminal resize (SIGWINCH) and re-adjust pane size with `resize-pane -y 2`
-- Save and restore HUD height after resize operations
-- Test with aggressive terminal resizing during development
-
-**Phase:** Phase 06-02 (tmux pane architecture) - establish resize-resilient layout from start
-
-**Sources:**
-- [tmux split pane ratio reset issue](https://github.com/tmux/tmux/issues/2094)
-- [tmux resize-pane percentage feature request](https://github.com/tmux/tmux/issues/383)
-
----
-
-### Pitfall 2: Input Goes to Wrong Pane After Focus Switch
-
-**Symptom:** User types in HUD pane but input appears in session pane, or vice versa.
-
-**Cause:** Known tmux bug where `pane-focus-in` event triggers in the wrong (former) pane. Also, `select-pane` doesn't always synchronize with actual input routing immediately.
+**Cause:** Claude Code settings apply in order of precedence, and project-level settings can **replace** rather than merge with global settings. This is a known issue tracked in [GitHub #17017](https://github.com/anthropics/claude-code/issues/17017) and [#11626](https://github.com/anthropics/claude-code/issues/11626).
 
 **Warning Signs:**
-- User selects HUD pane but keystrokes affect Claude session
-- Focus indicator shows one pane but input goes elsewhere
-- Problem intermittent and hard to reproduce
+- vibe-term stops tracking sessions in projects that have their own `.claude/settings.json`
+- User adds any hook to a project and vibe-term hooks silently stop working
+- Works for new projects but breaks for configured ones
+
+**Consequences:**
+- Silent failure - no error message, just missing session tracking
+- User confusion about why some projects work and others don't
+- Support burden explaining Claude Code's merge behavior
 
 **Prevention:**
-- Add small delay (50-100ms) after `select-pane` before accepting input
-- Use `tmux display-message -p '#{pane_id}'` to verify focus after switch
-- Implement explicit focus verification before routing keystrokes
-- Avoid mouse-based pane selection when possible (more prone to issues)
-- Test focus switching rapidly in development
+- The `add-hud-hooks.sh` approach is correct - hooks must be added to each project's settings file individually
+- Document this limitation clearly in README
+- Provide tooling that scans for and updates all project settings files
+- Consider a `vibe-term setup` command that handles both global and project-level hook installation
+- Detect when a session is missing hook data and warn user about potential project-level override
 
-**Phase:** Phase 06-03 (input handling) - verify focus before processing input
-
-**Sources:**
-- [pane-focus-in wrong pane issue](https://github.com/tmux/tmux/issues/3506)
-- [Wrong pane focus with mouse click](https://github.com/tmux/tmux/issues/619)
-
----
-
-### Pitfall 3: Nested tmux Detection and Session Creation
-
-**Symptom:** Error "sessions should be nested with care, unset $TMUX to force" when spawning sessions, or HUD creates duplicate nested sessions.
-
-**Cause:** HUD running inside tmux sets `$TMUX` environment variable, which prevents creating new tmux sessions or attaching from child processes.
-
-**Warning Signs:**
-- `tmux new-session` commands fail with nested session warning
-- User runs HUD from within existing tmux and spawning breaks
-- HUD works standalone but fails inside tmux
-
-**Prevention:**
+**Detection:**
 ```typescript
-// Check if already in tmux before operations
-const isInTmux = !!process.env.TMUX;
-
-if (isInTmux) {
-  // Use switch-client or select-window, not attach or new-session
-  await execAsync(`tmux switch-client -t "${sessionName}"`);
-} else {
-  // Can use new-session or attach
-  await execAsync(`tmux new-session -d -s "${sessionName}"`);
+// In session detection, flag sessions without recent hook updates
+const SESSION_STALE_THRESHOLD = 30000; // 30 seconds
+if (Date.now() - session.lastHookUpdate > SESSION_STALE_THRESHOLD && session.status !== 'idle') {
+  session.mayBeMissingHooks = true;
 }
 ```
-- Always detect tmux context before session operations
-- Use `switch-client` for within-tmux navigation
-- Provide clear error message if nested context prevents operation
 
-**Phase:** Phase 06-02 (session management) - detect context before every session operation
+**Phase:** Hook Management - must handle project-level hook injection
 
 **Sources:**
-- [Nested tmux sessions guidance](https://koenwoortman.com/tmux-sessions-should-be-nested-with-care-unset-tmux-to-force/)
-- [tmux nested session best practices](https://www.freecodecamp.org/news/tmux-in-practice-local-and-nested-remote-tmux-sessions-4f7ba5db8795/)
+- [Claude Code Settings Documentation](https://code.claude.com/docs/en/settings)
+- [Project-level permissions replace global permissions #17017](https://github.com/anthropics/claude-code/issues/17017)
+- [Feature request: Automatic merge #11626](https://github.com/anthropics/claude-code/issues/11626)
 
 ---
 
-### Pitfall 4: send-keys Race Conditions
+### Pitfall 2: Hook Array Deduplication Logic Wrong
 
-**Symptom:** Commands sent via `tmux send-keys` execute out of order, partially, or not at all.
+**Symptom:** After running hook installation multiple times, the same hook appears duplicated in settings files, causing the hook to run multiple times per event.
 
-**Cause:** `send-keys` operations are asynchronous and can race with each other or with shell state changes. Sending signals like Ctrl-Z creates race conditions with shell job control.
+**Cause:** Naive array concatenation without proper deduplication. The existing `add-hud-hooks.sh` checks for existing hooks but uses string matching that may miss variations.
 
 **Warning Signs:**
-- Commands appear truncated in session pane
-- Multi-key sequences don't complete (e.g., vim mode switching)
-- Spawned process doesn't receive intended input
+- Hook script runs 2x, 3x, 4x per Claude event
+- Session state files updated multiple times in rapid succession
+- Slower Claude response due to redundant hook execution
+
+**Consequences:**
+- Performance degradation for users
+- Confusing state updates in HUD
+- User has to manually edit settings.json to fix
 
 **Prevention:**
 ```typescript
-// Bad: multiple send-keys in sequence
-await execAsync(`tmux send-keys -t "${pane}" "cd /path" C-m`);
-await execAsync(`tmux send-keys -t "${pane}" "claude" C-m`);
+// Check for hook existence by normalized command path
+function hookExists(hooks: HookEntry[], targetCommand: string): boolean {
+  const normalizedTarget = normalizePath(targetCommand);
+  return hooks.some(entry =>
+    entry.hooks.some(hook =>
+      normalizePath(hook.command) === normalizedTarget ||
+      hook.command.includes('status-hook.sh') // Catch variations
+    )
+  );
+}
 
-// Better: combine into single shell command
-await execAsync(`tmux send-keys -t "${pane}" "cd /path && claude" C-m`);
-
-// Or: add explicit sync
-await execAsync(`tmux send-keys -t "${pane}" "cd /path" C-m`);
-await new Promise(resolve => setTimeout(resolve, 100)); // Wait for shell
-await execAsync(`tmux send-keys -t "${pane}" "claude" C-m`);
+function normalizePath(cmd: string): string {
+  // Handle $CLAUDE_PROJECT_DIR, ~, absolute paths
+  return cmd
+    .replace(/^"?\$CLAUDE_PROJECT_DIR"?/, '')
+    .replace(/^"?~/, '')
+    .replace(/\/+/g, '/')
+    .trim();
+}
 ```
-- Combine commands when possible
-- Add delays between dependent send-keys operations
-- Avoid Ctrl-Z or other signal keys through send-keys
-- Test with slow shells/machines
 
-**Phase:** Phase 06-03 (session spawning) - use combined commands or explicit synchronization
+**Phase:** Hook Management - implement robust deduplication before adding hooks
 
 **Sources:**
-- [send-keys async execution issue](https://github.com/tmux/tmux/issues/1517)
-- [send-keys Ctrl-Z race condition](https://github.com/tmux/tmux/issues/3360)
+- [deepmerge npm package](https://www.npmjs.com/package/deepmerge) - for array merge strategies
+- Existing `add-hud-hooks.sh` in project
 
 ---
 
-### Pitfall 5: TERM Environment Breaks Ink Rendering
+### Pitfall 3: npm Global Install Path Resolution Breaks Hook Scripts
 
-**Symptom:** Ink app renders incorrectly inside tmux pane - colors wrong, characters garbled, or layout broken.
+**Symptom:** After `npm install -g vibe-term`, hook scripts fail with "command not found" or wrong path errors.
 
-**Cause:** tmux sets `TERM=screen` or `TERM=tmux-256color` which may not match what Ink expects. The terminal capabilities described by TERM affect how Ink renders.
+**Cause:** When installed globally, the package is in a different location than when cloned and built locally. Hardcoded paths like `/home/user/claude/vibe-term/src/hooks/status-hook.sh` break.
 
 **Warning Signs:**
-- Colors look wrong (16 colors instead of 256)
-- Box-drawing characters display as `q`, `x`, etc.
-- Cursor invisible or in wrong position
-- Works outside tmux but breaks inside
+- Hooks work during development but fail after npm install
+- Error in Claude output: "status-hook.sh: No such file or directory"
+- Works on one machine, fails on another
+
+**Consequences:**
+- Complete loss of session tracking for globally installed users
+- Silent failure (hook errors don't stop Claude)
+- User must manually fix paths
 
 **Prevention:**
+```typescript
+// Use import.meta.dirname (Node 20.11+) for package location
+const packageRoot = import.meta.dirname; // or fileURLToPath(import.meta.url)
+const hookScript = path.join(packageRoot, 'hooks', 'status-hook.sh');
+
+// During hook installation, use the resolved absolute path
+function getHookCommand(): string {
+  const hookPath = path.join(getPackageRoot(), 'dist', 'hooks', 'status-hook.sh');
+  // Verify it exists before returning
+  if (!fs.existsSync(hookPath)) {
+    throw new Error(`Hook script not found at ${hookPath}. Reinstall vibe-term.`);
+  }
+  return hookPath;
+}
+```
+
+**Additional consideration:** The hook script must be included in the npm package's `files` array in package.json:
+```json
+{
+  "files": ["dist", "dist/hooks/status-hook.sh"]
+}
+```
+
+**Phase:** npm Distribution - resolve paths relative to package installation location
+
+**Sources:**
+- [ESM __dirname alternatives](https://blog.logrocket.com/alternatives-dirname-node-js-es-modules/)
+- [npm folders documentation](https://docs.npmjs.com/cli/v7/configuring-npm/folders/)
+- [import.meta.dirname in Node.js](https://www.sonarsource.com/blog/dirname-node-js-es-modules/)
+
+---
+
+### Pitfall 4: Backup Files Left Behind Without Restoration Path
+
+**Symptom:** User runs `vibe-term setup`, something goes wrong mid-process, and their `settings.json` is corrupted. Backup files exist but user doesn't know how to restore.
+
+**Cause:** Backup files created with timestamps like `settings.json.backup-1768763003544` but no `vibe-term restore` command or clear documentation on restoration.
+
+**Warning Signs:**
+- Multiple `.backup-*` files accumulating in ~/.claude/
+- User reports "Claude stopped working after running vibe-term setup"
+- No way to undo hook installation
+
+**Consequences:**
+- User loses their Claude configuration
+- Trust eroded - tool modifies critical config without safe undo
+- Support burden for manual recovery
+
+**Prevention:**
+```typescript
+// Clear backup naming convention with human-readable timestamp
+const backupName = `settings.json.vibe-term-backup.${new Date().toISOString().replace(/[:.]/g, '-')}`;
+
+// Create manifest of what was backed up
+const manifest = {
+  backupFile: backupPath,
+  originalFile: settingsPath,
+  createdAt: new Date().toISOString(),
+  createdBy: 'vibe-term setup',
+  restoreCommand: 'vibe-term restore --backup ' + backupName
+};
+
+// Implement restore command
+async function restore(backupPath: string): Promise<void> {
+  const backup = await fs.readFile(backupPath, 'utf8');
+  // Validate it's valid JSON before overwriting
+  JSON.parse(backup);
+  await fs.copyFile(backupPath, settingsPath);
+  console.log(`Restored settings from ${backupPath}`);
+}
+```
+
+**Best practices:**
+- Keep only last N backups (e.g., 5) to avoid clutter
+- Name backups with purpose: `settings.json.vibe-term-backup.YYYY-MM-DDTHH-MM-SS`
+- Provide `vibe-term restore` command
+- Show backup location after any settings modification
+- Use atomic write (write-file-atomic) to prevent corruption
+
+**Phase:** Hook Management - implement backup strategy with restoration command
+
+**Sources:**
+- [write-file-atomic npm package](https://www.npmjs.com/package/write-file-atomic)
+- Existing backup files in ~/.claude/: `settings.json.backup-*`
+
+---
+
+### Pitfall 5: EACCES Permission Errors on npm Global Install
+
+**Symptom:** `npm install -g vibe-term` fails with EACCES or requires sudo, which breaks subsequent operations.
+
+**Cause:** Default npm global directory (`/usr/local/lib/node_modules`) requires root permissions on many systems. Using sudo creates files owned by root that the user can't modify.
+
+**Warning Signs:**
+- `EACCES: permission denied` during install
+- User runs `sudo npm install -g` and then hook scripts fail with permission errors
+- Symlink creation fails for bin scripts
+
+**Consequences:**
+- Users unable to install without workarounds
+- Using sudo creates downstream permission problems
+- Different behavior across Linux, macOS, Windows
+
+**Prevention:**
+- Document recommended installation methods in README
+- Recommend using nvm or changing npm prefix to user directory
+- Test installation in CI on fresh systems without sudo
+- Don't require write access to system directories at runtime
+
+```markdown
+## Installation
+
+### Recommended: Use nvm (avoids permission issues)
 ```bash
-# In tmux.conf
-set-option -g default-terminal "tmux-256color"
-set-option -ga terminal-overrides ",xterm-256color:Tc"
+nvm install 20
+npm install -g vibe-term
 ```
 
-```typescript
-// In HUD startup, verify TERM compatibility
-const term = process.env.TERM;
-if (term && !term.includes('256color') && !term.includes('truecolor')) {
-  console.warn('Limited color support detected. Set TERM=xterm-256color for best results.');
-}
+### Alternative: Configure npm to use user directory
+```bash
+npm config set prefix ~/.npm-global
+export PATH=~/.npm-global/bin:$PATH
+npm install -g vibe-term
 ```
-- Document required tmux configuration
-- Detect and warn about incompatible TERM settings
-- Test HUD in fresh tmux with default config
-- Never manually set TERM in application code (let tmux handle it)
+```
 
-**Phase:** Phase 06-01 (HUD pane setup) - verify TERM on startup
+**Phase:** npm Distribution - document installation without sudo
 
 **Sources:**
-- [tmux FAQ on TERM settings](https://github.com/tmux/tmux/wiki/FAQ)
-- [tmux TERM environment issues](https://github.com/tmux/tmux/issues/1790)
+- [npm EACCES permission errors](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally/)
+- [npm permission notes](https://npm.github.io/installation-setup-docs/installing/a-note-on-permissions.html)
 
 ---
 
 ## Moderate Pitfalls
 
-### Pitfall 6: Working Directory Confusion When Spawning
+### Pitfall 6: ~/.vibe-term/ Directory Permission and Structure Issues
 
-**Symptom:** New Claude sessions spawn in wrong directory, or `#{pane_current_path}` returns unexpected value.
+**Symptom:** Hook script or vibe-term fails to write session state files. Files end up in wrong location or with wrong permissions.
 
-**Cause:** By default, tmux opens new panes in the directory where tmux server started, not the current pane's directory. Different shells (bash, zsh, fish) also handle PWD differently.
+**Cause:** No consistent handling of config/data directory creation. Different code paths create directories with different permissions or in different locations.
 
 **Warning Signs:**
-- User expects session in project dir but it opens in ~
-- `split-window` ignores apparent current directory
-- Works with bash, breaks with fish shell
+- Session state files missing despite hooks running
+- Permission denied writing to ~/.vibe-term/
+- Directory structure inconsistent across machines
 
 **Prevention:**
 ```typescript
-// Always specify working directory explicitly
-await execAsync(
-  `tmux split-window -v -c "${projectPath}" "claude"`,
-  { cwd: projectPath }
-);
+// Use env-paths for cross-platform config locations
+import envPaths from 'env-paths';
 
-// Or use pane_current_path format
-await execAsync(
-  `tmux split-window -v -c '#{pane_current_path}' "claude"`
-);
+const paths = envPaths('vibe-term', { suffix: '' });
+// paths.config -> ~/.config/vibe-term (Linux) or ~/Library/Preferences/vibe-term (macOS)
+// paths.data -> ~/.local/share/vibe-term
+// paths.cache -> ~/.cache/vibe-term
+
+// Centralize directory creation
+async function ensureDirectories(): Promise<void> {
+  await fs.mkdir(paths.config, { recursive: true, mode: 0o755 });
+  await fs.mkdir(path.join(paths.data, 'sessions'), { recursive: true, mode: 0o755 });
+}
+
+// Call on startup AND in hook script
 ```
-- Never rely on default working directory
-- Always pass `-c` option with explicit path
-- Verify directory exists before spawning
-- Handle paths with spaces (quote properly)
 
-**Phase:** Phase 06-03 (session spawning) - always specify -c directory
+**Note:** Current implementation uses `~/.claude-hud/sessions/` - consider migrating to `~/.config/vibe-term/` for standards compliance, but provide migration path.
+
+**Phase:** Hook Management - standardize directory structure
 
 **Sources:**
-- [tmux working directories explained](https://tmuxai.dev/tmux-working-directories/)
-- [New panes in same directory](https://qmacro.org/blog/posts/2021/04/01/new-tmux-panes-and-windows-in-the-right-directory/)
+- [env-paths npm package](https://www.npmjs.com/package/env-paths)
+- [XDG Base Directory specification](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 
 ---
 
-### Pitfall 7: Pane Process Exit Leaves Dead Panes
+### Pitfall 7: Encoded Path Names in ~/.claude/projects/ Mishandled
 
-**Symptom:** Claude session exits but pane remains visible as empty/dead, cluttering the window.
+**Symptom:** vibe-term can't find or modify settings for projects because it doesn't understand the path encoding scheme.
 
-**Cause:** By default, tmux destroys panes when their process exits. But if `remain-on-exit` is set (globally or on pane), dead panes persist.
+**Cause:** Claude Code encodes project paths like `/home/ssugar/claude/vibe-term` as `-home-ssugar-claude-vibe-term` in `~/.claude/projects/`. Tool needs to handle this encoding/decoding.
 
 **Warning Signs:**
-- User closes Claude but blank pane remains
-- Pane shows "[exited]" but doesn't close
-- Layout has empty slots where sessions were
+- Project settings scanner misses some projects
+- Hook installation targets wrong directory
+- Path matching fails for project detection
 
 **Prevention:**
 ```typescript
-// Detect dead panes during refresh
-const paneStatus = await execAsync(
-  `tmux list-panes -t "${target}" -F '#{pane_id}:#{?pane_dead,dead,alive}'`
-);
+// Encode path to Claude's format
+function encodeProjectPath(absolutePath: string): string {
+  return absolutePath.replace(/\//g, '-');
+}
 
-// Clean up dead panes
-if (paneStatus.includes('dead')) {
-  await execAsync(`tmux kill-pane -t "${paneId}"`);
+// Decode Claude's format to path
+function decodeProjectPath(encoded: string): string {
+  // First character is always '-' representing root '/'
+  return encoded.replace(/-/g, '/');
+}
+
+// Find project settings for a given working directory
+function findProjectSettings(cwd: string): string | null {
+  const encoded = encodeProjectPath(cwd);
+  const projectDir = path.join(os.homedir(), '.claude', 'projects', encoded);
+  const settingsPath = path.join(projectDir, 'settings.json');
+  return fs.existsSync(settingsPath) ? settingsPath : null;
 }
 ```
-- Don't set global `remain-on-exit` option
-- Check for dead panes during session refresh cycle
-- Provide manual cleanup option (kill dead panes)
-- Consider auto-cleanup with configurable delay
 
-**Phase:** Phase 06-04 (session lifecycle) - detect and clean dead panes
+**Phase:** Hook Management - handle Claude's path encoding scheme
 
 **Sources:**
-- [tmux respawn pane management](https://tmuxai.dev/tmux-respawn-pane/)
-- [Baeldung tmux kill/respawn](https://www.baeldung.com/linux/tmux-kill-respawn-pane)
+- Observed from `ls ~/.claude/projects/` showing encoded names
 
 ---
 
-### Pitfall 8: Window/Pane ID Instability
+### Pitfall 8: Shebang Line Issues for Cross-Platform bin Scripts
 
-**Symptom:** Cached pane IDs become invalid, causing operations to fail with "no such pane" errors.
+**Symptom:** CLI command fails on some systems with "bad interpreter" or doesn't execute at all on Windows.
 
-**Cause:** tmux pane IDs change when windows are rearranged, panes are killed, or session is re-created. IDs are not persistent across tmux server restarts.
+**Cause:** Shebang line `#!/usr/bin/env node` works on most systems but can fail. Windows handles shebangs differently through npm's cmd shim.
 
 **Warning Signs:**
-- "can't find pane" errors after some time
-- Operations work initially then fail
-- Works until user manually manipulates tmux layout
+- Works on macOS/Linux but fails on WSL2 with certain configurations
+- `node\r` error (Windows line endings in shebang)
+- Permission denied on the bin script itself
 
 **Prevention:**
 ```typescript
-// Don't cache pane IDs long-term
-// Re-resolve target before each operation
-async function getValidTarget(sessionName: string): Promise<string | null> {
-  const result = await execAsync(
-    `tmux list-panes -t "${sessionName}" -F '#{pane_id}' 2>/dev/null`
-  );
-  return result.stdout.trim() || null;
-}
-
-// Always handle "not found" gracefully
-try {
-  await execAsync(`tmux select-pane -t "${target}"`);
-} catch (e) {
-  if (e.message.includes("can't find")) {
-    // Pane no longer exists, refresh state
-    await refreshSessions();
+// In package.json, ensure correct bin entry
+{
+  "bin": {
+    "vibe-term": "./dist/cli.js"
   }
 }
-```
-- Never cache pane/window IDs for more than one operation
-- Re-query tmux state before operations
-- Handle "not found" errors as normal state, not exceptions
-- Use session names (stable) rather than IDs when possible
 
-**Phase:** Phase 06-02 (session detection) - always re-resolve before operations
+// In cli.js, use standard shebang with Unix line endings
+#!/usr/bin/env node
+
+// Ensure build process outputs Unix line endings
+// In tsup.config.ts or build script:
+// - Don't use git autocrlf on the built output
+// - Verify with: file dist/cli.js (should say "ASCII text executable")
+```
+
+**Additional checks:**
+- Ensure cli.js has executable permission in git: `git update-index --chmod=+x dist/cli.js`
+- Or add in package.json scripts: `"postinstall": "chmod +x dist/cli.js"` (Unix only)
+
+**Phase:** npm Distribution - validate shebang and permissions
 
 **Sources:**
-- [tmux session disappearing issues](https://github.com/tmux/tmux/issues/1776)
+- [Creating cross-platform shell scripts](https://exploringjs.com/nodejs-shell-scripting/ch_creating-shell-scripts.html)
+- [Cross-platform Node.js](https://alan.norbauer.com/articles/cross-platform-nodejs/)
 
 ---
 
-### Pitfall 9: Terminal Size Not Propagated to Pane
+### Pitfall 9: Hook Script Dependency on jq Not Available
 
-**Symptom:** Ink app doesn't detect resize, displays at wrong dimensions, or content gets clipped.
+**Symptom:** Status hook fails silently because `jq` command is not installed on user's system.
 
-**Cause:** Resizing tmux panes doesn't always trigger SIGWINCH in running processes. Also, `tput` may report stale dimensions after resize.
+**Cause:** Current `status-hook.sh` depends on `jq` for JSON parsing. Not all systems have jq installed by default.
 
 **Warning Signs:**
-- HUD content doesn't reflow after pane resize
-- Layout looks correct initially but breaks after resize
-- `process.stdout.columns` returns old value
+- Hook runs but produces no output files
+- `jq: command not found` in stderr (but hooks suppress errors)
+- Works on dev machine, fails on user's machine
 
 **Prevention:**
-```typescript
-// Force SIGWINCH propagation
-process.on('SIGWINCH', () => {
-  // Re-read dimensions
-  const { columns, rows } = process.stdout;
-  // Trigger Ink re-render
-  forceRerender();
-});
 
-// Also listen to stdout resize event
-process.stdout.on('resize', handleResize);
+Option A: Rewrite hook in Node.js (consistent with rest of project):
+```typescript
+#!/usr/bin/env node
+// status-hook.js - no external dependencies beyond Node
+import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
+
+const input = JSON.parse(readFileSync(0, 'utf8')); // Read from stdin
+// ... rest of hook logic
 ```
 
-From tmux side:
+Option B: Keep bash but use pure bash JSON parsing (fragile) or bundle jq.
+
+**Recommendation:** Rewrite hook in Node.js. It's already a Node project, and Node is guaranteed available if vibe-term is installed.
+
+**Phase:** Hook Management - remove jq dependency
+
+**Sources:**
+- Current `src/hooks/status-hook.sh` uses jq extensively
+
+---
+
+### Pitfall 10: npm link vs npm install -g Behavior Differences
+
+**Symptom:** Package works when tested with `npm link` but fails when user does `npm install -g`.
+
+**Cause:** `npm link` creates a symlink to your source directory, while `npm install -g` copies files to global node_modules. Paths, file permissions, and which files are included can differ.
+
+**Warning Signs:**
+- "File not found" for files that exist in source but aren't in package
+- Different behavior between dev testing and user installation
+- Works with `npm link`, breaks with `npm pack && npm install -g ./vibe-term-*.tgz`
+
+**Prevention:**
 ```bash
-# Send SIGWINCH to pane process
-kill -WINCH $(tmux display-message -p '#{pane_pid}')
+# Test the actual package, not symlinked source
+npm pack                           # Creates vibe-term-1.0.0.tgz
+npm install -g ./vibe-term-1.0.0.tgz  # Install from tarball
+vibe-term                          # Test the installed version
+
+# Verify package contents include all needed files
+tar -tvf vibe-term-1.0.0.tgz | grep -E '\.(js|sh)$'
 ```
-- Listen to both SIGWINCH and stdout resize
-- Don't trust cached terminal dimensions
-- Re-query dimensions before each render cycle
-- Test with frequent resize during development
 
-**Phase:** Phase 06-01 (HUD rendering) - handle resize signals properly
-
-**Sources:**
-- [tmux resize not updating terminfo](https://github.com/tmux/tmux/issues/2005)
-- [Programs report incorrect size after resize](https://github.com/tmux/tmux/issues/1880)
-
----
-
-### Pitfall 10: Keyboard Input Conflicts Between HUD and Sessions
-
-**Symptom:** Keystrokes meant for HUD affect Claude session, or HUD captures keys that should go to session.
-
-**Cause:** Both HUD pane and session pane are active in the same tmux window. Without careful input routing, keys can be misrouted based on which pane has tmux focus vs which pane the user thinks is active.
-
-**Warning Signs:**
-- User presses 'q' to quit HUD but Claude receives it
-- HUD hotkey triggers while user is typing in Claude
-- Input behavior unpredictable
-
-**Prevention:**
-- Design clear focus model: HUD pane ONLY receives input when tmux focus is on it
-- Visual focus indicator (border color, title) showing which pane is active
-- HUD should detect when it doesn't have tmux focus and ignore input
-- Consider "pass-through mode" where HUD forwards keys to session pane
-- Document expected focus switching behavior clearly
-
-```typescript
-// Detect if HUD pane currently has focus
-async function hudHasFocus(): Promise<boolean> {
-  const result = await execAsync(
-    `tmux display-message -p '#{pane_active}'`
-  );
-  return result.stdout.trim() === '1';
+```json
+// package.json - explicit files array
+{
+  "files": [
+    "dist/**/*.js",
+    "dist/**/*.sh",
+    "dist/**/*.d.ts"
+  ]
 }
-
-// In input handler
-useInput((input, key) => {
-  // Only handle input if we have focus
-  if (!hudHasFocus()) return;
-  // ... handle input
-});
 ```
 
-**Phase:** Phase 06-03 (input handling) - implement focus-aware input routing
+**Phase:** npm Distribution - test with npm pack, not just npm link
 
 **Sources:**
-- [tmux pane focus events](https://github.com/tmux/tmux/issues/2808)
+- [npm link documentation](https://docs.npmjs.com/cli/v9/commands/npm-link/)
+- [Different approaches to testing local packages](https://dev.to/one-beyond/different-approaches-to-testing-your-own-packages-locally-npm-link-4hoj)
 
 ---
 
 ## Minor Pitfalls
 
-### Pitfall 11: Child Process Cleanup on SIGKILL
+### Pitfall 11: Multiple Hook Events Cause State Race Conditions
 
-**Symptom:** If HUD is killed (SIGKILL, not SIGTERM), child processes or tmux state may be left inconsistent.
+**Symptom:** Session status flickers or shows wrong state because multiple hook events fire rapidly and race to update state file.
 
-**Cause:** SIGKILL cannot be caught, so cleanup handlers don't run. Any spawned processes or tmux manipulations cannot be undone.
-
-**Warning Signs:**
-- Zombie session panes after HUD crash
-- tmux layout corrupted after force-kill
-- Must manually clean up tmux state
-
-**Prevention:**
-- Use SIGTERM for normal shutdown (can be caught)
-- Design for recovery: HUD should detect and clean up orphaned state on startup
-- Don't spawn processes that would be problematic if abandoned
-- Keep tmux state minimal (prefer detecting existing sessions over managing lifecycle)
-
-**Phase:** Phase 06-04 (startup/shutdown) - implement orphan detection on startup
-
-**Sources:**
-- [Node.js child process SIGKILL issues](https://github.com/nodejs/node/issues/12101)
-
----
-
-### Pitfall 12: tmux Version Incompatibility
-
-**Symptom:** HUD commands fail on older tmux versions, or format strings don't work.
-
-**Cause:** tmux features and format variables change between versions. Features like `display-popup` require tmux 3.2+, some format variables are newer.
+**Cause:** `PreToolUse`, `PostToolUse`, and other hooks can fire in rapid succession. Each reads then writes the state file, potentially losing updates.
 
 **Warning Signs:**
-- Works on dev machine, fails on user's older tmux
-- "unknown command" or "bad format" errors
-- Features present in docs but not in installed version
+- Status shows "tool" then immediately "idle" then back to "working"
+- Subagent count goes negative or jumps unexpectedly
+- `lastUpdate` timestamp jumps backward
 
 **Prevention:**
 ```typescript
-// Check tmux version on startup
-async function getTmuxVersion(): Promise<string> {
-  const result = await execAsync('tmux -V');
-  return result.stdout.trim(); // "tmux 3.3a"
-}
+// Use atomic file operations with locking
+import { writeFile } from 'write-file-atomic';
 
-// Document minimum version requirement
-const MIN_TMUX_VERSION = '2.6'; // or whatever minimum we need
-```
-- Document minimum tmux version
-- Test on oldest supported version in CI
-- Avoid bleeding-edge features unless necessary
-- Provide helpful error if version too old
+// Or use a simple mutex for the state file
+const lockFile = `${stateFile}.lock`;
 
-**Phase:** Phase 06-01 (startup) - verify tmux version compatibility
-
-**Sources:**
-- [tmux changelog](https://raw.githubusercontent.com/tmux/tmux/master/CHANGES)
-
----
-
-### Pitfall 13: Externally Created Sessions Not Detected
-
-**Symptom:** User creates Claude session outside HUD (in a different tmux window/pane) and HUD doesn't see it.
-
-**Cause:** HUD only monitors sessions it creates, or only monitors specific tmux session names. External sessions don't match expected patterns.
-
-**Warning Signs:**
-- User runs `claude` manually and HUD shows 0 sessions
-- Sessions appear after HUD restart but not dynamically
-- Detection works for spawned sessions but not pre-existing ones
-
-**Prevention:**
-- Use process detection (existing v1.0 approach) as primary method
-- tmux integration is for management, not detection
-- Scan all tmux panes for Claude processes, not just "known" sessions
-- Regular polling of both process list and tmux pane list
-
-**Phase:** Phase 06-02 (session detection) - existing useSessions hook already handles this
-
-**Sources:**
-- Existing codebase: `useSessions.ts` uses process detection independent of tmux state
-
----
-
-## Integration Pitfalls (Ink + tmux)
-
-### Pitfall 14: Ink stdout Conflicts with tmux Capture
-
-**Symptom:** Using `tmux capture-pane` on HUD pane returns garbled output or interferes with Ink rendering.
-
-**Cause:** Ink uses cursor movement, colors, and alternate screen buffer. Capturing pane content while Ink is rendering can get partial state.
-
-**Warning Signs:**
-- External tools trying to read HUD state get garbage
-- Ink rendering corrupted after external pane capture
-- Intermittent visual glitches
-
-**Prevention:**
-- Don't expose HUD pane for external capture
-- If capture needed, pause Ink rendering first
-- Use state store for programmatic access, not screen scraping
-- Document that HUD pane shouldn't be captured
-
-**Phase:** Phase 06-01 (HUD pane) - document limitation, don't support external capture
-
----
-
-### Pitfall 15: Multiple HUD Instances Conflict
-
-**Symptom:** User accidentally starts two HUD instances, causing tmux state confusion or duplicate session entries.
-
-**Cause:** No singleton enforcement - user can start multiple `cc-hud` processes, each trying to manage the same tmux sessions.
-
-**Warning Signs:**
-- Duplicate entries in HUD after restart
-- Operations fail with "already exists"
-- Inconsistent state between two HUD windows
-
-**Prevention:**
-- Check for existing HUD process on startup (pid file or process detection)
-- Lock file in temp directory
-- Clear error message if HUD already running
-- Offer to attach to existing HUD instead of starting new one
-
-```typescript
-// Check for existing instance
-const lockFile = '/tmp/cc-hud.lock';
-if (fs.existsSync(lockFile)) {
-  const existingPid = fs.readFileSync(lockFile, 'utf8');
-  if (processExists(existingPid)) {
-    console.error(`HUD already running (pid ${existingPid}). Use existing instance.`);
-    process.exit(1);
+async function updateState(sessionId: string, updates: Partial<SessionState>) {
+  await acquireLock(lockFile);
+  try {
+    const current = await readState(sessionId);
+    const merged = { ...current, ...updates, lastUpdate: Date.now() };
+    await writeFile(stateFile, JSON.stringify(merged, null, 2));
+  } finally {
+    await releaseLock(lockFile);
   }
 }
-// Create lock file
-fs.writeFileSync(lockFile, process.pid.toString());
 ```
 
-**Phase:** Phase 06-01 (startup) - implement instance locking
+**Current mitigation in status-hook.sh:** Uses temp file + mv which is atomic for the write, but reads can still race. Consider adding file locking or accepting eventual consistency.
+
+**Phase:** Hook Management - consider atomic state updates
+
+---
+
+### Pitfall 12: Settings.json Formatting Lost After Modification
+
+**Symptom:** After vibe-term modifies settings.json, the file formatting changes (different indentation, key order changes, comments lost).
+
+**Cause:** JSON.parse/JSON.stringify doesn't preserve formatting. JSON doesn't support comments, so any commented settings are lost.
+
+**Warning Signs:**
+- User's carefully formatted settings.json becomes minified or differently indented
+- Comments in settings.json disappear
+- Git shows large diff for small logical change
+
+**Prevention:**
+```typescript
+// Preserve formatting with json5 or detect-indent
+import detectIndent from 'detect-indent';
+
+async function updateSettingsFile(filePath: string, updater: (obj: any) => any) {
+  const content = await fs.readFile(filePath, 'utf8');
+  const indent = detectIndent(content).indent || '  ';
+
+  const settings = JSON.parse(content);
+  const updated = updater(settings);
+
+  await writeFile(filePath, JSON.stringify(updated, null, indent) + '\n');
+}
+
+// Note: Comments cannot be preserved with standard JSON.
+// Document that settings files should not contain comments if using vibe-term setup.
+```
+
+**Phase:** Hook Management - preserve user's JSON formatting
+
+---
+
+### Pitfall 13: postinstall Scripts Security Perception
+
+**Symptom:** Security-conscious users refuse to install because postinstall scripts are a known attack vector.
+
+**Cause:** npm postinstall scripts run arbitrary code during installation. Many security guides recommend `--ignore-scripts`. vibe-term may need postinstall to set permissions.
+
+**Warning Signs:**
+- Users ask "why does this need a postinstall script?"
+- Installation fails for users with `ignore-scripts=true` in .npmrc
+- Security scanners flag the package
+
+**Prevention:**
+- Avoid postinstall scripts if possible
+- If needed for chmod, document why and keep it minimal:
+```json
+{
+  "scripts": {
+    "postinstall": "node -e \"require('fs').chmodSync('dist/hooks/status-hook.sh', 0o755)\""
+  }
+}
+```
+- Provide manual setup instructions for users who block scripts
+- Never do network requests or complex operations in postinstall
+
+**Phase:** npm Distribution - minimize or eliminate postinstall
+
+**Sources:**
+- [npm security best practices](https://github.com/lirantal/npm-security-best-practices)
+- [OWASP npm security cheat sheet](https://cheatsheetseries.owasp.org/cheatsheets/NPM_Security_Cheat_Sheet.html)
+
+---
+
+### Pitfall 14: Version Mismatch Between CLI and Hooks
+
+**Symptom:** User updates vibe-term but hooks still point to old version, causing compatibility issues.
+
+**Cause:** Hook paths are written to settings.json as absolute paths. Updating the npm package doesn't update those paths.
+
+**Warning Signs:**
+- New vibe-term features don't work after upgrade
+- Hook script errors after update
+- State file format mismatch
+
+**Prevention:**
+```typescript
+// Check hook version on startup
+async function validateHookVersion(): Promise<void> {
+  const expectedVersion = packageJson.version;
+  const installedHookPath = await getInstalledHookPath();
+
+  if (!installedHookPath) {
+    console.warn('Hooks not installed. Run: vibe-term setup');
+    return;
+  }
+
+  const hookVersion = await getHookVersion(installedHookPath);
+  if (hookVersion !== expectedVersion) {
+    console.warn(`Hook version mismatch: ${hookVersion} vs ${expectedVersion}`);
+    console.warn('Run: vibe-term setup --upgrade');
+  }
+}
+
+// Embed version in hook script
+// In status-hook.sh header:
+# VIBE_TERM_HOOK_VERSION=1.0.0
+```
+
+**Phase:** Hook Management - detect and warn about version mismatches
+
+---
+
+## Integration Pitfalls
+
+### Pitfall 15: Interaction with Other Claude Hooks
+
+**Symptom:** vibe-term hooks interfere with user's existing hooks, or other hooks interfere with vibe-term.
+
+**Cause:** Multiple hooks on same event run in array order. If a hook fails or produces output, it might affect subsequent hooks.
+
+**Warning Signs:**
+- User's existing hooks stop working after installing vibe-term
+- vibe-term hooks don't run when user has other hooks configured
+- Unexpected CLAUDE_PAYLOAD corruption
+
+**Prevention:**
+```bash
+# In hook script: Never modify environment for subsequent hooks
+# Always exit 0 to not block other hooks
+# Don't write to stdout (it goes to Claude)
+# Write errors to stderr sparingly
+
+#!/bin/bash
+# Redirect all output to avoid affecting Claude or other hooks
+exec 2>/dev/null  # Suppress stderr
+exec 1>/dev/null  # Suppress stdout (restore if needed for debugging)
+
+# ... hook logic ...
+
+exit 0  # Always exit cleanly
+```
+
+**Phase:** Hook Management - ensure hooks are well-behaved citizens
+
+---
+
+### Pitfall 16: tmux Integration Conflicts with Hook File Paths
+
+**Symptom:** Session state files are created but vibe-term running in tmux can't find them because paths resolve differently.
+
+**Cause:** The hook runs in Claude's context (with $HOME set), but vibe-term might be in a different environment. If using tmux with different users or containers, $HOME might differ.
+
+**Warning Signs:**
+- Sessions show as "unknown" status despite hooks running
+- State files appear in unexpected location
+- Works outside tmux, fails inside
+
+**Prevention:**
+```typescript
+// Use absolute path consistently
+const stateDir = path.join(os.homedir(), '.claude-hud', 'sessions');
+// Don't rely on $HOME environment variable in string interpolation
+
+// In hook script, be explicit:
+STATE_DIR="${HOME}/.claude-hud/sessions"
+# Not: STATE_DIR="~/.claude-hud/sessions" (tilde doesn't expand in all contexts)
+```
+
+**Phase:** Hook Management - use absolute paths consistently
 
 ---
 
 ## Prevention Strategy Summary by Phase
 
-### Phase 06-01: HUD Pane Foundation
-| Pitfall | Prevention |
-|---------|------------|
-| TERM environment (#5) | Verify TERM on startup, document requirements |
-| Terminal resize (#9) | Handle SIGWINCH + resize events |
-| Multiple instances (#15) | Lock file or pid check |
-| tmux version (#12) | Check version on startup |
+### Phase: Hook Management
+| Pitfall | Priority | Prevention |
+|---------|----------|------------|
+| Settings replace not merge (#1) | Critical | Document, provide per-project installation |
+| Array deduplication (#2) | Critical | Normalize paths, check for variations |
+| jq dependency (#9) | Moderate | Rewrite hook in Node.js |
+| Backup and restore (#4) | Moderate | Named backups, restore command |
+| Version mismatch (#14) | Minor | Embed version, check on startup |
+| JSON formatting (#12) | Minor | Detect and preserve indent |
+| Hook interactions (#15) | Minor | Silent, exit 0, no stdout |
+| Path encoding (#7) | Moderate | Handle Claude's `-` encoding scheme |
+| State races (#11) | Minor | Atomic writes, accept eventual consistency |
 
-### Phase 06-02: tmux Pane Architecture
-| Pitfall | Prevention |
-|---------|------------|
-| Pane resizing (#1) | Use fixed `-l` lines, handle resize events |
-| Nested tmux (#3) | Detect $TMUX, use appropriate commands |
-| ID instability (#8) | Re-resolve before operations |
-| External sessions (#13) | Use process detection, not just tmux tracking |
+### Phase: npm Distribution
+| Pitfall | Priority | Prevention |
+|---------|----------|------------|
+| Path resolution (#3) | Critical | Use import.meta.dirname, include files |
+| EACCES permissions (#5) | Critical | Document nvm, no-sudo installation |
+| link vs install -g (#10) | Moderate | Test with npm pack |
+| Shebang issues (#8) | Moderate | Unix line endings, chmod |
+| postinstall security (#13) | Minor | Minimize or document necessity |
 
-### Phase 06-03: Input Handling and Session Spawning
-| Pitfall | Prevention |
-|---------|------------|
-| Input to wrong pane (#2) | Verify focus before handling input |
-| send-keys races (#4) | Combine commands or add delays |
-| Working directory (#6) | Always specify -c option |
-| Keyboard conflicts (#10) | Focus-aware input routing |
-
-### Phase 06-04: Session Lifecycle
-| Pitfall | Prevention |
-|---------|------------|
-| Dead panes (#7) | Detect and clean during refresh |
-| SIGKILL cleanup (#11) | Orphan detection on startup |
+### Phase: Config Directory
+| Pitfall | Priority | Prevention |
+|---------|----------|------------|
+| Directory permissions (#6) | Moderate | Use env-paths, ensure on startup |
+| tmux path conflicts (#16) | Minor | Absolute paths, explicit $HOME |
 
 ---
 
 ## Quality Checklist
 
-Before completing tmux integration phases:
+Before shipping v3.0:
 
-- [ ] HUD renders correctly inside tmux pane (colors, characters)
-- [ ] Resize handling works (pane resize + terminal window resize)
-- [ ] Session spawning works from within tmux (nested context)
-- [ ] Input routing is predictable (HUD vs session pane)
-- [ ] Dead/orphaned panes are cleaned up
-- [ ] tmux version >= minimum documented requirement
-- [ ] Multiple HUD instances prevented or handled
-- [ ] External (manually created) sessions detected
-- [ ] send-keys operations complete reliably
-- [ ] Working directory correct for spawned sessions
+- [ ] Hook installation works for globally installed package (`npm install -g`)
+- [ ] Hook installation handles projects with existing `.claude/settings.json`
+- [ ] No duplicate hooks after running setup multiple times
+- [ ] Backup files created with clear naming, restore command works
+- [ ] Hook script runs without jq dependency
+- [ ] Works without sudo during installation
+- [ ] `npm pack && npm install -g` test passes
+- [ ] Path resolution works from any working directory
+- [ ] Session state directory created with correct permissions
+- [ ] Claude's encoded project paths handled correctly
+- [ ] Existing user hooks not disrupted
+- [ ] Version mismatch between CLI and hooks detected and warned
 
 ---
 
 ## Sources Summary
 
 ### Primary (HIGH confidence)
-- [tmux manual page](https://man7.org/linux/man-pages/man1/tmux.1.html) - Command reference
-- [tmux GitHub issues](https://github.com/tmux/tmux/issues) - Known bugs and limitations
-- [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) - TERM settings, common issues
+- [npm documentation](https://docs.npmjs.com/) - Install, publish, permissions
+- [Claude Code settings](https://code.claude.com/docs/en/settings) - Hook configuration
+- [GitHub anthropics/claude-code issues](https://github.com/anthropics/claude-code/issues) - Known merge behavior issues
 
 ### Secondary (MEDIUM confidence)
-- [tmux Advanced Use wiki](https://github.com/tmux/tmux/wiki/Advanced-Use) - Patterns
-- [Super Guide to split-window](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) - Detailed subcommand reference
-- [TmuxAI guides](https://tmuxai.dev/) - Working directories, respawn, FAQ
+- [write-file-atomic](https://www.npmjs.com/package/write-file-atomic) - Atomic file writes
+- [env-paths](https://www.npmjs.com/package/env-paths) - Cross-platform config directories
+- [deepmerge](https://www.npmjs.com/package/deepmerge) - JSON merge strategies
+- [Node.js ESM documentation](https://nodejs.org/api/esm.html) - import.meta.dirname
 
 ### Verified from Codebase
-- Existing `tmuxService.ts` - Pane enumeration patterns
-- Existing `jumpService.ts` - Session switching patterns
-- Existing `useSessions.ts` - Process detection independent of tmux state
+- Existing `status-hook.sh` - Current hook implementation
+- Existing `add-hud-hooks.sh` - Current project scanner
+- `~/.claude/projects/` structure - Path encoding scheme
+- `~/.claude/settings.json` - Global hook configuration

@@ -1,310 +1,254 @@
-# Research Summary: v2.0 Integrated Claude Terminal
+# Project Research Summary
 
-**Project:** Claude Code TUI HUD v2.0
-**Domain:** tmux-integrated terminal manager for Claude Code sessions
-**Researched:** 2026-01-25
-**Overall Confidence:** HIGH
+**Project:** vibe-term v3.0 - Hook Management & Distribution
+**Domain:** CLI tool with npm global install, hook configuration management
+**Researched:** 2026-01-30
+**Confidence:** HIGH
 
 ## Executive Summary
 
-The v2.0 architecture represents a fundamental shift from standalone monitoring to tmux-integrated session management. Research across tmux session managers (tmuxinator, tmux-sessionx, t-smart-tmux-session-manager) reveals a clear pattern: successful terminal managers work *with* tmux conventions, not against them. The HUD strip (1-2 line always-visible status bar) combined with native tmux pane management provides the optimal architecture for Claude workflow monitoring.
+vibe-term v3.0 extends the existing tmux-based HUD with hook management commands (setup/audit/fix) and npm global install distribution. Research reveals this is fundamentally a **configuration management tool** similar to Homebrew's `brew doctor`, npm's `npm audit`, and Husky's hook installer. The technical challenge is straightforward: add CLI subcommands before TUI initialization, manipulate JSON config files with proper backups, and package for npm global install.
 
-The recommended approach uses **no new npm dependencies** beyond the existing v1.0 stack (Ink 6.x, Zustand, React 19). All tmux integration happens through CLI commands via the existing `execAsync()` pattern. This is the correct decision because: (1) no Node.js library fully wraps tmux's pane management APIs, (2) the pattern is already proven in v1.0 for session operations, and (3) it avoids the complexity of libraries like `node-tmux` (missing critical pane operations) or `stmux` (replaces tmux entirely, contradicting design goals).
+The recommended approach leverages the existing stack completely - no new dependencies needed. The existing `meow` CLI parser handles subcommands via `cli.input[0]` routing. Node.js native `fs` operations are sufficient for JSON manipulation with backups. The architecture follows a clear pattern: command router in cli.tsx, dedicated command handlers in `src/commands/`, and shared services for settings/project-discovery/hook-merging operations.
 
-The primary risks are tmux-specific edge cases: pane resizing breaking layout, input routing to wrong pane after focus switch, and nested tmux detection. These are all manageable with proper defensive coding patterns documented in PITFALLS.md. The architecture is sound and well-precedented in the tmux ecosystem.
+The critical risk is **Claude Code's settings merge behavior**: project-level settings can replace rather than merge with global settings (tracked issues #17017, #11626). This means vibe-term hooks must be installed per-project, not just globally. The mitigation is to build audit/fix commands that scan `~/.claude/projects/` and intelligently merge hooks into project settings without clobbering user's existing configurations. Secondary risks include npm global install path resolution and hook script dependency on `jq`, both solvable with standard patterns (import.meta.dirname and rewriting the hook in Node.js).
 
 ## Key Findings
 
-### Stack Additions (from STACK.md)
+### Recommended Stack
 
-**No new dependencies required.** The v2.0 tmux-integrated architecture is accomplished entirely with:
+**No new dependencies required.** The existing stack provides all capabilities needed for v3.0:
 
-**Core technologies (unchanged from v1.0):**
-- **Ink 6.6.0**: React TUI framework — provides `<Box height={2}>` for HUD strip rendering
-- **React 19.2.3**: UI layer — note v1.0 already resolved React 19 compatibility
-- **Zustand 5.0.10**: State management — will add hudPaneId, sessionPaneTarget to store
-- **ps-list 9.0.0**: Process detection — continues to work for external session discovery
-- **execa latest**: Command execution — proven pattern for tmux CLI operations
-
-**tmux integration:**
-- All pane operations via tmux CLI commands: `split-window`, `send-keys`, `select-pane`, `resize-pane`, `swap-pane`
-- Existing `execAsync()` in `platform.ts` handles all tmux interaction
-- No wrapper libraries needed or recommended
+**Core technologies:**
+- **meow 14.0.0**: CLI argument parsing — subcommand routing via `cli.input[0]` pattern (simpler than migrating to Commander)
+- **Node.js fs (native)**: File operations — `readFileSync`, `writeFileSync`, `copyFileSync` sufficient for JSON with backup
+- **Node.js path/os (native)**: Path resolution — `homedir()`, `expandTilde()` already in use for directory scanning
 
 **Rejected alternatives:**
-- `node-tmux`: Missing split-window/pane operations, would require CLI fallback anyway
-- `stmux`: Replaces tmux entirely, contradicts native tmux integration goal
-- `node-pty`: Embedded terminal out of scope per PROJECT.md constraints
+- Commander/Yargs for subcommands (overkill for 3 commands, meow already works)
+- glob/fast-glob for directory scanning (no wildcards needed, `readdirSync` sufficient)
+- write-file-atomic for config files (CLI commands are sequential, not concurrent; backup+write is adequate)
 
-### Feature Landscape (from FEATURES.md)
+**npm packaging additions:**
+- Add `files: ["dist", "README.md"]` to limit published files
+- Add `prepublishOnly: "npm run build"` to ensure build before publish
+- Existing `bin` configuration already correct
+
+### Expected Features
+
+Research into CLI config management tools reveals consistent UX patterns across Homebrew, npm, ESLint, and Husky.
 
 **Must have (table stakes):**
-- Session list display with status indicators — v1.0 has this, refactor to horizontal
-- Keyboard navigation (j/k, 1-9) — v1.0 has this, unchanged
-- Session switching via tmux — v1.0 partial, v2.0 improves reliability
-- HUD persists after session switch — new requirement, core v2.0 value
-- Graceful external session detection — v1.0 has this via process detection
+- **Setup command** - Idempotent hook installation with automatic backup (like `npx husky init`)
+- **Audit command** - Scan for conflicts with clear pass/warn/fail status and exit codes (like `npm audit`)
+- **Fix command** - Dry-run by default with explicit `--apply` flag (like ESLint `--fix`)
+- **Colored status output** - Green/yellow/red with status symbols for professional CLI feel
+- **Backup before modification** - User trust depends on safe, reversible operations
 
 **Should have (competitive differentiators):**
-- Horizontal HUD strip (1-2 lines) — maximizes space for active Claude
-- Always-visible status bar — like browser tabs, not modal popup
-- Claude-specific status (working/idle/blocked) — v1.0 has this, preserve
-- Context window meters — v1.0 has this, condense to percentage
-- Spawn new sessions with `n` key — complete workflow without leaving HUD
-- Return to HUD with `b` key — quick toggle between work and overview
+- **Intelligent hook merging** - Deep merge preserving existing hooks, not naive overwrite (respect user's config)
+- **Project discovery from ~/.claude/projects/** - Decode encoded paths, scan for settings files
+- **Suggest next command** - After setup, prompt to run audit; after audit with issues, suggest fix
+- **Machine-readable output** - `--json` flag for CI/automation integration
 
-**Defer (v3+):**
-- Session preview pane — complexity without solving core problem
-- Fuzzy finder — overkill for 5-10 sessions
-- Session configuration files — over-engineering for Claude use case
-- Custom keybinding configuration — standard conventions are sufficient
+**Defer (v2+):**
+- Interactive setup wizard with per-project confirmation prompts
+- Backup management commands (list/restore/clean backups)
+- Hook editor/configurator UI
+- Watch mode for continuous conflict monitoring
 
-**Keybinding map:**
-- `j/k` or arrows: navigate sessions (vim/tmux convention)
-- `1-9`: quick select session (tmux window switching pattern)
-- `Enter`: jump to selected session
-- `n`: spawn new Claude session (tmux-sessionist pattern)
-- `b`: return to HUD (custom, mnemonic for "back")
-- `q`: quit HUD
-- `?`: toggle help (minimal, space is precious)
+### Architecture Approach
 
-### Architecture Approach (from ARCHITECTURE.md)
-
-**Integration pattern:** tmux becomes the container, HUD becomes a status layer. This inverts the v1.0 relationship where HUD was standalone and sessions were external.
-
-**Target layout:**
-```
-tmux session: claude-hud
-+----------------------------------------------------------------+
-| [1:proj-a ⏳ 45%] [2:proj-b ✓ 12%] [3:proj-c 🛑 78%]            | <- HUD pane (2 lines, Ink)
-+----------------------------------------------------------------+
-|                                                                 |
-|  Active Claude session pane (shell running Claude)              |
-|                                                                 |
-+----------------------------------------------------------------+
-```
+The architecture follows a **command-or-TUI router pattern**: check for subcommand before any TUI initialization. Subcommands are fast, stateless operations that complete and exit without touching tmux, Ink, or the React TUI infrastructure. This keeps clean separation between CLI utilities and the existing HUD application.
 
 **Major components:**
 
-1. **tmuxPaneManager Service** (new) — Manages tmux session/pane structure
-   - Create claude-hud session on startup
-   - Split window: HUD pane (top, 2 lines) + session pane (bottom, remaining)
-   - Handle session switching in session pane
-   - Spawn new Claude instances via `send-keys`
+1. **cli.tsx (modified)** - Add command router at entry point before `ensureTmuxEnvironment()`, route to handlers based on `cli.input[0]`
+2. **src/commands/** (new) - Dedicated handlers for setup.ts, audit.ts, fix.ts with console output (not Ink)
+3. **src/services/settingsService.ts** (new) - Read/write/backup Claude settings.json files with error handling
+4. **src/services/projectDiscoveryService.ts** (new) - Scan ~/.claude/projects/, decode path encoding, find settings files
+5. **src/services/hookMergeService.ts** (new) - Intelligent merge strategy that preserves existing user hooks
+6. **src/services/vibeTermDirService.ts** (new) - Manage ~/.vibe-term/ directory, install hook scripts
 
-2. **HudStrip Component** (new) — Horizontal tab-style display
-   - Replaces vertical SessionList from v1.0
-   - Renders in 1-2 terminal rows
-   - Format: `[1:proj-name ✓ 25%]` per tab
-   - Handles terminal width detection and truncation
+**Data flow:** User runs `vibe-term setup` → cli.tsx routes to setup.ts → vibeTermDirService creates ~/.vibe-term/ → settingsService reads ~/.claude/settings.json → hookMergeService merges hooks → settingsService writes with backup → console output and exit.
 
-3. **Startup Orchestrator** (new) — Initialize tmux environment before Ink
-   - Check if already in claude-hud session
-   - Create/attach tmux session as needed
-   - Start Ink app in HUD pane
-   - Error if tmux not available
+**Pattern: Backup Before Modify** - Every settings file modification creates timestamped backup (`settings.json.backup-TIMESTAMP`) first, with clear console output showing backup location for manual restoration.
 
-**Modified v1.0 components:**
-- `App.tsx`: Remove overlays, change to horizontal strip layout, add `n`/`b` handlers
-- `jumpService.ts`: Simplify to use tmuxPaneManager for switching
-- `appStore.ts`: Add hudSessionName, sessionPaneTarget
-- `Header.tsx`/`Footer.tsx`: Remove entirely (HUD strip is only visible element)
+### Critical Pitfalls
 
-**Data flow patterns:**
-- **Session discovery**: Unchanged — `useSessions` polls processes, builds session list
-- **Session switching**: `tmuxPaneManager.switchToSession()` → `send-keys` to switch pane
-- **New session**: User presses `n` → `spawnClaude(cwd)` → `send-keys -t session-pane "cd {cwd} && claude"`
-- **Return to HUD**: User presses `b` (tmux binding) → `select-pane -t hud-pane`
+1. **Claude Code settings replace instead of merge** - Project-level `.claude/settings.json` overrides global `~/.claude/settings.json` completely (GitHub issues #17017, #11626). Prevention: Hook management must target each project's settings, not just global. The audit command scans `~/.claude/projects/` to find all projects, and fix command merges hooks into project-level settings.
 
-### Critical Pitfalls (from PITFALLS.md)
+2. **Hook array deduplication logic** - Running setup multiple times can duplicate hooks, causing hook script to run 2x-4x per event. Prevention: Normalize paths before checking existence (handle `$CLAUDE_PROJECT_DIR`, `~`, variations). Use robust matching that catches different path representations of the same script.
 
-1. **HUD Pane Resizing Breaks Layout** — Use fixed line count (`split-window -l 2`) not percentage. Listen for SIGWINCH and re-adjust with `resize-pane -y 2`. Test with aggressive terminal resizing.
+3. **npm global install path resolution** - Hardcoded paths like `/home/user/claude/vibe-term/hooks/status-hook.sh` break after `npm install -g`. Prevention: Use `import.meta.dirname` for package location, include hook scripts in package.json `files` array, reference by resolved absolute path at install time.
 
-2. **Input Goes to Wrong Pane After Focus Switch** — Known tmux bug where `pane-focus-in` triggers in wrong pane. Add 50-100ms delay after `select-pane`. Verify focus with `display-message -p '#{pane_id}'` before accepting input.
+4. **Backup files without restoration path** - Creating backups without clear undo mechanism erodes user trust. Prevention: Named backups with human-readable timestamps (`settings.json.vibe-term-backup.2026-01-30T14-30-00`), clear console output showing backup location, document manual restoration with `cp` command.
 
-3. **Nested tmux Detection Fails Session Creation** — `$TMUX` environment variable prevents new sessions from child processes. Always detect `process.env.TMUX` before session operations. Use `switch-client` when inside tmux, not `attach` or `new-session`.
+5. **EACCES permission errors on npm install** - Default global directory requires root, using sudo creates permission problems. Prevention: Document nvm installation or npm prefix configuration in README, never require sudo for installation or operation.
 
-4. **send-keys Race Conditions** — Commands sent via `send-keys` can execute out of order or partially. Combine commands when possible (`cd /path && claude`). Add explicit delays between dependent operations. Avoid signal keys like Ctrl-Z.
+## Implications for Roadmap
 
-5. **TERM Environment Breaks Ink Rendering** — tmux sets `TERM=screen` or `TERM=tmux-256color` which may break Ink colors/characters. Document required tmux config: `set-option -g default-terminal "tmux-256color"`. Verify TERM on startup and warn if incompatible.
+Based on research, suggested 5-phase structure following dependency order:
 
-**Additional moderate pitfalls:**
-- Working directory confusion (always specify `-c` option)
-- Dead panes after process exit (detect and clean during refresh)
-- Pane ID instability (re-resolve before operations, never cache long-term)
-- Terminal resize not propagated (listen to SIGWINCH + stdout resize)
-- Keyboard input conflicts (implement focus-aware input routing)
+### Phase 1: Foundation Services
+**Rationale:** All commands depend on settings manipulation and directory management. Build the infrastructure first.
 
-## Recommended Build Order
+**Delivers:** Core services for file operations:
+- `vibeTermDirService` - Create ~/.vibe-term/, install hook scripts with correct permissions
+- `settingsService` - Read/write/backup Claude settings.json with error handling
+- Basic test coverage for JSON manipulation and backup creation
 
-Based on dependencies and integration points, implementation should proceed in waves:
+**Addresses:** Pitfalls #4 (backup strategy), #6 (directory permissions)
 
-### Phase 06-01: HUD Pane Foundation
-**Rationale:** Establish the rendering and tmux environment before building session management
-**Delivers:** Ink app runs in 2-line tmux pane with correct rendering
-**Addresses:**
-- TERM environment verification (Pitfall #5)
-- Terminal resize handling (Pitfall #9)
-- tmux version compatibility check (Pitfall #12)
-- Multiple instance prevention (Pitfall #15)
+**Research flag:** Standard patterns, skip research-phase
 
-**Components:**
-- Startup orchestrator (check/create tmux session)
-- HudStrip component skeleton (horizontal layout)
-- Basic tmux pane creation (split-window -l 2)
+### Phase 2: CLI Command Router
+**Rationale:** Establish command routing before implementing individual commands. Single point of change.
 
-**Research flag:** Standard patterns, skip phase research
+**Delivers:**
+- Modified cli.tsx with subcommand detection via `cli.input[0]`
+- Updated meow help text showing all subcommands
+- Exit before TUI initialization when subcommand present
 
-### Phase 06-02: tmux Pane Architecture
-**Rationale:** Build the pane management layer before interactive features
-**Delivers:** tmuxPaneManager service with session/pane lifecycle
-**Addresses:**
-- Pane resizing resilience (Pitfall #1)
-- Nested tmux detection (Pitfall #3)
-- External session discovery (existing v1.0 pattern)
+**Uses:** Existing meow CLI parser
 
-**Components:**
-- tmuxPaneManager.ts service
-- Session/pane creation logic
-- Pane ID resolution (don't cache, re-query)
+**Addresses:** Architecture requirement for command-or-TUI split
 
-**Research flag:** Standard patterns, skip phase research
+**Research flag:** Standard patterns, skip research-phase
 
-### Phase 06-03: Input Handling and Session Spawning
-**Rationale:** Core interaction features depend on stable pane architecture
-**Delivers:** Session switching, spawning, and keyboard navigation
-**Addresses:**
-- Input routing to correct pane (Pitfall #2)
-- send-keys race conditions (Pitfall #4)
-- Working directory handling (Pitfall #6)
-- Keyboard input conflicts (Pitfall #10)
+### Phase 3: Setup Command
+**Rationale:** Highest user value, enables basic hook installation. Independent of project discovery.
 
-**Components:**
-- Update jumpService.ts to use tmuxPaneManager
-- Implement `n` key handler for new sessions
-- Implement `b` key handler for return to HUD
-- Focus verification before input handling
+**Delivers:**
+- `vibe-term setup` command that installs hooks to ~/.claude/settings.json
+- Idempotent operation with backup creation
+- Clear console output with success/failure reporting
 
-**Research flag:** Standard patterns, skip phase research
+**Addresses:** Table stakes features (setup command, backup before modification)
 
-### Phase 06-04: UI Transformation and Polish
-**Rationale:** Polish the UX after core mechanics are stable
-**Delivers:** Complete horizontal HUD strip with tab display
-**Addresses:**
-- Session list to horizontal tabs refactor
-- Status indicators in minimal format
-- Terminal width handling and truncation
+**Avoids:** Pitfalls #2 (deduplication), #4 (backup strategy)
 
-**Components:**
-- Complete HudStrip.tsx and SessionTab.tsx
-- Refactor App.tsx layout
-- Remove Header.tsx, Footer.tsx
-- Add visual polish (colors, selection indicators)
+**Research flag:** Standard patterns, skip research-phase
 
-**Research flag:** Standard patterns, skip phase research
+### Phase 4: Audit Command
+**Rationale:** Enables conflict detection. Requires project discovery service.
 
-### Phase 06-05: Session Lifecycle and Cleanup
-**Rationale:** Handle edge cases after happy path works
-**Delivers:** Robust session management with cleanup
-**Addresses:**
-- Dead pane detection (Pitfall #7)
-- Orphaned state cleanup (Pitfall #11)
-- External session integration
+**Delivers:**
+- `projectDiscoveryService` - Scan ~/.claude/projects/ with path decoding
+- `vibe-term audit` command with colored status output
+- Exit code 0 (clean) or 1 (conflicts found)
+- Optional `--json` flag for machine-readable output
 
-**Components:**
-- Dead pane cleanup in refresh cycle
-- Startup orphan detection
-- External session handling (show all with indicator)
+**Addresses:** Table stakes (audit command), differentiator (project discovery)
 
-**Research flag:** Standard patterns, skip phase research
+**Avoids:** Pitfall #1 (detecting project-level overrides), #7 (path encoding)
+
+**Research flag:** Need to verify Claude's exact path encoding scheme during implementation
+
+### Phase 5: Fix Command
+**Rationale:** Completes the hook management story. Requires merge logic.
+
+**Delivers:**
+- `hookMergeService` - Intelligent merge preserving existing hooks
+- `vibe-term fix [project]` command with dry-run default
+- `--apply` flag to execute changes
+- Per-project backup before modification
+
+**Addresses:** Table stakes (fix command with dry-run), differentiator (intelligent merging)
+
+**Avoids:** Pitfall #1 (project-level hook injection), #2 (deduplication)
+
+**Research flag:** May need deeper research on edge cases in hook merging during implementation
+
+### Phase 6: npm Distribution
+**Rationale:** Final step - package and test global install after all functionality works.
+
+**Delivers:**
+- Updated package.json with `files` and `prepublishOnly`
+- Testing with `npm pack` and local tarball install
+- README documentation for installation without sudo
+
+**Addresses:** Table stakes (global install), pitfalls #3, #5, #8, #10
+
+**Avoids:** All npm-related pitfalls (path resolution, permissions, shebang issues)
+
+**Research flag:** Standard patterns, but thorough testing required
 
 ### Phase Ordering Rationale
 
-- **Foundation first:** Establish tmux environment and rendering before building features
-- **Infrastructure before interaction:** Pane management must be stable before switching/spawning
-- **Core mechanics before polish:** Get switching working before refining tab display
-- **Edge cases last:** Handle cleanup and external sessions after happy path proven
+- **Foundation first** - Services are dependencies for all commands, build once and reuse
+- **Router before commands** - Establish routing pattern, then fill in handlers
+- **Setup before audit/fix** - Setup is independent and highest value; audit/fix depend on project discovery
+- **Audit before fix** - Users need to see conflicts before fixing them; natural workflow progression
+- **Distribution last** - Only package after all functionality is implemented and tested locally
 
-This order avoids pitfalls by:
-- Testing resize handling from the start (Pitfall #1)
-- Verifying focus before building input features (Pitfall #2)
-- Establishing nested tmux patterns before session operations (Pitfall #3)
-- Building synchronization into send-keys from the start (Pitfall #4)
+This order minimizes rework and matches the natural user workflow: setup global hooks → audit for conflicts → fix conflicts → distribute to users.
+
+### Research Flags
+
+Phases likely needing deeper research during implementation:
+- **Phase 4 (Audit):** May need to verify Claude's exact path encoding scheme in ~/.claude/projects/ through testing
+- **Phase 5 (Fix):** Edge cases in hook merging (arrays vs strings, multiple hook types) may require experimentation
+
+Phases with standard patterns (skip research-phase):
+- **Phase 1:** Standard file I/O operations
+- **Phase 2:** Meow CLI routing pattern well-documented
+- **Phase 3:** Setup follows established CLI tool patterns
+- **Phase 6:** npm packaging is well-documented, testing-intensive but not research-intensive
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | **HIGH** | No new dependencies, existing patterns proven in v1.0 |
-| Features | **HIGH** | Well-established patterns across multiple tmux managers |
-| Architecture | **HIGH** | tmux pane mechanics stable 20+ years, Ink rendering proven |
-| Pitfalls | **HIGH** | Verified via GitHub issues, official docs, existing codebase |
+| Stack | HIGH | No new dependencies, existing tools verified sufficient |
+| Features | HIGH | Patterns verified across Homebrew, npm, ESLint, Husky |
+| Architecture | HIGH | Command router pattern standard, matches existing codebase conventions |
+| Pitfalls | HIGH | Claude Code issues verified in GitHub, npm patterns well-documented |
 
-**Overall confidence: HIGH**
+**Overall confidence:** HIGH
 
-All research areas are backed by authoritative sources (tmux man pages, GitHub official repos, verified issues). The v1.0 codebase provides proof-of-concept for Ink rendering and tmux integration. The only uncertainty is in user workflow preferences (external session handling), which requires feedback during implementation.
+All research based on official documentation, verified npm package versions, and concrete GitHub issues for Claude Code behavior. The domain (CLI config management) is mature with well-established patterns.
 
 ### Gaps to Address
 
-**External session handling strategy** — How to handle Claude sessions in other tmux sessions (not claude-hud)?
-- **Recommended:** Show all sessions with indicator, switch to their tmux session on select
-- **Validate:** User testing will reveal if this is confusing vs helpful
-- **Fallback:** Filter to only claude-hud sessions, provide toggle to show external
+Minor gaps that need resolution during implementation:
 
-**Multiple HUD instance behavior** — What if user runs cc-tui-hud twice?
-- **Recommended:** Attach to existing session (single source of truth)
-- **Validate:** Does tmux attach-session work reliably from startup script?
-- **Fallback:** Error with clear message about existing instance
+- **Claude's path encoding details**: The `-home-ssugar-claude-vibe-term` encoding is observed but not officially documented. Verify encoding/decoding logic with real project names during Phase 4.
 
-**Return-to-HUD keybinding** — Should `b` be tmux binding or HUD input?
-- **Recommended:** tmux global binding (`bind-key b select-pane -t hud-pane`)
-- **Validate:** Can HUD safely modify user's tmux bindings?
-- **Fallback:** Document manual tmux.conf addition, HUD only handles when focused
+- **Hook merge edge cases**: Need to handle hooks defined as both strings (single command) and arrays (multiple commands) in settings.json. Test during Phase 5 with various configurations.
 
-## Implications for Roadmap
+- **Hook script rewrite**: Current hook uses `jq` for JSON parsing (pitfall #9). Decide in Phase 1 whether to rewrite in Node.js (recommended) or bundle jq with package (not recommended).
 
-The research strongly supports a 5-phase roadmap with clear dependencies:
-
-1. **Phase 06-01 (HUD Pane Foundation)** delivers the rendering environment
-2. **Phase 06-02 (tmux Pane Architecture)** builds the management layer
-3. **Phase 06-03 (Input Handling)** enables interaction
-4. **Phase 06-04 (UI Transformation)** completes the UX
-5. **Phase 06-05 (Session Lifecycle)** handles edge cases
-
-Each phase addresses specific pitfalls and builds on prior work. The architecture is sound, the stack is proven, and the implementation path is clear.
-
-**Ready for roadmap: yes**
+- **Session state directory migration**: Current `~/.claude-hud/sessions/` could move to `~/.vibe-term/sessions/` for consistency. Defer to v4 or provide optional migration in v3.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [tmux manual page](https://man7.org/linux/man-pages/man1/tmux.1.html) — Command reference
-- [tmux GitHub](https://github.com/tmux/tmux) — Official repo, issues for known bugs
-- [tmux FAQ](https://github.com/tmux/tmux/wiki/FAQ) — TERM settings, common issues
-- [Ink GitHub](https://github.com/vadimdemedes/ink) — v6.6.0 features, React 19 compatibility
-- [ps-list GitHub](https://github.com/sindresorhus/ps-list) — v9.0.0 requirements
-- [Zustand GitHub](https://github.com/pmndrs/zustand) — v5.0.10 state management
-- [execa GitHub](https://github.com/sindresorhus/execa) — Process execution patterns
+- [Meow GitHub](https://github.com/sindresorhus/meow) - v14.0.0 CLI parser, input array handling
+- [npm package.json docs](https://docs.npmjs.com/cli/v9/configuring-npm/package-json/) - files, bin, prepublishOnly fields
+- [Node.js fs docs](https://nodejs.org/api/fs.html) - Native file system APIs
+- [Claude Code Settings Documentation](https://code.claude.com/docs/en/settings) - Hook configuration
+- [GitHub anthropics/claude-code issues #17017, #11626](https://github.com/anthropics/claude-code/issues) - Settings merge behavior
+- [CLI Guidelines](https://clig.dev/) - Comprehensive CLI UX patterns
+- [npm audit docs](https://docs.npmjs.com/cli/v9/commands/npm-audit/) - Audit command patterns
+- [Homebrew Troubleshooting](https://docs.brew.sh/Troubleshooting) - Doctor pattern
+- [ESLint CLI](https://eslint.org/docs/latest/use/command-line-interface) - Fix patterns
+- [Husky Get Started](https://typicode.github.io/husky/get-started.html) - Setup command patterns
 
 ### Secondary (MEDIUM confidence)
-- [tmux-sessionx](https://github.com/omerxx/tmux-sessionx) — Session manager UX patterns
-- [tmuxinator](https://github.com/tmuxinator/tmuxinator) — Project-based management
-- [t-smart-tmux-session-manager](https://github.com/joshmedeski/t-smart-tmux-session-manager) — Smart create-or-attach
-- [tmux-sessionist](https://github.com/tmux-plugins/tmux-sessionist) — Lightweight operations
-- [Tao of Tmux](https://tao-of-tmux.readthedocs.io/) — Scripting patterns
-- [tmux Advanced Use](https://github.com/tmux/tmux/wiki/Advanced-Use) — Pane targeting
-
-### Tertiary (LOW confidence)
-- [Super Guide to split-window](https://gist.github.com/sdondley/b01cc5bb1169c8c83401e438a652b84e) — Detailed patterns
-- [TmuxAI guides](https://tmuxai.dev/) — Working directories, respawn
-- [Baeldung tmux guides](https://www.baeldung.com/linux/tmux-status-bar-customization) — Configuration
+- [Commander.js GitHub](https://github.com/tj/commander.js) - Alternative CLI framework comparison
+- [npm EACCES permission errors](https://docs.npmjs.com/resolving-eacces-permissions-errors-when-installing-packages-globally/) - Installation without sudo
+- [write-file-atomic npm](https://www.npmjs.com/package/write-file-atomic) - Atomic write alternative evaluation
+- [env-paths npm](https://www.npmjs.com/package/env-paths) - Cross-platform config directories
+- [ESM __dirname alternatives](https://blog.logrocket.com/alternatives-dirname-node-js-es-modules/) - Path resolution in ES modules
 
 ### Verified from Codebase
-- `src/services/tmuxService.ts` — Pane enumeration patterns
-- `src/services/jumpService.ts` — Session switching patterns
-- `src/hooks/useSessions.ts` — Process detection independent of tmux
-- `src/services/platform.ts` — execAsync() pattern for tmux commands
+- Existing `src/cli.tsx` - Current TUI launch flow
+- Existing `src/services/configService.ts`, `directoryService.ts` - Service patterns to follow
+- Existing `status-hook.sh` - Current hook implementation and jq dependency
+- `~/.claude/projects/` structure - Path encoding observation (-home-ssugar-format)
+- `~/.claude/settings.json` - Global hook configuration location
 
 ---
-*Research completed: 2026-01-25*
+*Research completed: 2026-01-30*
 *Ready for roadmap: yes*
