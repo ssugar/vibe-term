@@ -39,11 +39,13 @@
     "figures": "^6.1.0",
     "ink": "^6.6.0",
     "meow": "^14.0.0",
+    "micromatch": "^4.0.8",
     "picocolors": "^1.1.1",
     "react": "^19.2.3",
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@types/micromatch": "^4.0.10",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
     "tsup": "^8.5.1",
