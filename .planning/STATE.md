@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-30)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Phase 15 - Fix Command (v3.0 Hook Management & Distribution)
+**Current focus:** Phase 15 - Fix Command (v3.0 Hook Management & Distribution) - COMPLETE
 
 ## Current Position
 
-Phase: 15 of 17 (Fix Command)
-Plan: 01 of 02 (projectFixer service)
-Status: In progress
-Last activity: 2026-01-31 — Completed 15-01-PLAN.md
+Phase: 15 of 17 (Fix Command) - COMPLETE
+Plan: 02 of 02 (fix CLI command) - COMPLETE
+Status: Phase complete
+Last activity: 2026-02-01 — Completed 15-02-PLAN.md
 
-Progress: [##########################....] 82% (14/17 phases complete)
+Progress: [##########################....] 88% (15/17 phases complete)
 
 ## Performance Metrics
 
@@ -28,8 +28,8 @@ Progress: [##########################....] 82% (14/17 phases complete)
 - Average duration: ~6 min/plan
 
 **v3.0:**
-- Total plans: TBD (4 phases remaining to plan)
-- Completed: 7 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min, 14-02 3min; Phase 15: 15-01 3min)
+- Total plans: TBD (2 phases remaining to plan)
+- Completed: 8 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min, 14-02 3min; Phase 15: 15-01 3min, 15-02 3min)
 
 ## Accumulated Context
 
@@ -58,6 +58,8 @@ Progress: [##########################....] 82% (14/17 phases complete)
 - Sessions-index.json resolution for project paths (never decode from directory name)
 - Preview/Apply pattern: generateFixPreview shows what will change, applyFix executes with safety
 - Backup validation: read-back and parse JSON after write to catch corruption
+- Dry-run by default for fix command, --apply required to execute changes
+- Per-project confirmation with y/N prompt (safe default, auto-proceed in CI)
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-01-31
-Stopped at: Completed 15-01-PLAN.md
+Last session: 2026-02-01
+Stopped at: Completed 15-02-PLAN.md (Phase 15 complete)
 Resume file: None
