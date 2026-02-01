@@ -5,14 +5,14 @@
 See: .planning/PROJECT.md (updated 2026-01-30)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Phase 15 - Fix Command (v3.0 Hook Management & Distribution) - COMPLETE
+**Current focus:** Phase 16 - CLI Polish (v3.0 Hook Management & Distribution)
 
 ## Current Position
 
-Phase: 15 of 17 (Fix Command) - COMPLETE
-Plan: 02 of 02 (fix CLI command) - COMPLETE
-Status: Phase complete
-Last activity: 2026-02-01 — Completed 15-02-PLAN.md
+Phase: 16 of 17 (CLI Polish)
+Plan: — (not yet planned)
+Status: Ready to plan
+Last activity: 2026-01-31 — Phase 15 complete
 
 Progress: [##########################....] 88% (15/17 phases complete)
 

@@ -30,12 +30,12 @@ Requirements for Hook Management & Distribution. Each maps to roadmap phases.
 
 ### Fix Command
 
-- [ ] **FIX-01**: User can run `vibe-term fix` to preview hook fixes (dry-run)
-- [ ] **FIX-02**: User can run `vibe-term fix --apply` to execute hook fixes
-- [ ] **FIX-03**: Fix backs up project settings before modification
-- [ ] **FIX-04**: Fix reports what would change before applying
-- [ ] **FIX-05**: Fix merges hooks intelligently (add vibe-term alongside existing)
-- [ ] **FIX-06**: User can fix a single project with `vibe-term fix /path/to/project`
+- [x] **FIX-01**: User can run `vibe-term fix` to preview hook fixes (dry-run)
+- [x] **FIX-02**: User can run `vibe-term fix --apply` to execute hook fixes
+- [x] **FIX-03**: Fix backs up project settings before modification
+- [x] **FIX-04**: Fix reports what would change before applying
+- [x] **FIX-05**: Fix merges hooks intelligently (add vibe-term alongside existing)
+- [x] **FIX-06**: User can fix a single project with `vibe-term fix /path/to/project`
 
 ### CLI/UX
 
@@ -103,12 +103,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUDIT-06 | Phase 14 | Complete |
 | AUDIT-07 | Phase 14 | Complete |
 | AUDIT-08 | Phase 14 | Complete |
-| FIX-01 | Phase 15 | Pending |
-| FIX-02 | Phase 15 | Pending |
-| FIX-03 | Phase 15 | Pending |
-| FIX-04 | Phase 15 | Pending |
-| FIX-05 | Phase 15 | Pending |
-| FIX-06 | Phase 15 | Pending |
+| FIX-01 | Phase 15 | Complete |
+| FIX-02 | Phase 15 | Complete |
+| FIX-03 | Phase 15 | Complete |
+| FIX-04 | Phase 15 | Complete |
+| FIX-05 | Phase 15 | Complete |
+| FIX-06 | Phase 15 | Complete |
 | CLI-01 | Phase 12 | Complete |
 | CLI-02 | Phase 12 | Complete |
 | CLI-03 | Phase 16 | Pending |
