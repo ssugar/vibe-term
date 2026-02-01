@@ -223,7 +223,7 @@ Plans:
 
 - [x] **Phase 12: Foundation Services** - Core infrastructure for settings management and vibe-term directory
 - [x] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
-- [ ] **Phase 14: Audit Command** - Project discovery and conflict detection
+- [x] **Phase 14: Audit Command** - Project discovery and conflict detection
 - [ ] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
 - [ ] **Phase 16: CLI Polish** - JSON output mode and action suggestions
 - [ ] **Phase 17: Distribution & Documentation** - npm packaging and README updates
@@ -287,7 +287,11 @@ Plans:
   3. Fix creates backup before modifying any project settings
   4. Fix merges hooks intelligently (adds vibe-term alongside existing, no clobbering)
   5. User can fix a single project with `vibe-term fix /path/to/project`
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 15-01-PLAN.md — Project fixer service for preview generation and fix application
+- [ ] 15-02-PLAN.md — Fix CLI command and router integration
 
 ### Phase 16: CLI Polish
 **Goal**: CLI commands support machine-readable output and guide users to next steps
@@ -332,7 +336,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 12. Foundation Services | v3.0 | 2/2 | Complete | 2026-01-30 |
 | 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
-| 15. Fix Command | v3.0 | 0/TBD | Not started | - |
+| 15. Fix Command | v3.0 | 0/2 | Planned | - |
 | 16. CLI Polish | v3.0 | 0/TBD | Not started | - |
 | 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
 
