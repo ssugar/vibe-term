@@ -21,16 +21,19 @@ const cli = meow(
     $ vibe-term           Launch TUI (default)
     $ vibe-term setup     Install global hooks
     $ vibe-term audit     Scan projects for conflicts
+    $ vibe-term fix       Fix hook conflicts
 
   Commands
     setup     Install hooks to ~/.claude/settings.json
     audit     Scan ~/.claude/projects/ for hook conflicts
+    fix       Fix hook conflicts in project settings
 
   Options
     --refresh, -r  Refresh interval in seconds (default: 2)
-    --yes          Skip confirmation prompts (setup only)
+    --yes          Skip confirmation prompts (setup/fix)
     --verbose, -v  Show detailed output
     --fail-only    Show only failing projects (audit only)
+    --apply        Execute changes (fix only, default is dry-run)
 
   Examples
     $ vibe-term
@@ -38,6 +41,10 @@ const cli = meow(
     $ vibe-term audit
     $ vibe-term audit --fail-only
     $ vibe-term audit "**/my-project*"
+    $ vibe-term fix
+    $ vibe-term fix --apply
+    $ vibe-term fix --apply --yes
+    $ vibe-term fix "**/my-project*"
 `,
   {
     importMeta: import.meta,
@@ -57,6 +64,10 @@ const cli = meow(
         default: false,
       },
       failOnly: {
+        type: 'boolean',
+        default: false,
+      },
+      apply: {
         type: 'boolean',
         default: false,
       },
@@ -80,6 +91,17 @@ if (command === 'audit') {
   const { runAudit } = await import('./cli/audit.js');
   const exitCode = await runAudit({
     failOnly: cli.flags.failOnly,
+    verbose: cli.flags.verbose,
+    pattern: cli.input[1], // Second positional arg is pattern
+  });
+  process.exit(exitCode);
+}
+
+if (command === 'fix') {
+  const { runFix } = await import('./cli/fix.js');
+  const exitCode = await runFix({
+    apply: cli.flags.apply,
+    yes: cli.flags.yes,
     verbose: cli.flags.verbose,
     pattern: cli.input[1], // Second positional arg is pattern
   });
