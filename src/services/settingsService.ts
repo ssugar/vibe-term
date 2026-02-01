@@ -24,7 +24,7 @@ export interface HookConfig {
  * Format a date as YYYY-MM-DD_HHmmss (human readable, filesystem safe)
  * Example: 2026-01-30_143052
  */
-function formatTimestamp(date: Date): string {
+export function formatTimestamp(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
