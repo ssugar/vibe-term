@@ -317,7 +317,10 @@ Plans:
   2. `vibe-term` command works after global install (correct path resolution)
   3. Package includes only necessary files (minimal install size)
   4. README documents installation steps, setup/audit/fix commands, and hook workflow
-**Plans**: TBD
+**Plans**: 1 plan in 1 wave
+
+Plans:
+- [ ] 17-01-PLAN.md — npm package configuration and README rewrite
 
 ## Progress
 
@@ -342,7 +345,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 15. Fix Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 16. CLI Polish | v3.0 | 2/2 | Complete | 2026-02-02 |
-| 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
+| 17. Distribution & Docs | v3.0 | 0/1 | Planned | - |
 
 ---
 *Roadmap created: 2026-01-22*
