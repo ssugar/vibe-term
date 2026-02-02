@@ -41,8 +41,8 @@ Requirements for Hook Management & Distribution. Each maps to roadmap phases.
 
 - [ ] **CLI-01**: All commands use colored output (green/yellow/red)
 - [ ] **CLI-02**: All commands use status symbols (checkmarks, X, warning)
-- [ ] **CLI-03**: All commands support `--json` flag for machine-readable output
-- [ ] **CLI-04**: Commands suggest next action after completion
+- [x] **CLI-03**: All commands support `--json` flag for machine-readable output
+- [x] **CLI-04**: Commands suggest next action after completion
 
 ### Distribution
 
@@ -111,8 +111,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | FIX-06 | Phase 15 | Complete |
 | CLI-01 | Phase 12 | Complete |
 | CLI-02 | Phase 12 | Complete |
-| CLI-03 | Phase 16 | Pending |
-| CLI-04 | Phase 16 | Pending |
+| CLI-03 | Phase 16 | Complete |
+| CLI-04 | Phase 16 | Complete |
 | DIST-01 | Phase 17 | Pending |
 | DIST-02 | Phase 17 | Pending |
 | DIST-03 | Phase 17 | Pending |

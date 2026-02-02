@@ -225,7 +225,7 @@ Plans:
 - [x] **Phase 13: CLI Router & Setup Command** - Subcommand routing and global hook installation
 - [x] **Phase 14: Audit Command** - Project discovery and conflict detection
 - [x] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
-- [ ] **Phase 16: CLI Polish** - JSON output mode and action suggestions
+- [x] **Phase 16: CLI Polish** - JSON output mode and action suggestions
 - [ ] **Phase 17: Distribution & Documentation** - npm packaging and README updates
 
 ## Phase Details
@@ -305,8 +305,8 @@ Plans:
 **Plans**: 2 plans in 2 waves
 
 Plans:
-- [ ] 16-01-PLAN.md — JSON infrastructure (types, formatters, dual-mode output)
-- [ ] 16-02-PLAN.md — Apply JSON mode and suggestions to all commands
+- [x] 16-01-PLAN.md — JSON infrastructure (types, formatters, dual-mode output)
+- [x] 16-02-PLAN.md — Apply JSON mode and suggestions to all commands
 
 ### Phase 17: Distribution & Documentation
 **Goal**: Users can install vibe-term globally via npm and have clear documentation
@@ -341,7 +341,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 15. Fix Command | v3.0 | 2/2 | Complete | 2026-01-31 |
-| 16. CLI Polish | v3.0 | 0/2 | Not started | - |
+| 16. CLI Polish | v3.0 | 2/2 | Complete | 2026-02-02 |
 | 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
 
 ---
