@@ -1,16 +1,20 @@
 {
   "name": "vibe-term",
   "version": "1.0.0",
-  "description": "Manage multiple AI coding assistant sessions in a unified terminal HUD",
+  "description": "Terminal HUD for managing Claude Code sessions",
   "type": "module",
   "main": "dist/cli.js",
   "bin": {
     "vibe-term": "dist/cli.js"
   },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "tsx src/cli.tsx",
     "build": "tsup src/cli.tsx --format esm --dts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
   },
   "engines": {
     "node": ">=20"
@@ -24,10 +28,10 @@
     "terminal",
     "tui",
     "hud",
-    "ai",
-    "coding",
-    "multiplexer",
-    "tmux"
+    "tmux",
+    "claude",
+    "claude-code",
+    "sessions"
   ],
   "author": "",
   "license": "ISC",
