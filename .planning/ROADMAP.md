@@ -302,7 +302,11 @@ Plans:
   2. Setup suggests running audit after completion
   3. Audit with issues suggests running fix
   4. Fix suggests verifying with audit after applying
-**Plans**: TBD
+**Plans**: 2 plans in 2 waves
+
+Plans:
+- [ ] 16-01-PLAN.md — JSON infrastructure (types, formatters, dual-mode output)
+- [ ] 16-02-PLAN.md — Apply JSON mode and suggestions to all commands
 
 ### Phase 17: Distribution & Documentation
 **Goal**: Users can install vibe-term globally via npm and have clear documentation
@@ -337,7 +341,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 13. CLI Router & Setup | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 15. Fix Command | v3.0 | 2/2 | Complete | 2026-01-31 |
-| 16. CLI Polish | v3.0 | 0/TBD | Not started | - |
+| 16. CLI Polish | v3.0 | 0/2 | Not started | - |
 | 17. Distribution & Docs | v3.0 | 0/TBD | Not started | - |
 
 ---
