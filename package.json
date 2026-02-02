@@ -1,6 +1,6 @@
 {
   "name": "vibe-term",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "description": "Terminal HUD for managing Claude Code sessions",
   "type": "module",
   "main": "dist/cli.js",
@@ -14,7 +14,12 @@
     "dev": "tsx src/cli.tsx",
     "build": "tsup src/cli.tsx --format esm --dts",
     "typecheck": "tsc --noEmit",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "release": "standard-version",
+    "release:patch": "standard-version --release-as patch",
+    "release:minor": "standard-version --release-as minor",
+    "release:major": "standard-version --release-as major",
+    "release:first": "standard-version --first-release"
   },
   "engines": {
     "node": ">=20"
@@ -52,6 +57,7 @@
     "@types/micromatch": "^4.0.10",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
+    "standard-version": "^9.5.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
