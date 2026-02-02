@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-01-30)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Phase 16 - CLI Polish (v3.0 Hook Management & Distribution)
+**Current focus:** Phase 16 - CLI Polish (v3.0 Hook Management & Distribution) - COMPLETE
 
 ## Current Position
 
 Phase: 16 of 17 (CLI Polish)
-Plan: 01 of 2 complete
-Status: In progress
-Last activity: 2026-02-02 — Completed 16-01-PLAN.md
+Plan: 02 of 2 complete
+Status: Phase complete
+Last activity: 2026-02-02 — Completed 16-02-PLAN.md
 
-Progress: [##########################....] 88% (15/17 phases complete)
+Progress: [############################..] 94% (16/17 phases complete)
 
 ## Performance Metrics
 
@@ -29,7 +29,7 @@ Progress: [##########################....] 88% (15/17 phases complete)
 
 **v3.0:**
 - Total plans: TBD (1 phase remaining to plan)
-- Completed: 9 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min, 14-02 3min; Phase 15: 15-01 3min, 15-02 3min; Phase 16: 16-01 4min)
+- Completed: 10 (Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min, 14-02 3min; Phase 15: 15-01 3min, 15-02 3min; Phase 16: 16-01 4min, 16-02 5min)
 
 ## Accumulated Context
 
@@ -60,6 +60,8 @@ Progress: [##########################....] 88% (15/17 phases complete)
 - Backup validation: read-back and parse JSON after write to catch corruption
 - Dry-run by default for fix command, --apply required to execute changes
 - Per-project confirmation with y/N prompt (safe default, auto-proceed in CI)
+- JSON mode requires --yes for confirmation-needed operations (non-interactive)
+- Suggestions only shown when actionable (contextual next-step hints)
 
 ### Pending Todos
 
@@ -73,5 +75,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Completed 16-01-PLAN.md
+Stopped at: Completed 16-02-PLAN.md (Phase 16 complete)
 Resume file: None
