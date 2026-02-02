@@ -4,7 +4,7 @@
 
 - v1.0 Standalone HUD - Phases 1-6 (shipped 2026-01-25)
 - v2.0 Integrated Claude Terminal - Phases 7-11 (shipped 2026-01-30)
-- **v3.0 Hook Management & Distribution** - Phases 12-17 (in progress)
+- **v3.0 Hook Management & Distribution** - Phases 12-17 (shipped 2026-02-02)
 
 ## Phases
 
@@ -217,7 +217,7 @@ Plans:
 
 </details>
 
-### v3.0 Hook Management & Distribution (In Progress)
+### v3.0 Hook Management & Distribution (SHIPPED 2026-02-02)
 
 **Milestone Goal:** Make vibe-term easy to install and self-managing for Claude hooks. Users can install globally, set up hooks automatically, audit for conflicts, and fix them intelligently.
 
@@ -226,7 +226,7 @@ Plans:
 - [x] **Phase 14: Audit Command** - Project discovery and conflict detection
 - [x] **Phase 15: Fix Command** - Intelligent hook merging for conflict resolution
 - [x] **Phase 16: CLI Polish** - JSON output mode and action suggestions
-- [ ] **Phase 17: Distribution & Documentation** - npm packaging and README updates
+- [x] **Phase 17: Distribution & Documentation** - npm packaging and README updates
 
 ## Phase Details
 
@@ -320,7 +320,7 @@ Plans:
 **Plans**: 1 plan in 1 wave
 
 Plans:
-- [ ] 17-01-PLAN.md — npm package configuration and README rewrite
+- [x] 17-01-PLAN.md — npm package configuration and README rewrite
 
 ## Progress
 
@@ -345,7 +345,7 @@ Phases execute in numeric order: 1 -> 2 -> ... -> 11 -> 12 -> 13 -> 14 -> 15 -> 
 | 14. Audit Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 15. Fix Command | v3.0 | 2/2 | Complete | 2026-01-31 |
 | 16. CLI Polish | v3.0 | 2/2 | Complete | 2026-02-02 |
-| 17. Distribution & Docs | v3.0 | 0/1 | Planned | - |
+| 17. Distribution & Docs | v3.0 | 1/1 | Complete | 2026-02-02 |
 
 ---
 *Roadmap created: 2026-01-22*
