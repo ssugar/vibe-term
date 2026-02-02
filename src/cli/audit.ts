@@ -3,12 +3,11 @@
  *
  * Scans ~/.claude/projects/ to discover Claude projects and detect hook conflicts
  * with vibe-term's global hooks. Displays pass/warn/fail status per project with
- * colored table output, supports filtering and verbose mode.
+ * colored table output, supports filtering, verbose mode, and JSON output.
  */
 
 import figures from 'figures';
 import {
-  success,
   error,
   warning,
   info,
@@ -16,7 +15,13 @@ import {
   green,
   yellow,
   red,
+  cyan,
+  setJsonMode,
+  isJsonMode,
+  getCollectedErrors,
 } from './output.js';
+import { createJsonOutput, outputJson } from './json.js';
+import { getAuditSuggestion, type AuditResult } from './suggestions.js';
 import {
   readClaudeSettings,
   settingsFileExists,
@@ -52,6 +57,8 @@ export interface AuditOptions {
   verbose: boolean;
   /** Glob pattern or path to filter projects */
   pattern?: string;
+  /** Output machine-readable JSON */
+  json: boolean;
 }
 
 /**
@@ -133,24 +140,82 @@ function displaySummary(results: ProjectAuditResult[]): void {
 }
 
 /**
+ * Convert ProjectAuditResult[] to AuditResult for JSON output.
+ */
+function buildAuditResult(results: ProjectAuditResult[]): AuditResult {
+  const passCount = results.filter(r => r.status === 'pass').length;
+  const warnCount = results.filter(r => r.status === 'warn').length;
+  const failCount = results.filter(r => r.status === 'fail').length;
+
+  return {
+    scanned: results.length,
+    pass: passCount,
+    warn: warnCount,
+    fail: failCount,
+    projects: results.map(r => ({
+      path: r.path,
+      status: r.status,
+      issues: r.issues,
+    })),
+  };
+}
+
+/**
+ * Output JSON result and return exit code.
+ */
+function outputJsonResult(
+  result: AuditResult,
+  exitCode: number,
+  startTime: bigint
+): number {
+  const suggestion = getAuditSuggestion(result);
+  const suggestions = suggestion ? [suggestion] : [];
+  const output = createJsonOutput('audit', result, {
+    success: result.fail === 0,
+    errors: getCollectedErrors(),
+    suggestions,
+    startTime,
+  });
+  outputJson(output);
+  return exitCode;
+}
+
+/**
  * Run the audit command to scan for hook conflicts.
  *
  * @param options - Audit options
  * @returns Exit code
  */
 export async function runAudit(options: AuditOptions): Promise<number> {
-  const { failOnly, verbose, pattern } = options;
+  const { failOnly, verbose, pattern, json } = options;
+  const startTime = process.hrtime.bigint();
+  setJsonMode(json);
+
+  // Initialize empty result for error cases
+  const emptyResult: AuditResult = {
+    scanned: 0,
+    pass: 0,
+    warn: 0,
+    fail: 0,
+    projects: [],
+  };
 
   // Step 1: Verify global hooks are installed
   const settingsExist = await settingsFileExists();
   if (!settingsExist) {
     error('Global settings not found. Run `vibe-term setup` first.');
+    if (isJsonMode()) {
+      return outputJsonResult(emptyResult, EXIT_CODES.ERROR, startTime);
+    }
     return EXIT_CODES.ERROR;
   }
 
   const settings = await readClaudeSettings();
   if (!isVibeTermInstalled(settings)) {
     error('vibe-term hooks not installed. Run `vibe-term setup` first.');
+    if (isJsonMode()) {
+      return outputJsonResult(emptyResult, EXIT_CODES.ERROR, startTime);
+    }
     return EXIT_CODES.ERROR;
   }
 
@@ -161,6 +226,9 @@ export async function runAudit(options: AuditOptions): Promise<number> {
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       warning('No projects found. ~/.claude/projects/ does not exist.');
+      if (isJsonMode()) {
+        return outputJsonResult(emptyResult, EXIT_CODES.SUCCESS, startTime);
+      }
       return EXIT_CODES.SUCCESS;
     }
     throw err;
@@ -168,6 +236,9 @@ export async function runAudit(options: AuditOptions): Promise<number> {
 
   if (projects.length === 0) {
     info('No projects found to audit.');
+    if (isJsonMode()) {
+      return outputJsonResult(emptyResult, EXIT_CODES.SUCCESS, startTime);
+    }
     return EXIT_CODES.SUCCESS;
   }
 
@@ -176,6 +247,9 @@ export async function runAudit(options: AuditOptions): Promise<number> {
     projects = filterByPattern(projects, pattern);
     if (projects.length === 0) {
       warning(`No projects match pattern: ${pattern}`);
+      if (isJsonMode()) {
+        return outputJsonResult(emptyResult, EXIT_CODES.SUCCESS, startTime);
+      }
       return EXIT_CODES.SUCCESS;
     }
   }
@@ -191,23 +265,44 @@ export async function runAudit(options: AuditOptions): Promise<number> {
     results.push(result);
   }
 
-  // Step 5: Filter results if --fail-only
+  // Step 5: Build audit result for JSON mode or suggestions
+  const auditResult = buildAuditResult(results);
+
+  // Step 6: Output based on mode
+  if (isJsonMode()) {
+    const hasFailures = results.some(r => r.status === 'fail');
+    return outputJsonResult(
+      auditResult,
+      hasFailures ? EXIT_CODES.CONFLICTS_FOUND : EXIT_CODES.SUCCESS,
+      startTime
+    );
+  }
+
+  // Human mode output
+
+  // Step 7: Filter results if --fail-only
   const displayResults = failOnly
     ? results.filter(r => r.status === 'fail')
     : results;
 
-  // Step 6: Display table
+  // Step 8: Display table
   displayTable(displayResults);
 
-  // Step 7: Show verbose details if requested
+  // Step 9: Show verbose details if requested
   if (verbose) {
     displayVerboseDetails(results);
   }
 
-  // Step 8: Summary
+  // Step 10: Summary
   displaySummary(results);
 
-  // Step 9: Return exit code
+  // Step 11: Show suggestion if issues found
+  const suggestion = getAuditSuggestion(auditResult);
+  if (suggestion) {
+    console.log(`${cyan('->')} ${suggestion.action}`);
+  }
+
+  // Step 12: Return exit code
   const hasFailures = results.some(r => r.status === 'fail');
   return hasFailures ? EXIT_CODES.CONFLICTS_FOUND : EXIT_CODES.SUCCESS;
 }
