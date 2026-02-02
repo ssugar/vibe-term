@@ -87,7 +87,8 @@ export function getAuditSuggestion(result: AuditResult): JsonSuggestion | null {
  * Get suggestion after fix command completes.
  */
 export function getFixSuggestion(result: FixResult, dryRun: boolean): JsonSuggestion | null {
-  if (dryRun) {
+  // Only suggest --apply if there are actually projects to fix
+  if (dryRun && result.total > 0) {
     return {
       action: 'Run `vibe-term fix --apply` to execute changes',
       command: 'vibe-term fix --apply',

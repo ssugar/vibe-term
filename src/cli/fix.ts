@@ -2,8 +2,8 @@
  * Fix command implementation for vibe-term.
  *
  * Previews and applies hook fixes to project settings. Supports dry-run mode
- * (default), per-project confirmation prompts, and batch mode with --yes flag.
- * Creates backups before modifying any files.
+ * (default), per-project confirmation prompts, batch mode with --yes flag,
+ * and JSON output for machine-readable results.
  */
 
 import { createInterface } from 'node:readline/promises';
@@ -18,7 +18,13 @@ import {
   cyan,
   heading,
   filePath,
+  setJsonMode,
+  isJsonMode,
+  getCollectedErrors,
+  collectError,
 } from './output.js';
+import { createJsonOutput, outputJson } from './json.js';
+import { getFixSuggestion, type FixResult as SuggestionFixResult } from './suggestions.js';
 import {
   readClaudeSettings,
   settingsFileExists,
@@ -57,6 +63,8 @@ export interface FixOptions {
   verbose: boolean;
   /** Glob pattern or path to filter projects */
   pattern?: string;
+  /** Output machine-readable JSON */
+  json: boolean;
 }
 
 /**
@@ -163,24 +171,71 @@ async function confirmProject(
 }
 
 /**
+ * Output JSON result and return exit code.
+ */
+function outputJsonResult(
+  result: SuggestionFixResult,
+  exitCode: number,
+  startTime: bigint,
+  dryRun: boolean
+): number {
+  const suggestion = getFixSuggestion(result, dryRun);
+  const suggestions = suggestion ? [suggestion] : [];
+  const output = createJsonOutput('fix', result, {
+    success: result.failed === 0,
+    errors: getCollectedErrors(),
+    suggestions,
+    startTime,
+  });
+  outputJson(output);
+  return exitCode;
+}
+
+/**
  * Run the fix command to preview/apply hook fixes.
  *
  * @param options - Fix options
  * @returns Exit code
  */
 export async function runFix(options: FixOptions): Promise<number> {
-  const { apply, yes, verbose, pattern } = options;
+  const { apply, yes, verbose, pattern, json } = options;
+  const startTime = process.hrtime.bigint();
+  setJsonMode(json);
+
+  // Initialize result tracking for JSON output
+  const resultData: SuggestionFixResult = {
+    total: 0,
+    fixed: 0,
+    skipped: 0,
+    failed: 0,
+    projects: [],
+  };
+
+  // Check JSON mode with --apply but without --yes
+  if (json && apply && !yes) {
+    collectError(
+      'Confirmation required but --json mode is non-interactive. Use --yes to skip confirmation.',
+      'CONFIRMATION'
+    );
+    return outputJsonResult(resultData, EXIT_CODES.ERROR, startTime, !apply);
+  }
 
   // Step 1: Verify global hooks are installed
   const settingsExist = await settingsFileExists();
   if (!settingsExist) {
     error('Global settings not found. Run `vibe-term setup` first.');
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.ERROR, startTime, !apply);
+    }
     return EXIT_CODES.ERROR;
   }
 
   const settings = await readClaudeSettings();
   if (!isVibeTermInstalled(settings)) {
     error('vibe-term hooks not installed. Run `vibe-term setup` first.');
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.ERROR, startTime, !apply);
+    }
     return EXIT_CODES.ERROR;
   }
 
@@ -191,6 +246,9 @@ export async function runFix(options: FixOptions): Promise<number> {
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
       warning('No projects found. ~/.claude/projects/ does not exist.');
+      if (isJsonMode()) {
+        return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, !apply);
+      }
       return EXIT_CODES.SUCCESS;
     }
     throw err;
@@ -198,6 +256,9 @@ export async function runFix(options: FixOptions): Promise<number> {
 
   if (projects.length === 0) {
     info('No projects found.');
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, !apply);
+    }
     return EXIT_CODES.SUCCESS;
   }
 
@@ -206,6 +267,9 @@ export async function runFix(options: FixOptions): Promise<number> {
     projects = filterByPattern(projects, pattern);
     if (projects.length === 0) {
       warning(`No projects match pattern: ${pattern}`);
+      if (isJsonMode()) {
+        return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, !apply);
+      }
       return EXIT_CODES.SUCCESS;
     }
   }
@@ -235,6 +299,9 @@ export async function runFix(options: FixOptions): Promise<number> {
 
   if (projectsNeedingFix.length === 0) {
     info('No projects need fixing.');
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, !apply);
+    }
     return EXIT_CODES.SUCCESS;
   }
 
@@ -253,23 +320,48 @@ export async function runFix(options: FixOptions): Promise<number> {
   const toFix = previews.filter((p) => !p.alreadyConfigured);
   if (toFix.length === 0) {
     info('All projects already have vibe-term hooks configured.');
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, !apply);
+    }
     return EXIT_CODES.SUCCESS;
   }
 
-  // Step 6: Display summary and previews
-  displaySummaryTable(toFix);
+  // Update total count
+  resultData.total = toFix.length;
 
-  // Show before/after in dry-run or verbose mode
-  if (!apply || verbose) {
-    for (const preview of toFix) {
-      displayBeforeAfter(preview);
+  // Step 6: Display summary and previews (human mode only)
+  if (!isJsonMode()) {
+    displaySummaryTable(toFix);
+
+    // Show before/after in dry-run or verbose mode
+    if (!apply || verbose) {
+      for (const preview of toFix) {
+        displayBeforeAfter(preview);
+      }
     }
   }
 
   // Step 7: Dry-run exit
   if (!apply) {
+    // In dry-run mode, all projects are "skipped"
+    for (const preview of toFix) {
+      resultData.skipped++;
+      resultData.projects.push({
+        path: preview.projectPath,
+        status: 'skipped',
+      });
+    }
+
+    if (isJsonMode()) {
+      return outputJsonResult(resultData, EXIT_CODES.SUCCESS, startTime, true);
+    }
+
     console.log('');
     info('Dry run complete. Use --apply to execute changes.');
+    const suggestion = getFixSuggestion(resultData, true);
+    if (suggestion) {
+      console.log(`${cyan('->')} ${suggestion.action}`);
+    }
     return EXIT_CODES.SUCCESS;
   }
 
@@ -277,11 +369,16 @@ export async function runFix(options: FixOptions): Promise<number> {
   const results: FixResult[] = [];
 
   for (const preview of toFix) {
-    // Prompt for confirmation unless --yes
-    if (!yes) {
+    // Prompt for confirmation unless --yes (only in human mode, JSON mode already checked above)
+    if (!yes && !isJsonMode()) {
       const confirmed = await confirmProject(preview.projectPath, preview);
       if (!confirmed) {
         info(`Skipped: ${preview.projectPath}`);
+        resultData.skipped++;
+        resultData.projects.push({
+          path: preview.projectPath,
+          status: 'skipped',
+        });
         continue;
       }
     }
@@ -295,24 +392,56 @@ export async function runFix(options: FixOptions): Promise<number> {
     results.push(result);
 
     if (result.success) {
-      success(`Fixed: ${preview.projectPath}`);
-      if (result.backupPath) {
-        info(`  Backup: ${result.backupPath}`);
+      resultData.fixed++;
+      resultData.projects.push({
+        path: preview.projectPath,
+        status: 'fixed',
+        backup_path: result.backupPath,
+      });
+      if (!isJsonMode()) {
+        success(`Fixed: ${preview.projectPath}`);
+        if (result.backupPath) {
+          info(`  Backup: ${result.backupPath}`);
+        }
       }
     } else {
-      error(`Failed: ${preview.projectPath}`);
-      if (result.error) {
-        error(`  ${result.error}`);
+      resultData.failed++;
+      resultData.projects.push({
+        path: preview.projectPath,
+        status: 'failed',
+        error: result.error,
+      });
+      if (!isJsonMode()) {
+        error(`Failed: ${preview.projectPath}`);
+        if (result.error) {
+          error(`  ${result.error}`);
+        }
       }
     }
   }
 
-  // Step 9: Summary
+  // Step 9: Output based on mode
+  if (isJsonMode()) {
+    return outputJsonResult(
+      resultData,
+      resultData.failed > 0 ? EXIT_CODES.PARTIAL_FAILURE : EXIT_CODES.SUCCESS,
+      startTime,
+      false
+    );
+  }
+
+  // Human mode summary
   const successCount = results.filter((r) => r.success).length;
   const failCount = results.filter((r) => !r.success).length;
 
   console.log('');
   info(`Fixed ${successCount} project(s), ${failCount} failed.`);
+
+  // Show suggestion
+  const suggestion = getFixSuggestion(resultData, false);
+  if (suggestion) {
+    console.log(`${cyan('->')} ${suggestion.action}`);
+  }
 
   // Step 10: Exit code
   if (failCount > 0) {
