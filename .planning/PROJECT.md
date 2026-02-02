@@ -2,108 +2,82 @@
 
 ## What This Is
 
-A tmux-integrated terminal multiplexer for managing multiple Claude Code sessions. Features an always-visible HUD strip at the top showing all sessions as horizontal tabs with status and context usage, while the main area displays the active Claude session. One keypress switches between sessions, and the HUD is always visible while working.
+A tmux-integrated terminal multiplexer for managing multiple Claude Code sessions. Features an always-visible HUD strip showing all sessions as horizontal tabs with status and context usage. One keypress switches between sessions. Includes CLI commands for hook management (setup, audit, fix) and is installable via npm.
 
 ## Core Value
 
 Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
 
-## Current Milestone: v3.0 Hook Management & Distribution
+## Current State
 
-**Goal:** Make vibe-term easy to install and self-managing for Claude hooks
+**Shipped:** v1.3.0 (npm: `npm install -g vibe-term`)
+**Codebase:** 6,587 LOC TypeScript
+**Package size:** 28.4 kB
 
-**Target features:**
-- Discover all Claude projects from `~/.claude/projects/`
-- Global hook setup with automatic backup
-- Audit projects for conflicting hook settings
-- Intelligent hook merging (preserve project hooks, add vibe-term)
-- npm global install support (`npm install -g vibe-term`)
+**What's working:**
+- TUI with HUD strip and tmux pane architecture
+- Session detection, status tracking, context usage
+- CLI hook management: `vibe-term setup`, `audit`, `fix`
+- npm global installation
 
 ## Requirements
 
 ### Validated
 
-*Shipped in v1.0:*
+*Shipped in v1.1 (Standalone HUD):*
+- Detect all running Claude Code instances
+- Show working vs idle vs blocked status
+- Display context window usage with stoplight colors
+- Keyboard navigation (j/k, 1-9 hotkeys)
+- Cross-platform support (Linux, macOS, WSL2)
 
-- ✓ Detect all running Claude Code instances — v1.0
-- ✓ Show working vs idle vs blocked status — v1.0
-- ✓ Display context window usage with stoplight colors — v1.0
-- ✓ Keyboard navigation (j/k, 1-9 hotkeys) — v1.0
-- ✓ Cross-platform support (Linux, macOS, WSL2) — v1.0
-- ✓ Status detection via hooks — v1.0
-- ✓ Project/directory identification — v1.0
-- ✓ Real-time status refresh — v1.0
+*Shipped in v1.2 (Integrated Terminal):*
+- Horizontal HUD strip with session tabs
+- tmux split pane architecture
+- Reliable session switching (native tmux)
+- Spawn new sessions from HUD
+- External tmux session detection
 
-*Shipped in v2.0:*
-
-- ✓ Horizontal HUD strip with session tabs — v2.0
-- ✓ tmux split pane architecture — v2.0
-- ✓ Reliable session switching (native tmux) — v2.0
-- ✓ Return to HUD with Ctrl+h key — v2.0
-- ✓ Spawn new sessions from HUD (`n` key) — v2.0
-- ✓ Detect externally-created tmux sessions — v2.0
-- ✓ Minimal tab format with status and context — v2.0
+*Shipped in v1.3 (Hook Management & Distribution):*
+- CLI hook management commands (setup, audit, fix)
+- Intelligent hook merging
+- Project conflict detection
+- JSON output mode for scripting
+- npm global install packaging
+- Comprehensive documentation
 
 ### Active
 
-*v3.0 scope:*
-
-- [ ] Discover Claude projects from ~/.claude/projects/
-- [ ] ~/.vibe-term/ directory for hooks script and config
-- [ ] Global hook setup command with backup
-- [ ] Audit projects for conflicting settings
-- [ ] Fix/merge conflicting hooks with backup
-- [ ] npm global install packaging
-- [ ] CLI commands for hook management (setup, audit, fix)
-- [ ] Update GitHub README with installation and usage docs
+*No active requirements — planning next milestone*
 
 ### Out of Scope
 
-- Embedded terminal (node-pty) — Using tmux splits instead, proven reliability
+- Embedded terminal (node-pty) — Using tmux splits instead
 - Native Windows support — WSL2 is primary
 - Non-tmux session management — tmux-integrated by design
-- Session preview pane — Defer to v4
-- Cost/token tracking — Defer to v4
+- Session preview pane — Defer to future
+- Cost/token tracking — Defer to future
 - Multi-machine monitoring — Massive complexity
 - GUI installer — CLI-first for developer audience
 
-## Context
-
-**Evolution through v2.0:**
-- v1.0 standalone HUD → v2.0 tmux-integrated terminal
-- Core UX is solid: HUD strip, session tabs, one-keypress switching
-- Status tracking relies on hooks configured in Claude settings
-
-**v3.0 focus — adoption friction:**
-- Users must manually configure hooks for status tracking to work
-- Project-level `.claude/settings.json` can conflict with global hooks
-- No easy install path (`npm install -g` not supported yet)
-- Hook script location tied to dev environment, not portable
-
-**Technical approach:**
-- Add CLI commands: `vibe-term setup`, `vibe-term audit`, `vibe-term fix`
-- `~/.vibe-term/` as persistent home for hooks script and future config
-- Project discovery via `~/.claude/projects/` directory structure
-- Intelligent hook merging preserves project hooks while adding vibe-term's
-
 ## Constraints
 
-- **Tech stack**: Ink (React TUI) — evolving existing codebase
-- **Architecture**: tmux split panes — HUD top, sessions bottom
-- **Platform**: Must work on Linux, macOS, WSL2 (all have tmux)
-- **UX**: HUD strip must be minimal (1-2 lines) to maximize session space
+- **Tech stack**: Ink (React TUI) + TypeScript
+- **Architecture**: tmux split panes (HUD top, sessions bottom)
+- **Platform**: Linux, macOS, WSL2 (all have tmux)
+- **UX**: HUD strip must be minimal (1-2 lines)
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Ink (React TUI) | Proven in v1.0, familiar patterns | ✓ Good |
-| Hooks over JSONL | JSONL format unreliable, hooks authoritative | ✓ Good |
-| tmux splits over embedded terminal | Native reliability, less complexity | ✓ Good |
-| Evolve v1.0 codebase | Reuse session detection, status parsing, context tracking | ✓ Good |
-| Minimal HUD strip | Maximize space for active session | ✓ Good |
-| ~/.vibe-term/ for user config | Persistent location independent of npm install path | — Pending |
-| Intelligent hook merging | Preserve project hooks while adding vibe-term's | — Pending |
+| Ink (React TUI) | Proven across 3 milestones | Good |
+| Hooks over JSONL | JSONL format unreliable | Good |
+| tmux splits | Native reliability | Good |
+| ~/.vibe-term/ for config | Portable across installs | Good |
+| Intelligent hook merging | Preserves user hooks | Good |
+| Dry-run by default | Safe config modification | Good |
+| JSON output mode | Enables scripting/automation | Good |
 
 ---
-*Last updated: 2026-01-30 after v3.0 milestone initialization*
+*Last updated: 2026-02-02 after v1.3 milestone*

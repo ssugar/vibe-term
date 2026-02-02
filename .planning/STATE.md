@@ -2,74 +2,53 @@
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-01-30)
+See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Phase 17 - Distribution & Documentation (v3.0 Hook Management & Distribution)
+**Current focus:** Planning next milestone
 
 ## Current Position
 
-Phase: 17 of 17 (Distribution & Documentation)
-Plan: 01 of 01 complete
-Status: Phase complete
-Last activity: 2026-02-02 — Completed 17-01-PLAN.md
+Phase: — (milestone complete)
+Plan: —
+Status: v1.3 shipped, ready for next milestone
+Last activity: 2026-02-02 — v1.3 milestone complete
 
-Progress: [##############################] 100% (17/17 phases complete)
+Progress: [##############################] 100% (v1.3 shipped)
 
 ## Performance Metrics
 
-**v1.0 Completed:**
-- Total plans: 15
-- Total execution time: ~109 min
-- Average duration: ~7.3 min/plan
+**v1.1 Standalone HUD:**
+- 6 phases, 15 plans
+- Shipped: 2026-01-25
 
-**v2.0 Completed:**
-- Total plans: 13 (Phase 7: 3, Phase 8: 3, Phase 9: 3, Phase 10: 3, Phase 11: 1)
-- Average duration: ~6 min/plan
+**v1.2 Integrated Terminal:**
+- 5 phases, 13 plans
+- Shipped: 2026-01-30
 
-**v3.0 Completed:**
-- Total plans: 11
-- Completed: Phase 12: 12-01 3min, 12-02 2min; Phase 13: 13-01 1min, 13-02 3min; Phase 14: 14-01 4min, 14-02 3min; Phase 15: 15-01 3min, 15-02 3min; Phase 16: 16-01 4min, 16-02 5min; Phase 17: 17-01 3min
-- Average duration: ~3.5 min/plan
+**v1.3 Hook Management & Distribution:**
+- 6 phases, 11 plans
+- Shipped: 2026-02-02
+- npm package: v1.3.0 (28.4 kB)
 
 ## Accumulated Context
 
-### Decisions
-
-*Carried forward from v1.0/v2.0:*
+### Key Decisions (Cumulative)
 
 - ESM-only project (type: module) required for Ink 6.x
-- .js extension in TS imports for ESM compatibility
-- **PIVOTED:** Hooks over JSONL parsing (JSONL format unreliable, hooks authoritative)
-- Global hooks in ~/.claude/settings.json for cross-project tracking
+- Hooks over JSONL parsing (JSONL format unreliable)
 - tmux splits over embedded terminal (native reliability)
-- Minimal HUD strip (1-2 lines max)
-
-*New for v3.0:*
-
 - ~/.vibe-term/ for hooks script and config (persistent, portable)
-- Intelligent hook merging (preserve project hooks while adding vibe-term's)
-- CLI subcommands before TUI initialization (command-or-TUI router pattern)
-- picocolors for CLI colored output (lightweight, no dependencies)
-- figures for cross-platform status symbols
-- node: prefix required for Node.js built-in imports with tsup bundler
-- Dynamic import for CLI subcommands (code splitting)
-- EXIT_CODES constant pattern: SUCCESS=0, ERROR=1, USER_ABORT=2
-- micromatch for glob pattern matching (faster than minimatch)
-- Sessions-index.json resolution for project paths (never decode from directory name)
-- Preview/Apply pattern: generateFixPreview shows what will change, applyFix executes with safety
-- Backup validation: read-back and parse JSON after write to catch corruption
-- Dry-run by default for fix command, --apply required to execute changes
-- Per-project confirmation with y/N prompt (safe default, auto-proceed in CI)
-- JSON mode requires --yes for confirmation-needed operations (non-interactive)
-- Suggestions only shown when actionable (contextual next-step hints)
-- npm files field whitelist (dist only) for minimal package size
-- prepublishOnly script ensures fresh build before publish
+- Intelligent hook merging (preserve project hooks)
+- Preview/Apply pattern with dry-run by default
+- JSON output mode for scripting/automation
 
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
-- Add kill tab functionality (close specific session from HUD)
+- Future: Add kill tab functionality (close specific session from HUD)
+- Future: Session preview pane
+- Future: Cost/token tracking
 
 ### Blockers/Concerns
 
@@ -78,5 +57,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: Phase 17 complete - all phases complete
+Stopped at: v1.3 milestone complete
 Resume file: None
