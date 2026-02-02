@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** Planning next milestone
+**Current focus:** v1.4 Session Lifecycle
 
 ## Current Position
 
-Phase: — (milestone complete)
+Phase: Not started (defining requirements)
 Plan: —
-Status: v1.3 shipped, ready for next milestone
-Last activity: 2026-02-02 — v1.3 milestone complete
+Status: Defining requirements
+Last activity: 2026-02-02 — Milestone v1.4 started
 
-Progress: [##############################] 100% (v1.3 shipped)
+Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0% (requirements phase)
 
 ## Performance Metrics
 
@@ -46,9 +46,10 @@ Progress: [##############################] 100% (v1.3 shipped)
 ### Pending Todos
 
 - Future: Display subagent model breakdown (e.g., "+1 haiku, +2 sonnet")
-- Future: Add kill tab functionality (close specific session from HUD)
 - Future: Session preview pane
 - Future: Cost/token tracking
+
+*Kill tab functionality moved to v1.4 Active*
 
 ### Blockers/Concerns
 

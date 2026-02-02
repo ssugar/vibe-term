@@ -48,7 +48,11 @@ Never miss a blocked Claude. See everything at a glance, get to any Claude in on
 
 ### Active
 
-*No active requirements — planning next milestone*
+*v1.4 Session Lifecycle:*
+- Kill tab functionality (terminate sessions from HUD)
+  - `x` key on selected tab initiates kill
+  - Confirmation prompt before terminating
+  - Kills tmux pane, removes from tab strip, cleans up state
 
 ### Out of Scope
 
@@ -79,5 +83,14 @@ Never miss a blocked Claude. See everything at a glance, get to any Claude in on
 | Dry-run by default | Safe config modification | Good |
 | JSON output mode | Enables scripting/automation | Good |
 
+## Current Milestone: v1.4 Session Lifecycle
+
+**Goal:** Let users terminate individual Claude sessions from the HUD
+
+**Target features:**
+- Kill tab with `x` key and confirmation prompt
+- tmux pane termination
+- Session state cleanup
+
 ---
-*Last updated: 2026-02-02 after v1.3 milestone*
+*Last updated: 2026-02-02 after v1.4 milestone start*
