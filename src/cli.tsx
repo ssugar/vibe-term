@@ -34,6 +34,7 @@ const cli = meow(
     --verbose, -v  Show detailed output
     --fail-only    Show only failing projects (audit only)
     --apply        Execute changes (fix only, default is dry-run)
+    --json         Output machine-readable JSON
 
   Examples
     $ vibe-term
@@ -71,6 +72,10 @@ const cli = meow(
         type: 'boolean',
         default: false,
       },
+      json: {
+        type: 'boolean',
+        default: false,
+      },
     },
   }
 );
@@ -83,6 +88,7 @@ if (command === 'setup') {
   const exitCode = await runSetup({
     yes: cli.flags.yes,
     verbose: cli.flags.verbose,
+    json: cli.flags.json,
   });
   process.exit(exitCode);
 }
@@ -93,6 +99,7 @@ if (command === 'audit') {
     failOnly: cli.flags.failOnly,
     verbose: cli.flags.verbose,
     pattern: cli.input[1], // Second positional arg is pattern
+    json: cli.flags.json,
   });
   process.exit(exitCode);
 }
@@ -104,6 +111,7 @@ if (command === 'fix') {
     yes: cli.flags.yes,
     verbose: cli.flags.verbose,
     pattern: cli.input[1], // Second positional arg is pattern
+    json: cli.flags.json,
   });
   process.exit(exitCode);
 }
