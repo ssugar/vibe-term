@@ -1,106 +1,93 @@
 # vibe-term
 
-A tmux-integrated terminal multiplexer for managing multiple Claude Code sessions.
+Terminal HUD for managing Claude Code sessions.
 
-## The Problem
+![vibe-term TUI](./docs/screenshot.png)
 
-When running multiple Claude Code sessions across different projects, you lose track of which ones need attention. Sessions get blocked waiting for input, context windows fill up, and you waste time alt-tabbing through terminals trying to find the one that needs you.
+## What It Does
 
-## What vibe-term Does
+vibe-term provides an always-visible HUD strip showing all your Claude Code sessions as tabs. At a glance you see which sessions are working, idle, or blocked, plus context window usage with stoplight colors. One keypress switches between sessions.
 
-vibe-term provides an always-visible HUD strip showing all your Claude sessions as tabs. At a glance you see:
-
-- Which sessions are working, idle, or blocked
-- Context window usage (with stoplight colors)
-- Project directory for each session
-
-One keypress switches between sessions. The HUD stays visible while you work.
-
-## Requirements
-
-- Node.js 20+
-- tmux
-- Claude Code CLI installed and configured
-- Linux, macOS, or WSL2
+The HUD stays visible at the top of your terminal while you work. Sessions spawned from vibe-term or running in external tmux panes are detected automatically.
 
 ## Installation
 
-Clone the repository and build:
-
 ```bash
-git clone https://github.com/ssugar/vibe-term.git
-cd vibe-term
-npm install
-npm run build
+npm install -g vibe-term
 ```
 
-Run directly:
+## Prerequisites
 
-```bash
-npm run dev
-```
+- **Node.js 20+**
+- **tmux** - Terminal multiplexer
+- **Claude Code CLI** - Installed and configured
 
-Or link globally:
-
-```bash
-npm link
-vibe-term
-```
-
-## Hooks Setup
-
-vibe-term relies on Claude Code hooks to track session status. Add the status hook to your global Claude settings (`~/.claude/settings.json`):
-
-```json
-{
-  "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
-    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
-    "PreToolUse": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
-    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }],
-    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "/path/to/vibe-term/src/hooks/status-hook.sh" }] }]
-  }
-}
-```
-
-Replace `/path/to/vibe-term` with the actual path where you cloned the repository.
-
-### Project-Level Settings Override
-
-Claude Code settings don't merge between global and project-level configs. If a project has its own `.claude/settings.json` or `.claude/settings.local.json`, the global hooks won't run for that project. See [#17017](https://github.com/anthropics/claude-code/issues/17017) and [#19487](https://github.com/anthropics/claude-code/issues/19487).
-
-To add the HUD hook to all your existing projects:
-
-```bash
-./scripts/add-hud-hooks.sh ~/path/to/your/projects
-```
-
-This script finds all project-level Claude settings and adds the status hook to each one.
-
-## Usage
-
-Start vibe-term from any terminal:
+## Quick Start
 
 ```bash
 vibe-term
 ```
 
-vibe-term creates a tmux session with the HUD strip at the top and your active Claude session below. Sessions you spawn from within vibe-term are managed automatically. External Claude sessions running in other tmux panes are also detected and shown in the HUD.
+This launches the TUI in a tmux session with the HUD strip at the top.
 
-### Options
+## Hook Setup Commands
 
+vibe-term tracks session status via Claude Code hooks. Use these commands to configure hooks across your projects.
+
+### setup
+
+Install global hooks to `~/.claude/settings.json`:
+
+```bash
+vibe-term setup          # Install hooks with confirmation
+vibe-term setup --yes    # Skip confirmation
+vibe-term setup --json   # JSON output for scripting
 ```
---refresh, -r  Refresh interval in seconds (default: 2)
+
+### audit
+
+Scan projects for hook conflicts:
+
+```bash
+vibe-term audit              # Scan all projects with Claude sessions
+vibe-term audit --conflicts  # Show only projects with conflicts
+vibe-term audit --json       # JSON output
 ```
 
-## Keybindings
+### fix
+
+Resolve hook conflicts by merging vibe-term hooks with existing project hooks:
+
+```bash
+vibe-term fix            # Preview changes (dry-run)
+vibe-term fix --apply    # Apply fixes with backup
+vibe-term fix /path      # Fix single project
+vibe-term fix --json     # JSON output (requires --yes)
+```
+
+## Hook Workflow
+
+1. **setup** installs global hooks that track session status (working/idle/blocked)
+2. Project-level `.claude/settings.json` can override global hooks
+3. **audit** detects projects with conflicting hooks
+4. **fix** merges vibe-term hooks into project settings, preserving existing hooks
+
+Typical workflow for new users:
+
+```bash
+vibe-term setup           # Install global hooks
+vibe-term audit           # Check for conflicts
+vibe-term fix --apply     # Resolve any conflicts
+vibe-term                 # Launch TUI
+```
+
+## TUI Keybindings
 
 | Key | Action |
 |-----|--------|
-| `j` / `↓` | Select next session |
-| `k` / `↑` | Select previous session |
-| `←` / `→` | Navigate tabs |
+| `j` / `Down` | Select next session |
+| `k` / `Up` | Select previous session |
+| `Left` / `Right` | Navigate tabs |
 | `1-9` | Jump to session by number |
 | `Enter` | Switch to selected session |
 | `b` | Return focus to HUD |
@@ -111,33 +98,55 @@ vibe-term creates a tmux session with the HUD strip at the top and your active C
 
 ### Spawning Sessions
 
-Press `n` to spawn a new Claude session. Enter a directory path (tab completion supported) and press Enter. If the directory doesn't exist, you'll be prompted to create it.
+Press `n` to spawn a new Claude session. Enter a directory path (tab completion supported) and press Enter.
 
-## Configuration
+## Troubleshooting
 
-vibe-term looks for `~/.config/vibe-term/config.json`:
+### tmux not found
 
-```json
-{
-  "hudPosition": "top",
-  "hudHeight": 3
-}
+**macOS:**
+```bash
+brew install tmux
 ```
 
-| Option | Values | Default |
-|--------|--------|---------|
-| `hudPosition` | `"top"`, `"bottom"` | `"top"` |
-| `hudHeight` | Number of rows | `3` |
+**Debian/Ubuntu:**
+```bash
+sudo apt install tmux
+```
 
-## How It Works
+**Other Linux:**
+Use your distribution's package manager to install tmux.
 
-vibe-term uses Claude Code's hook system to detect session status. When Claude is working, waiting for input, or blocked, the hooks report state changes that vibe-term reads to update the HUD in real-time.
+### Permission errors on npm install -g
 
-Sessions are managed through tmux pane operations. Internal sessions (spawned from vibe-term) live in a scratch window and are swapped into the main view when selected. External sessions (Claude running in other tmux panes) are detected and can be focused directly.
+If you get EACCES permission errors during global install, configure npm to use a user-owned directory:
 
-## Contributing
+```bash
+mkdir ~/.npm-global
+npm config set prefix '~/.npm-global'
+```
 
-Issues and pull requests welcome at [github.com/ssugar/vibe-term](https://github.com/ssugar/vibe-term).
+Add to your shell profile (~/.bashrc or ~/.zshrc):
+```bash
+export PATH=~/.npm-global/bin:$PATH
+```
+
+Alternatively, use [nvm](https://github.com/nvm-sh/nvm) which handles this automatically.
+
+### WSL2 Notes
+
+- Install tmux in your WSL distro: `sudo apt install tmux`
+- If tmux behaves oddly (lag, rendering issues), restart WSL: `wsl.exe --shutdown`
+- Some Windows Terminal versions may have rendering issues with the status bar
+
+### Claude Code CLI not found
+
+Ensure Claude Code is installed and `claude` is in your PATH:
+```bash
+which claude
+```
+
+If not found, follow the [Claude Code installation guide](https://docs.anthropic.com/en/docs/claude-code/installation).
 
 ## License
 
