@@ -6,6 +6,7 @@ dist/
 
 # Local/personal settings
 .claude/settings.local.json
+.claude/settings.json.vibe-term-backup.*
 
 # GSD framework (shared tooling, not project-specific)
 .claude/agents/
