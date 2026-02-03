@@ -46,18 +46,18 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| KILL-01 | TBD | Pending |
-| KILL-02 | TBD | Pending |
-| KILL-03 | TBD | Pending |
-| KILL-04 | TBD | Pending |
-| KILL-05 | TBD | Pending |
-| KILL-06 | TBD | Pending |
+| KILL-01 | Phase 18 | Pending |
+| KILL-02 | Phase 18 | Pending |
+| KILL-03 | Phase 18 | Pending |
+| KILL-04 | Phase 18 | Pending |
+| KILL-05 | Phase 18 | Pending |
+| KILL-06 | Phase 18 | Pending |
 
 **Coverage:**
 - v1.4 requirements: 6 total
-- Mapped to phases: 0
-- Unmapped: 6 ⚠️
+- Mapped to phases: 6 (100%)
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after initial definition*
+*Last updated: 2026-02-02 after roadmap creation*

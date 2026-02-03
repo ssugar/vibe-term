@@ -9,12 +9,12 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 
 ## Current Position
 
-Phase: Not started (defining requirements)
-Plan: —
-Status: Defining requirements
-Last activity: 2026-02-02 — Milestone v1.4 started
+Phase: 18 - Session Termination
+Plan: Not started (roadmap created)
+Status: Ready for planning
+Last activity: 2026-02-02 — v1.4 roadmap created
 
-Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0% (requirements phase)
+Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0% (Phase 18 planning)
 
 ## Performance Metrics
 
@@ -30,6 +30,10 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - 6 phases, 11 plans
 - Shipped: 2026-02-02
 - npm package: v1.3.0 (28.4 kB)
+
+**v1.4 Session Lifecycle:**
+- 1 phase, 0 plans (in progress)
+- Started: 2026-02-02
 
 ## Accumulated Context
 
@@ -49,8 +53,6 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - Future: Session preview pane
 - Future: Cost/token tracking
 
-*Kill tab functionality moved to v1.4 Active*
-
 ### Blockers/Concerns
 
 None.
@@ -58,5 +60,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-02
-Stopped at: v1.3 milestone complete
+Stopped at: v1.4 roadmap created, ready for Phase 18 planning
 Resume file: None
