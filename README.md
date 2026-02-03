@@ -6,9 +6,9 @@ Terminal HUD for managing Claude Code sessions.
 
 ## What It Does
 
-vibe-term provides an always-visible HUD strip showing all your Claude Code sessions as tabs. At a glance you see which sessions are working, idle, or blocked, plus context window usage with stoplight colors. One keypress switches between sessions.
+vibe-term provides an always-visible HUD strip showing all your Claude Code sessions as tabs. At a glance you see which sessions are working, idle, or blocked, plus context window usage with stoplight colors.
 
-The HUD stays visible at the top of your terminal while you work. Sessions spawned from vibe-term or running in external tmux panes are detected automatically.
+The HUD stays visible at the top of your terminal while you work. Press `Alt+1` through `Alt+9` to instantly switch between sessions, or `Ctrl+H` to focus the HUD. Sessions spawned from vibe-term or running in external tmux panes are detected automatically.
 
 ## Installation
 
@@ -81,24 +81,33 @@ vibe-term fix --apply     # Resolve any conflicts
 vibe-term                 # Launch TUI
 ```
 
-## TUI Keybindings
+## Keybindings
+
+### Global (work anywhere in the tmux session)
 
 | Key | Action |
 |-----|--------|
-| `j` / `Down` | Select next session |
-| `k` / `Up` | Select previous session |
-| `Left` / `Right` | Navigate tabs |
-| `1-9` | Jump to session by number |
+| `Alt+1-9` | Switch to session by number |
+| `Ctrl+H` | Focus the HUD pane |
+| `Ctrl+\` | Detach from tmux session |
+
+### HUD Pane (when HUD is focused)
+
+| Key | Action |
+|-----|--------|
+| `j/k` or `↑/↓` | Navigate session list |
+| `←/→` | Navigate tabs |
+| `1-9` | Select session by number |
 | `Enter` | Switch to selected session |
-| `b` | Return focus to HUD |
 | `n` | Spawn new Claude session |
-| `q` | Quit (detach or kill) |
-| `?` | Show help |
+| `q` | Quit prompt (d=detach, k=kill) |
+| `?` | Show help overlay |
+| `x` | Dismiss error message |
 | `Ctrl+C` | Exit (press twice to force) |
 
 ### Spawning Sessions
 
-Press `n` to spawn a new Claude session. Enter a directory path (tab completion supported) and press Enter.
+Press `n` in the HUD to spawn a new Claude session. Enter a directory path (tab completion supported) and press Enter.
 
 ## Troubleshooting
 
