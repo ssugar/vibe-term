@@ -15,6 +15,8 @@ interface HudStripProps {
   completionCount?: number;
   hudFocused?: boolean;
   hasSessions?: boolean; // Whether any sessions exist (affects hint display)
+  killMode?: 'none' | 'confirming';
+  killTargetSession?: { projectName: string } | null;
 }
 
 /**
@@ -43,18 +45,21 @@ export function HudStrip({
   completionCount = 0,
   hudFocused = true,
   hasSessions = false,
+  killMode = 'none',
+  killTargetSession = null,
 }: HudStripProps): React.ReactElement {
   // Determine what to show on line 2 (priority order)
   const showMkdir = showMkdirPrompt;
   const showSpawnPrompt = !showMkdir && spawnMode;
-  const showQuitPrompt = !showMkdir && !showSpawnPrompt && quitMode === 'confirming';
-  const showExitConfirm = !showMkdir && !showSpawnPrompt && !showQuitPrompt && isConfirmingExit;
-  const showHelpText = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
-  const showError = !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
+  const showKillPrompt = !showMkdir && !showSpawnPrompt && killMode === 'confirming';
+  const showQuitPrompt = !showMkdir && !showSpawnPrompt && !showKillPrompt && quitMode === 'confirming';
+  const showExitConfirm = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && isConfirmingExit;
+  const showHelpText = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
+  const showError = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
 
   // Show keybinding hints when focused, no modal state active, AND sessions exist
   // (EmptyState already includes spawn hint when no sessions)
-  const showHints = hudFocused && hasSessions && !showMkdir && !showSpawnPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
+  const showHints = hudFocused && hasSessions && !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
 
   return (
     <Box
@@ -84,6 +89,19 @@ export function HudStrip({
           <Text>{spawnInput || ''}</Text>
           <Text backgroundColor="white"> </Text>
           <Text dimColor> (Tab: complete{completionCount > 0 ? ` [${completionCount}]` : ''} | Enter: spawn | Esc: cancel)</Text>
+        </Text>
+      )}
+
+      {/* Kill confirmation prompt */}
+      {showKillPrompt && (
+        <Text>
+          <Text color="red">Kill </Text>
+          <Text bold>{killTargetSession?.projectName || 'session'}</Text>
+          <Text color="red">? </Text>
+          <Text bold color="green">[y]</Text>
+          <Text>es / </Text>
+          <Text bold color="red">[n]</Text>
+          <Text>o</Text>
         </Text>
       )}
 
@@ -131,7 +149,7 @@ export function HudStrip({
       {/* Keybinding hints - only when focused and no modal state */}
       {showHints && (
         <Text dimColor>
-          ←/→: nav | Enter: switch | n: new | q: quit | ?: help
+          ←/→: nav | Enter: switch | n: new | x: kill | q: quit | ?: help
         </Text>
       )}
     </Box>
