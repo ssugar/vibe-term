@@ -101,14 +101,16 @@ export function useSessions(): void {
 
             if (targetPaneId && mainPaneId) {
               // Swap the next session into the main pane
-              // After swap: targetPaneId location has old main content (the closed session)
+              // After swap: targetPaneId (with next session) is now in main window,
+              // mainPaneId (with closed session content) is now in scratch window.
+              // Pane IDs follow their content, not position.
               await execAsync(`tmux swap-pane -s ${targetPaneId} -t ${mainPaneId}`).catch(() => {});
               await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${nextSession.id}`).catch(() => {});
               useAppStore.getState().setActiveSessionId(nextSession.id);
 
-              // Now kill the orphaned pane (old main content now in scratch at targetPaneId location)
-              // This prevents scratch window from filling up
-              await execAsync(`tmux kill-pane -t ${targetPaneId}`).catch(() => {});
+              // Now kill the orphaned pane (closed session content now in scratch)
+              // mainPaneId now refers to the pane in scratch with the closed session
+              await execAsync(`tmux kill-pane -t ${mainPaneId}`).catch(() => {});
             }
           } else if (mainPaneId) {
             // No sessions left - show welcome screen in main pane
