@@ -52,7 +52,7 @@
 
 ### v1.4 Session Lifecycle (Phase 18) - ACTIVE
 
-- [ ] Phase 18: Session Termination
+- [ ] Phase 18: Session Termination (2 plans)
 
 ---
 
@@ -69,10 +69,14 @@
 1. User presses `x` on selected tab and sees confirmation prompt with session info
 2. User confirms kill and tab immediately disappears from HUD strip
 3. Session's tmux pane terminates (verified with `tmux list-panes`)
-4. Session state files removed from ~/.vibe-term/sessions/
+4. Session state files removed from ~/.claude-hud/sessions/
 5. User can kill last remaining session, resulting in empty HUD strip (no crash)
 
-**Plans:** TBD
+**Plans:** 2 plans
+
+Plans:
+- [ ] 18-01-PLAN.md — Kill service functions (paneSessionManager, hookStateService)
+- [ ] 18-02-PLAN.md — Kill mode UI and execution (app.tsx, HudStrip.tsx)
 
 ---
 
@@ -83,7 +87,7 @@
 | v1.1 Standalone HUD | 1-6 | 16 | Complete | 2026-01-25 |
 | v1.2 Integrated Terminal | 7-11 | 13 | Complete | 2026-01-30 |
 | v1.3 Hook Management | 12-17 | 11 | Complete | 2026-02-02 |
-| v1.4 Session Lifecycle | 18 | 0 | Planning | — |
+| v1.4 Session Lifecycle | 18 | 2 | Ready | — |
 
 **Total:** 17 phases shipped, 1 active, 40 plans shipped
 
@@ -91,3 +95,4 @@
 *Roadmap created: 2026-01-22*
 *v1.3 archived: 2026-02-02*
 *v1.4 added: 2026-02-02*
+*Phase 18 planned: 2026-02-04*
