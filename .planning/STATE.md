@@ -10,11 +10,11 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 18 - Session Termination
-Plan: Not started (roadmap created)
-Status: Ready for planning
-Last activity: 2026-02-02 — v1.4 roadmap created
+Plan: 01 of 4 complete
+Status: In progress
+Last activity: 2026-02-04 - Completed 18-01-PLAN.md (service functions)
 
-Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0% (Phase 18 planning)
+Progress: [████████░░░░░░░░░░░░░░░░░░░░░░] 25% (Phase 18 plan 01 complete)
 
 ## Performance Metrics
 
@@ -32,7 +32,7 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - npm package: v1.3.0 (28.4 kB)
 
 **v1.4 Session Lifecycle:**
-- 1 phase, 0 plans (in progress)
+- 1 phase, 1 plan complete (3 remaining)
 - Started: 2026-02-02
 
 ## Accumulated Context
@@ -46,6 +46,7 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - Intelligent hook merging (preserve project hooks)
 - Preview/Apply pattern with dry-run by default
 - JSON output mode for scripting/automation
+- kill-pane over respawn-pane for session termination (complete removal vs restart)
 
 ### Pending Todos
 
@@ -59,6 +60,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-02
-Stopped at: v1.4 roadmap created, ready for Phase 18 planning
+Last session: 2026-02-04
+Stopped at: Completed 18-01-PLAN.md (service functions for session termination)
 Resume file: None
