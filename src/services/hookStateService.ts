@@ -129,3 +129,21 @@ export function getHookBasedStatus(cwd: string): {
     transcriptPath: state.transcriptPath || null
   };
 }
+
+/**
+ * Delete the session state file for a given project path.
+ * Uses findStateByPath to locate the session, then removes the JSON file.
+ *
+ * @param cwd - The project path to find and delete state for
+ */
+export function deleteSessionState(cwd: string): void {
+  try {
+    const state = findStateByPath(cwd);
+    if (!state) return;
+
+    const statePath = path.join(STATE_DIR, `${state.sessionId}.json`);
+    fs.unlinkSync(statePath);
+  } catch {
+    // File may already be deleted or inaccessible - that's fine
+  }
+}
