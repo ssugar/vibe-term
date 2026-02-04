@@ -5,16 +5,16 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** Never miss a blocked Claude. See everything at a glance, get to any Claude in one keypress — reliably.
-**Current focus:** v1.4 Session Lifecycle
+**Current focus:** v1.4 Session Lifecycle — Complete
 
 ## Current Position
 
-Phase: 18 - Session Termination
-Plan: 02 of 4 complete
-Status: In progress
-Last activity: 2026-02-04 - Completed 18-02-PLAN.md (kill mode UI and execution)
+Phase: 18 - Session Termination (COMPLETE)
+Plan: 2/2 complete
+Status: Phase verified, milestone complete
+Last activity: 2026-02-04 — Phase 18 verified and complete
 
-Progress: [████████████████░░░░░░░░░░░░░░] 50% (Phase 18 plan 02 complete)
+Progress: [██████████████████████████████] 100% (v1.4 complete)
 
 ## Performance Metrics
 
@@ -32,8 +32,8 @@ Progress: [████████████████░░░░░░░
 - npm package: v1.3.0 (28.4 kB)
 
 **v1.4 Session Lifecycle:**
-- 1 phase, 2 plans complete (2 remaining)
-- Started: 2026-02-02
+- 1 phase, 2 plans
+- Shipped: 2026-02-04
 
 ## Accumulated Context
 
@@ -61,5 +61,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-04
-Stopped at: Completed 18-02-PLAN.md (kill mode UI and execution)
+Stopped at: v1.4 milestone complete
 Resume file: None

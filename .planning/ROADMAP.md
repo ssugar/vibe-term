@@ -50,9 +50,9 @@
 
 </details>
 
-### v1.4 Session Lifecycle (Phase 18) - ACTIVE
+### v1.4 Session Lifecycle (Phase 18) - COMPLETE
 
-- [ ] Phase 18: Session Termination (2 plans)
+- [x] Phase 18: Session Termination (2 plans) ✓
 
 ---
 
@@ -75,8 +75,8 @@
 **Plans:** 2 plans
 
 Plans:
-- [ ] 18-01-PLAN.md — Kill service functions (paneSessionManager, hookStateService)
-- [ ] 18-02-PLAN.md — Kill mode UI and execution (app.tsx, HudStrip.tsx)
+- [x] 18-01-PLAN.md — Kill service functions (paneSessionManager, hookStateService)
+- [x] 18-02-PLAN.md — Kill mode UI and execution (app.tsx, HudStrip.tsx)
 
 ---
 
@@ -87,9 +87,9 @@ Plans:
 | v1.1 Standalone HUD | 1-6 | 16 | Complete | 2026-01-25 |
 | v1.2 Integrated Terminal | 7-11 | 13 | Complete | 2026-01-30 |
 | v1.3 Hook Management | 12-17 | 11 | Complete | 2026-02-02 |
-| v1.4 Session Lifecycle | 18 | 2 | Ready | — |
+| v1.4 Session Lifecycle | 18 | 2 | Complete | 2026-02-04 |
 
-**Total:** 17 phases shipped, 1 active, 40 plans shipped
+**Total:** 18 phases shipped, 42 plans shipped
 
 ---
 *Roadmap created: 2026-01-22*
