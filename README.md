@@ -100,14 +100,18 @@ vibe-term                 # Launch TUI
 | `1-9` | Select session by number |
 | `Enter` | Switch to selected session |
 | `n` | Spawn new Claude session |
+| `x` | Kill selected session (with confirmation) |
 | `q` | Quit prompt (d=detach, k=kill) |
 | `?` | Show help overlay |
-| `x` | Dismiss error message |
 | `Ctrl+C` | Exit (press twice to force) |
 
 ### Spawning Sessions
 
 Press `n` in the HUD to spawn a new Claude session. Enter a directory path (tab completion supported) and press Enter.
+
+### Killing Sessions
+
+Press `x` on a selected session to terminate it. A confirmation prompt shows the session name — press `y` to confirm or `n`/`Escape` to cancel. This kills the tmux pane and cleans up session state files. External sessions (not spawned by vibe-term) cannot be killed.
 
 ## Troubleshooting
 
