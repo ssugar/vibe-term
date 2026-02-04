@@ -9,7 +9,9 @@ import { saveHudWindowId, returnToHud } from './services/windowFocusService.js';
 import { resizeHudPane } from './services/tmuxService.js';
 import { TMUX_SESSION_NAME } from './startup.js';
 import { execAsync } from './services/platform.js';
-import { ensureScratchWindow } from './services/paneSessionManager.js';
+import { ensureScratchWindow, killSessionPane } from './services/paneSessionManager.js';
+import { deleteSessionState } from './services/hookStateService.js';
+import type { Session } from './stores/types.js';
 import {
   expandTilde,
   directoryExists,
@@ -35,6 +37,10 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
   const [completionIndex, setCompletionIndex] = useState(0);
   const [showMkdirPrompt, setShowMkdirPrompt] = useState(false);
   const [mkdirPath, setMkdirPath] = useState('');
+
+  // Kill mode state for terminating sessions
+  const [killMode, setKillMode] = useState<'none' | 'confirming'>('none');
+  const [killTargetSession, setKillTargetSession] = useState<Session | null>(null);
 
   // Session detection polling hook
   useSessions();
@@ -121,6 +127,35 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       } else if (key.escape || input === 'n') {
         // Cancel: return to normal HUD
         setQuitMode('none');
+      }
+      return;
+    }
+
+    // Handle kill confirmation keys
+    if (killMode === 'confirming') {
+      if (input === 'y' || input === 'Y') {
+        // Execute kill
+        if (killTargetSession) {
+          // 1. Kill tmux pane
+          killSessionPane(killTargetSession.id)
+            .then(() => {
+              // 2. Delete session state file
+              deleteSessionState(killTargetSession.projectPath);
+              // 3. Update store (removes from list, clamps selectedIndex)
+              useAppStore.getState().removeSession(killTargetSession.id);
+            })
+            .catch((err) => {
+              useAppStore.getState().setError(`Kill failed: ${err.message}`);
+              setTimeout(() => {
+                useAppStore.getState().setError(null);
+              }, 5000);
+            });
+        }
+        setKillMode('none');
+        setKillTargetSession(null);
+      } else if (key.escape || input === 'n' || input === 'N') {
+        setKillMode('none');
+        setKillTargetSession(null);
       }
       return;
     }
@@ -387,9 +422,26 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
       }
     }
 
-    // x to dismiss error
+    // x to kill selected session (or dismiss error if shown)
     if (input === 'x') {
-      useAppStore.getState().setError(null);
+      if (error) {
+        useAppStore.getState().setError(null);
+        return;
+      }
+      // Initiate kill if sessions exist
+      if (sessions.length > 0) {
+        const session = sessions[selectedIndex];
+        // Block killing external sessions
+        if (session.isExternal) {
+          useAppStore.getState().setError('Cannot kill external session');
+          setTimeout(() => {
+            useAppStore.getState().setError(null);
+          }, 3000);
+          return;
+        }
+        setKillTargetSession(session);
+        setKillMode('confirming');
+      }
       return;
     }
 
@@ -439,6 +491,8 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         completionCount={completions.length}
         hudFocused={hudFocused}
         hasSessions={sessions.length > 0}
+        killMode={killMode}
+        killTargetSession={killTargetSession}
       />
     </Box>
   );
