@@ -191,8 +191,15 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
                           const panes = paneList.trim().split('\n');
                           const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
                           // Swap new pane into main position
+                          // After swap: newPaneId location now has old main content (in scratch)
+                          // We need to kill that orphan pane to prevent scratch from filling up
                           return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`)
-                            .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
+                            .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`))
+                            .then(() => {
+                              // Kill the orphan pane (old main content now in scratch)
+                              // Use .catch to ignore errors if pane already gone
+                              execAsync(`tmux kill-pane -t ${newPaneId}`).catch(() => {});
+                            });
                         });
                     });
                 });

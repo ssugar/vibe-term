@@ -50,19 +50,22 @@ export function useSessions(): void {
       const currentIds = new Set(sessions.map(s => s.id));
       const removedIds = [...previousSessionsRef.current.keys()].filter(id => !currentIds.has(id));
 
-      // Clean up panes for removed INTERNAL sessions only
-      // External sessions belong to other tmux sessions - do NOT kill their panes
+      // Get pane info for removed sessions (needed for cleanup)
+      const removedPaneInfos: Array<{ id: string; paneId: string }> = [];
       for (const id of removedIds) {
         const prevInfo = previousSessionsRef.current.get(id);
         if (prevInfo && !prevInfo.isExternal && prevInfo.paneId) {
-          // Respawn the pane with a fresh shell (keeps pane structure, clears content)
-          execAsync(`tmux respawn-pane -k -t ${prevInfo.paneId}`).catch(() => {});
+          removedPaneInfos.push({ id, paneId: prevInfo.paneId });
         }
       }
 
       // If active session was removed, switch to another session or show welcome
+      // IMPORTANT: Do the swap FIRST, then kill panes. If we kill the active session's
+      // pane first, there won't be a main pane to swap into.
       const activeSessionId = useAppStore.getState().activeSessionId;
-      if (activeSessionId && removedIds.includes(activeSessionId)) {
+      const activeSessionWasRemoved = activeSessionId && removedIds.includes(activeSessionId);
+
+      if (activeSessionWasRemoved) {
         useAppStore.getState().setActiveSessionId(null);
 
         // Get HUD pane ID from environment
@@ -98,9 +101,14 @@ export function useSessions(): void {
 
             if (targetPaneId && mainPaneId) {
               // Swap the next session into the main pane
+              // After swap: targetPaneId location has old main content (the closed session)
               await execAsync(`tmux swap-pane -s ${targetPaneId} -t ${mainPaneId}`).catch(() => {});
               await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${nextSession.id}`).catch(() => {});
               useAppStore.getState().setActiveSessionId(nextSession.id);
+
+              // Now kill the orphaned pane (old main content now in scratch at targetPaneId location)
+              // This prevents scratch window from filling up
+              await execAsync(`tmux kill-pane -t ${targetPaneId}`).catch(() => {});
             }
           } else if (mainPaneId) {
             // No sessions left - show welcome screen in main pane
@@ -138,7 +146,20 @@ export function useSessions(): void {
           if (hudPaneId) {
             await execAsync(`tmux select-pane -t ${hudPaneId}`).catch(() => {});
           }
+
+          // Clean up panes for removed INACTIVE sessions (not the active one we handled above)
+          // These are in scratch and can be killed directly
+          for (const { id, paneId } of removedPaneInfos) {
+            if (id !== activeSessionId) {
+              execAsync(`tmux kill-pane -t ${paneId}`).catch(() => {});
+            }
+          }
         })();
+      } else {
+        // No active session was removed - just clean up inactive session panes
+        for (const { paneId } of removedPaneInfos) {
+          execAsync(`tmux kill-pane -t ${paneId}`).catch(() => {});
+        }
       }
 
       // Update previous sessions for next cycle
