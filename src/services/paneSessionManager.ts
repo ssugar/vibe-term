@@ -213,3 +213,26 @@ export async function cleanupSessionPane(sessionId: string): Promise<void> {
     await execAsync(`tmux set-environment -u CLAUDE_PANE_${envKey}`).catch(() => {});
   }
 }
+
+/**
+ * Kill the tmux pane associated with a session.
+ * Unlike cleanupSessionPane which respawns the pane, this fully removes it.
+ * Removes the environment variable mapping.
+ *
+ * @param sessionId - The session ID whose pane should be killed
+ */
+export async function killSessionPane(sessionId: string): Promise<void> {
+  try {
+    const paneId = await getSessionPane(sessionId);
+    if (!paneId) return;
+
+    // Kill the pane completely (removes it from tmux)
+    await execAsync(`tmux kill-pane -t ${paneId}`);
+  } catch {
+    // Pane may already be gone - that's fine
+  } finally {
+    // Always clear the environment variable
+    const envKey = sanitizeEnvKey(sessionId);
+    await execAsync(`tmux set-environment -u CLAUDE_PANE_${envKey}`).catch(() => {});
+  }
+}
