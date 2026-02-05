@@ -192,15 +192,12 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
                           const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
                           // Swap new pane into main position
                           // After swap: newPaneId (with Claude) is now in main window,
-                          // mainPaneId (with old content) is now in scratch window.
-                          // Pane IDs follow their content, not position.
+                          // mainPaneId (with previous content) is now in scratch window.
+                          // IMPORTANT: Don't kill mainPaneId here! If there was an existing
+                          // session, it's still alive in scratch and we want to keep it.
+                          // Dead sessions are cleaned up by useSessions.ts separately.
                           return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`)
-                            .then(() => execAsync(`tmux select-pane -t ${newPaneId}`))
-                            .then(() => {
-                              // Kill the orphan pane (old main content now in scratch)
-                              // mainPaneId now refers to the pane in scratch with old content
-                              execAsync(`tmux kill-pane -t ${mainPaneId}`).catch(() => {});
-                            });
+                            .then(() => execAsync(`tmux select-pane -t ${newPaneId}`));
                         });
                     });
                 });
