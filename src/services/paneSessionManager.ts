@@ -78,6 +78,10 @@ export async function createSessionPane(
     `tmux set-environment CLAUDE_PANE_${envKey} ${paneId}`
   );
 
+  // Apply tiled layout to scratch window to maximize pane capacity
+  // This distributes panes in a grid rather than stacking vertically
+  await execAsync(`tmux select-layout -t ${scratchWindow} tiled`);
+
   return paneId;
 }
 

@@ -179,6 +179,10 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
           return execAsync(`tmux split-window -t ${scratchWindow} -d -P -F '#{pane_id}'`)
             .then(({ stdout }) => {
               const newPaneId = stdout.trim();
+              // Apply tiled layout to maximize pane capacity in scratch
+              return execAsync(`tmux select-layout -t ${scratchWindow} tiled`).then(() => newPaneId);
+            })
+            .then((newPaneId) => {
               // cd to directory and start Claude (explicit cd is more reliable than -c flag)
               return execAsync(`tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`)
                 .then(() => {
