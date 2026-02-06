@@ -132,6 +132,10 @@ export async function configureSession(
     `set-option -t ${sessionName} escape-time 0`,
     // Increase history limit
     `set-option -t ${sessionName} history-limit 10000`,
+    // Use largest client size for all windows (including unviewed scratch window)
+    // This prevents "no space for new pane" errors when scratch window would
+    // otherwise be sized smaller than the active client
+    `set-option -t ${sessionName} window-size largest`,
   ];
 
   for (const opt of options) {
