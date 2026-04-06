@@ -1,6 +1,6 @@
 {
   "name": "vibe-term",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Terminal HUD for managing Claude Code sessions",
   "type": "module",
   "main": "dist/cli.js",
