@@ -127,9 +127,14 @@ export async function buildSessions(
   panes: TmuxPane[],
   previousOrder: string[]
 ): Promise<Session[]> {
+  // Filter out subagent processes (whose parent is another Claude process)
+  // Subagents are managed by their parent session and should not appear as separate sessions
+  const claudePids = new Set(processes.map(p => p.pid));
+  const topLevelProcesses = processes.filter(p => !claudePids.has(p.ppid));
+
   // Get CWDs for all processes in parallel
   const cwdResults = await Promise.all(
-    processes.map(async (proc) => ({
+    topLevelProcesses.map(async (proc) => ({
       process: proc,
       cwd: await getProcessCwd(proc.pid),
     }))
