@@ -85,25 +85,25 @@ vibe-term                 # Launch TUI
 
 ### Global (work anywhere in the tmux session)
 
-| Key | Action |
-|-----|--------|
+| Key       | Action                      |
+| --------- | --------------------------- |
 | `Alt+1-9` | Switch to session by number |
-| `Ctrl+H` | Focus the HUD pane |
-| `Ctrl+\` | Detach from tmux session |
+| `Ctrl+H`  | Focus the HUD pane          |
+| `Ctrl+\`  | Detach from tmux session    |
 
 ### HUD Pane (when HUD is focused)
 
-| Key | Action |
-|-----|--------|
-| `j/k` or `↑/↓` | Navigate session list |
-| `←/→` | Navigate tabs |
-| `1-9` | Select session by number |
-| `Enter` | Switch to selected session |
-| `n` | Spawn new Claude session |
-| `x` | Kill selected session (with confirmation) |
-| `q` | Quit prompt (d=detach, k=kill) |
-| `?` | Show help overlay |
-| `Ctrl+C` | Exit (press twice to force) |
+| Key            | Action                                    |
+| -------------- | ----------------------------------------- |
+| `j/k` or `↑/↓` | Navigate session list                     |
+| `←/→`          | Navigate tabs                             |
+| `1-9`          | Select session by number                  |
+| `Enter`        | Switch to selected session                |
+| `n`            | Spawn new Claude session                  |
+| `x`            | Kill selected session (with confirmation) |
+| `q`            | Quit prompt (d=detach, k=kill)            |
+| `?`            | Show help overlay                         |
+| `Ctrl+C`       | Exit (press twice to force)               |
 
 ### Spawning Sessions
 
@@ -118,11 +118,13 @@ Press `x` on a selected session to terminate it. A confirmation prompt shows the
 ### tmux not found
 
 **macOS:**
+
 ```bash
 brew install tmux
 ```
 
 **Debian/Ubuntu:**
+
 ```bash
 sudo apt install tmux
 ```
@@ -140,6 +142,7 @@ npm config set prefix '~/.npm-global'
 ```
 
 Add to your shell profile (~/.bashrc or ~/.zshrc):
+
 ```bash
 export PATH=~/.npm-global/bin:$PATH
 ```
@@ -155,6 +158,7 @@ Alternatively, use [nvm](https://github.com/nvm-sh/nvm) which handles this autom
 ### Claude Code CLI not found
 
 Ensure Claude Code is installed and `claude` is in your PATH:
+
 ```bash
 which claude
 ```

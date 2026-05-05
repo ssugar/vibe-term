@@ -23,9 +23,7 @@ export async function jumpToSession(session: Session): Promise<JumpResult> {
     const result = await focusTerminalWindow(session);
     return {
       success: result.success,
-      message: result.hint
-        ? `${result.message}. ${result.hint}`
-        : result.message,
+      message: result.hint ? `${result.message}. ${result.hint}` : result.message,
     };
   }
 
@@ -34,9 +32,8 @@ export async function jumpToSession(session: Session): Promise<JumpResult> {
 
     // Parse session name from target (format: "session:window.pane")
     const colonIdx = session.tmuxTarget.indexOf(':');
-    const sessionName = colonIdx > 0
-      ? session.tmuxTarget.substring(0, colonIdx)
-      : session.tmuxTarget;
+    const sessionName =
+      colonIdx > 0 ? session.tmuxTarget.substring(0, colonIdx) : session.tmuxTarget;
 
     if (isHudInTmux) {
       // switch-client changes current tmux client to target session

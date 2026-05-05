@@ -26,9 +26,7 @@ export async function findClaudeProcesses(): Promise<ClaudeProcess[]> {
     //   etimes: elapsed time in seconds
     //   args: full command line
     // The [c] in "[c]laude" prevents grep from matching itself
-    const { stdout } = await execAsync(
-      'ps -eo pid,ppid,etimes,args | grep -E "[c]laude( |$)"'
-    );
+    const { stdout } = await execAsync('ps -eo pid,ppid,etimes,args | grep -E "[c]laude( |$)"');
 
     return stdout
       .trim()

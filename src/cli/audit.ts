@@ -22,10 +22,7 @@ import {
 } from './output.js';
 import { createJsonOutput, outputJson } from './json.js';
 import { getAuditSuggestion, type AuditResult } from './suggestions.js';
-import {
-  readClaudeSettings,
-  settingsFileExists,
-} from '../services/settingsService.js';
+import { readClaudeSettings, settingsFileExists } from '../services/settingsService.js';
 import { isVibeTermInstalled } from '../services/hookMerger.js';
 import {
   discoverProjects,
@@ -106,7 +103,7 @@ function displayTable(results: ProjectAuditResult[]): void {
  * Display verbose details for projects with issues.
  */
 function displayVerboseDetails(results: ProjectAuditResult[]): void {
-  const withIssues = results.filter(r => r.issues.length > 0);
+  const withIssues = results.filter((r) => r.issues.length > 0);
   if (withIssues.length === 0) {
     return;
   }
@@ -129,13 +126,13 @@ function displayVerboseDetails(results: ProjectAuditResult[]): void {
  * Display the summary line.
  */
 function displaySummary(results: ProjectAuditResult[]): void {
-  const passCount = results.filter(r => r.status === 'pass').length;
-  const warnCount = results.filter(r => r.status === 'warn').length;
-  const failCount = results.filter(r => r.status === 'fail').length;
+  const passCount = results.filter((r) => r.status === 'pass').length;
+  const warnCount = results.filter((r) => r.status === 'warn').length;
+  const failCount = results.filter((r) => r.status === 'fail').length;
 
   console.log('');
   console.log(
-    `Scanned ${results.length} projects: ${green(passCount + ' pass')}, ${yellow(warnCount + ' warn')}, ${red(failCount + ' fail')}`
+    `Scanned ${results.length} projects: ${green(passCount + ' pass')}, ${yellow(warnCount + ' warn')}, ${red(failCount + ' fail')}`,
   );
 }
 
@@ -143,16 +140,16 @@ function displaySummary(results: ProjectAuditResult[]): void {
  * Convert ProjectAuditResult[] to AuditResult for JSON output.
  */
 function buildAuditResult(results: ProjectAuditResult[]): AuditResult {
-  const passCount = results.filter(r => r.status === 'pass').length;
-  const warnCount = results.filter(r => r.status === 'warn').length;
-  const failCount = results.filter(r => r.status === 'fail').length;
+  const passCount = results.filter((r) => r.status === 'pass').length;
+  const warnCount = results.filter((r) => r.status === 'warn').length;
+  const failCount = results.filter((r) => r.status === 'fail').length;
 
   return {
     scanned: results.length,
     pass: passCount,
     warn: warnCount,
     fail: failCount,
-    projects: results.map(r => ({
+    projects: results.map((r) => ({
       path: r.path,
       status: r.status,
       issues: r.issues,
@@ -163,11 +160,7 @@ function buildAuditResult(results: ProjectAuditResult[]): AuditResult {
 /**
  * Output JSON result and return exit code.
  */
-function outputJsonResult(
-  result: AuditResult,
-  exitCode: number,
-  startTime: bigint
-): number {
+function outputJsonResult(result: AuditResult, exitCode: number, startTime: bigint): number {
   const suggestion = getAuditSuggestion(result);
   const suggestions = suggestion ? [suggestion] : [];
   const output = createJsonOutput('audit', result, {
@@ -260,7 +253,7 @@ export async function runAudit(options: AuditOptions): Promise<number> {
     const result = await classifyProject(
       project.originalPath,
       project.settingsPath,
-      project.localSettingsPath
+      project.localSettingsPath,
     );
     results.push(result);
   }
@@ -270,20 +263,18 @@ export async function runAudit(options: AuditOptions): Promise<number> {
 
   // Step 6: Output based on mode
   if (isJsonMode()) {
-    const hasFailures = results.some(r => r.status === 'fail');
+    const hasFailures = results.some((r) => r.status === 'fail');
     return outputJsonResult(
       auditResult,
       hasFailures ? EXIT_CODES.CONFLICTS_FOUND : EXIT_CODES.SUCCESS,
-      startTime
+      startTime,
     );
   }
 
   // Human mode output
 
   // Step 7: Filter results if --fail-only
-  const displayResults = failOnly
-    ? results.filter(r => r.status === 'fail')
-    : results;
+  const displayResults = failOnly ? results.filter((r) => r.status === 'fail') : results;
 
   // Step 8: Display table
   displayTable(displayResults);
@@ -303,6 +294,6 @@ export async function runAudit(options: AuditOptions): Promise<number> {
   }
 
   // Step 12: Return exit code
-  const hasFailures = results.some(r => r.status === 'fail');
+  const hasFailures = results.some((r) => r.status === 'fail');
   return hasFailures ? EXIT_CODES.CONFLICTS_FOUND : EXIT_CODES.SUCCESS;
 }

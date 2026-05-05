@@ -37,18 +37,17 @@ export function useSessions(): void {
   const refresh = useCallback(async () => {
     try {
       // Fetch processes and tmux panes in parallel
-      const [processes, panes] = await Promise.all([
-        findClaudeProcesses(),
-        getTmuxPanes(),
-      ]);
+      const [processes, panes] = await Promise.all([findClaudeProcesses(), getTmuxPanes()]);
 
       // Build sessions with previous order for stability
       const previousOrder = previousOrderRef.current;
       const sessions = await buildSessions(processes, panes, previousOrder);
 
       // Detect removed sessions (were in previous, not in current)
-      const currentIds = new Set(sessions.map(s => s.id));
-      const removedIds = [...previousSessionsRef.current.keys()].filter(id => !currentIds.has(id));
+      const currentIds = new Set(sessions.map((s) => s.id));
+      const removedIds = [...previousSessionsRef.current.keys()].filter(
+        (id) => !currentIds.has(id),
+      );
 
       // Get pane info for removed sessions (needed for cleanup)
       const removedPaneInfos: Array<{ id: string; paneId: string }> = [];
@@ -84,7 +83,7 @@ export function useSessions(): void {
           try {
             const { stdout: paneList } = await execAsync(`tmux list-panes -F '#{pane_id}'`);
             const panes = paneList.trim().split('\n');
-            return panes.find(p => p !== hudPaneId) || panes[1];
+            return panes.find((p) => p !== hudPaneId) || panes[1];
           } catch {
             return undefined;
           }
@@ -113,7 +112,9 @@ export function useSessions(): void {
                 // Do NOT kill mainPaneId since it still holds the live pane.
               }
 
-              await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${nextSession.id}`).catch(() => {});
+              await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${nextSession.id}`).catch(
+                () => {},
+              );
               useAppStore.getState().setActiveSessionId(nextSession.id);
 
               if (swapSucceeded) {
@@ -150,7 +151,7 @@ export function useSessions(): void {
 `;
             const escapedArt = welcomeArt.replace(/'/g, "'\\''");
             await execAsync(
-              `tmux send-keys -t ${mainPaneId} 'clear && echo '"'"'${escapedArt}'"'"'' Enter`
+              `tmux send-keys -t ${mainPaneId} 'clear && echo '"'"'${escapedArt}'"'"'' Enter`,
             ).catch(() => {});
           }
 
@@ -176,7 +177,7 @@ export function useSessions(): void {
 
       // Update previous sessions for next cycle
       previousSessionsRef.current = new Map(
-        sessions.map(s => [s.id, { isExternal: s.isExternal, paneId: s.paneId }])
+        sessions.map((s) => [s.id, { isExternal: s.isExternal, paneId: s.paneId }]),
       );
 
       // Update previous order for next cycle
@@ -205,9 +206,9 @@ export function useSessions(): void {
           useAppStore.getState().setHudFocused(true);
         });
     } catch (err) {
-      useAppStore.getState().setError(
-        err instanceof Error ? err.message : 'Failed to detect sessions'
-      );
+      useAppStore
+        .getState()
+        .setError(err instanceof Error ? err.message : 'Failed to detect sessions');
     }
   }, []);
 

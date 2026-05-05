@@ -88,7 +88,7 @@ export function createJsonOutput<T>(
     errors?: JsonError[];
     suggestions?: JsonSuggestion[];
     startTime: bigint;
-  }
+  },
 ): JsonOutput<T> {
   const duration_ms = Number(process.hrtime.bigint() - options.startTime) / 1_000_000;
 

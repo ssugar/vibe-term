@@ -17,12 +17,7 @@ export function Footer(): React.ReactElement {
   const timeAgo = formatRelativeTime(lastRefresh);
 
   return (
-    <Box
-      borderStyle="round"
-      borderColor="gray"
-      paddingX={1}
-      justifyContent="space-between"
-    >
+    <Box borderStyle="round" borderColor="gray" paddingX={1} justifyContent="space-between">
       <Text>
         <Text dimColor>j/k:</Text>
         <Text> navigate </Text>

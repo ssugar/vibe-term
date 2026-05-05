@@ -23,25 +23,19 @@ const SCRATCH_WINDOW = 'scratch';
 export async function ensureScratchWindow(): Promise<string> {
   try {
     // Check if scratch window exists
-    const { stdout } = await execAsync(
-      `tmux list-windows -t ${TMUX_SESSION} -F '#{window_name}'`
-    );
+    const { stdout } = await execAsync(`tmux list-windows -t ${TMUX_SESSION} -F '#{window_name}'`);
 
     if (!stdout.includes(SCRATCH_WINDOW)) {
       // Create scratch window (detached, won't switch to it)
       // Use colon suffix to auto-assign window index
-      await execAsync(
-        `tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`
-      );
+      await execAsync(`tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`);
     }
 
     return `${TMUX_SESSION}:${SCRATCH_WINDOW}`;
   } catch (error) {
     // If session doesn't exist or other error, try to create anyway
     try {
-      await execAsync(
-        `tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`
-      );
+      await execAsync(`tmux new-window -d -t ${TMUX_SESSION}: -n ${SCRATCH_WINDOW}`);
     } catch {
       // Window may already exist, ignore
     }
@@ -56,10 +50,7 @@ export async function ensureScratchWindow(): Promise<string> {
  * @param projectPath - The working directory for the pane
  * @returns The pane ID (e.g., "%42")
  */
-export async function createSessionPane(
-  sessionId: string,
-  projectPath: string
-): Promise<string> {
+export async function createSessionPane(sessionId: string, projectPath: string): Promise<string> {
   // Ensure scratch window exists
   const scratchWindow = await ensureScratchWindow();
 
@@ -67,16 +58,14 @@ export async function createSessionPane(
   // -P -F '#{pane_id}' returns the new pane's ID
   // -c sets the working directory
   const { stdout } = await execAsync(
-    `tmux split-window -t ${scratchWindow} -P -F '#{pane_id}' -c "${projectPath}"`
+    `tmux split-window -t ${scratchWindow} -P -F '#{pane_id}' -c "${projectPath}"`,
   );
   const paneId = stdout.trim();
 
   // Store mapping: session ID -> pane ID
   // Using sanitized session ID for environment variable name
   const envKey = sanitizeEnvKey(sessionId);
-  await execAsync(
-    `tmux set-environment CLAUDE_PANE_${envKey} ${paneId}`
-  );
+  await execAsync(`tmux set-environment CLAUDE_PANE_${envKey} ${paneId}`);
 
   // Apply tiled layout to scratch window to maximize pane capacity
   // This distributes panes in a grid rather than stacking vertically
@@ -91,14 +80,10 @@ export async function createSessionPane(
  * @param sessionId - The session ID to look up
  * @returns The pane ID or null if not found
  */
-export async function getSessionPane(
-  sessionId: string
-): Promise<string | null> {
+export async function getSessionPane(sessionId: string): Promise<string | null> {
   try {
     const envKey = sanitizeEnvKey(sessionId);
-    const { stdout } = await execAsync(
-      `tmux show-environment CLAUDE_PANE_${envKey}`
-    );
+    const { stdout } = await execAsync(`tmux show-environment CLAUDE_PANE_${envKey}`);
 
     // Output format: "CLAUDE_PANE_xxx=%NN" or "-CLAUDE_PANE_xxx" (if unset)
     if (stdout.startsWith('-')) {
@@ -122,7 +107,7 @@ export async function getSessionPane(
  */
 export async function switchToSession(
   sessionId: string,
-  mainPaneId: string
+  mainPaneId: string,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     // Get target session's pane
@@ -137,14 +122,10 @@ export async function switchToSession(
 
     // Swap target pane with main pane
     // After swap, target's content is now in main pane location
-    await execAsync(
-      `tmux swap-pane -s ${targetPaneId} -t ${mainPaneId}`
-    );
+    await execAsync(`tmux swap-pane -s ${targetPaneId} -t ${mainPaneId}`);
 
     // Update active session tracking
-    await execAsync(
-      `tmux set-environment CLAUDE_ACTIVE_SESSION ${sessionId}`
-    );
+    await execAsync(`tmux set-environment CLAUDE_ACTIVE_SESSION ${sessionId}`);
 
     // Focus main pane (now showing target session)
     await execAsync(`tmux select-pane -t ${mainPaneId}`);
@@ -165,9 +146,7 @@ export async function switchToSession(
  */
 export async function getActiveSessionId(): Promise<string | null> {
   try {
-    const { stdout } = await execAsync(
-      `tmux show-environment CLAUDE_ACTIVE_SESSION`
-    );
+    const { stdout } = await execAsync(`tmux show-environment CLAUDE_ACTIVE_SESSION`);
 
     // Output format: "CLAUDE_ACTIVE_SESSION=xxx" or "-CLAUDE_ACTIVE_SESSION" (if unset)
     if (stdout.startsWith('-')) {

@@ -62,13 +62,13 @@ export async function readClaudeSettings(): Promise<ClaudeSettings> {
  */
 export async function writeClaudeSettings(
   settings: ClaudeSettings,
-  options: { backup?: boolean } = {}
+  options: { backup?: boolean } = {},
 ): Promise<string | null> {
   const { backup = true } = options;
   let backupPath: string | null = null;
 
   // Create backup if requested and file exists
-  if (backup && await settingsFileExists()) {
+  if (backup && (await settingsFileExists())) {
     backupPath = await backupSettings();
   }
 

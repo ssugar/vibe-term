@@ -9,11 +9,11 @@ import { ContextMeter } from './ContextMeter.js';
  * Uses Unicode characters that render correctly in terminal.
  */
 const STATUS_EMOJI: Record<Session['status'], string> = {
-  idle: '\u2705',      // Green checkmark ✅
-  working: '\u23F3',   // Hourglass ⏳
-  tool: '\u{1F527}',   // Wrench 🔧 - tool executing
+  idle: '\u2705', // Green checkmark ✅
+  working: '\u23F3', // Hourglass ⏳
+  tool: '\u{1F527}', // Wrench 🔧 - tool executing
   blocked: '\u{1F6D1}', // Stop sign 🛑
-  ended: '\u274C',     // X mark ❌
+  ended: '\u274C', // X mark ❌
 };
 
 interface SessionRowProps {
@@ -56,9 +56,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
   // Subagent indicator (e.g., "+2" if 2 subagents running)
   // Fixed 3-char width for consistent alignment of context meters
   const subagentWidth = 3;
-  const subagentDisplay = session.subagentCount > 0
-    ? `+${session.subagentCount}`.padEnd(subagentWidth, ' ')
-    : ' '.repeat(subagentWidth);
+  const subagentDisplay =
+    session.subagentCount > 0
+      ? `+${session.subagentCount}`.padEnd(subagentWidth, ' ')
+      : ' '.repeat(subagentWidth);
 
   // Check if session is blocked for visual emphasis
   const isBlocked = session.status === 'blocked';
@@ -80,7 +81,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         </Text>
         {/* Subagent indicator - fixed 3-char width */}
         <Text> </Text>
-        <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+        <Text
+          color={session.subagentCount > 0 ? 'yellow' : undefined}
+          bold={session.subagentCount > 0}
+        >
           {subagentDisplay}
         </Text>
         {/* Context meter - always visible */}
@@ -90,7 +94,9 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         {session.inTmux && (
           <>
             <Text> </Text>
-            <Text dimColor color="cyan">[T]</Text>
+            <Text dimColor color="cyan">
+              [T]
+            </Text>
           </>
         )}
       </Box>
@@ -123,7 +129,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
         <Text> </Text>
 
         {/* Subagent indicator - fixed 3-char width, yellow if active */}
-        <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+        <Text
+          color={session.subagentCount > 0 ? 'yellow' : undefined}
+          bold={session.subagentCount > 0}
+        >
           {subagentDisplay}
         </Text>
         <Text> </Text>
@@ -138,7 +147,7 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
             [T]
           </Text>
         ) : (
-          <Text>   </Text>
+          <Text> </Text>
         )}
       </Box>
     );
@@ -169,7 +178,10 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
       <Text> </Text>
 
       {/* Subagent indicator - fixed 3-char width, yellow if active */}
-      <Text color={session.subagentCount > 0 ? "yellow" : undefined} bold={session.subagentCount > 0}>
+      <Text
+        color={session.subagentCount > 0 ? 'yellow' : undefined}
+        bold={session.subagentCount > 0}
+      >
         {subagentDisplay}
       </Text>
       <Text> </Text>
@@ -184,7 +196,7 @@ export function SessionRow({ session, index, isSelected }: SessionRowProps): Rea
           [T]
         </Text>
       ) : (
-        <Text>   </Text>
+        <Text> </Text>
       )}
     </Box>
   );

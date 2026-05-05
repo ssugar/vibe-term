@@ -32,7 +32,7 @@ interface Usage {
  * - Usage at: message.usage
  */
 interface JsonlEntry {
-  type: string;  // "assistant", "user", "progress", etc
+  type: string; // "assistant", "user", "progress", etc
   isSidechain?: boolean;
   message?: {
     usage?: Usage;
@@ -98,7 +98,7 @@ export function getContextUsage(transcriptPath: string | null): number | null {
     try {
       lastMainEntry = execSync(
         `grep -a '"requestId"' "${transcriptPath}" | grep '"type":"assistant"' | grep '"usage"' | grep -v '"isSidechain":true' | tail -1`,
-        { encoding: 'utf-8', maxBuffer: 1024 * 1024 }
+        { encoding: 'utf-8', maxBuffer: 1024 * 1024 },
       ).trim();
     } catch {
       // grep failed - return last known good value if available
@@ -135,10 +135,7 @@ export function getContextUsage(transcriptPath: string | null): number | null {
       (usage.cache_read_input_tokens || 0);
 
     // Calculate percentage, cap at 100
-    const percentage = Math.min(
-      Math.round((totalTokens / CONTEXT_WINDOW_SIZE) * 100),
-      100
-    );
+    const percentage = Math.min(Math.round((totalTokens / CONTEXT_WINDOW_SIZE) * 100), 100);
 
     // Update caches
     cache.set(transcriptPath, { mtime, percentage });

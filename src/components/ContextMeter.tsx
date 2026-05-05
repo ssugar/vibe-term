@@ -2,8 +2,8 @@ import React from 'react';
 import { Box, Text } from 'ink';
 
 interface ContextMeterProps {
-  percent: number;      // 0-100
-  width?: number;       // Bar width in characters, default 12
+  percent: number; // 0-100
+  width?: number; // Bar width in characters, default 12
   showPercent?: boolean; // Whether to show percentage text, default true
 }
 
@@ -44,7 +44,7 @@ function renderProgressBar(percent: number, width: number): string {
 export function ContextMeter({
   percent,
   width = 12,
-  showPercent = true
+  showPercent = true,
 }: ContextMeterProps): React.ReactElement {
   // Clamp percent to 0-100 for display
   const clampedPercent = Math.max(0, Math.min(100, percent));
@@ -58,7 +58,11 @@ export function ContextMeter({
 
   return (
     <Box>
-      {showWarning && <Text color="red" bold>!</Text>}
+      {showWarning && (
+        <Text color="red" bold>
+          !
+        </Text>
+      )}
       <Text color={color}>{bar}</Text>
       {showPercent && <Text color={color}> {percentText.padStart(4)}</Text>}
     </Box>

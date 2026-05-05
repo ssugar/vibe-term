@@ -42,10 +42,7 @@ const TERMINAL_EMULATORS = [
  * Wayland does not support window focus manipulation like X11
  */
 function isWayland(): boolean {
-  return (
-    !!process.env.WAYLAND_DISPLAY ||
-    process.env.XDG_SESSION_TYPE === 'wayland'
-  );
+  return !!process.env.WAYLAND_DISPLAY || process.env.XDG_SESSION_TYPE === 'wayland';
 }
 
 /**
@@ -116,7 +113,7 @@ async function getProcessName(pid: number): Promise<string | null> {
  */
 function isTerminalEmulator(name: string): boolean {
   const lowerName = name.toLowerCase();
-  return TERMINAL_EMULATORS.some(t => lowerName.includes(t));
+  return TERMINAL_EMULATORS.some((t) => lowerName.includes(t));
 }
 
 /**
@@ -168,9 +165,7 @@ async function focusLinuxWindow(session: Session): Promise<FocusResult> {
     try {
       // windowactivate is more reliable than windowfocus
       // It switches desktops if needed
-      await execAsync(
-        `xdotool search --pid ${terminalPid} windowactivate`
-      );
+      await execAsync(`xdotool search --pid ${terminalPid} windowactivate`);
       return { success: true, message: `Focused ${session.projectName}` };
     } catch {
       // Fall through to title matching
@@ -179,9 +174,7 @@ async function focusLinuxWindow(session: Session): Promise<FocusResult> {
 
   // Fallback: title matching with project name
   try {
-    await execAsync(
-      `xdotool search --name "${session.projectName}" windowactivate`
-    );
+    await execAsync(`xdotool search --name "${session.projectName}" windowactivate`);
     return { success: true, message: `Focused ${session.projectName}` };
   } catch {
     return {
@@ -240,15 +233,10 @@ exit 1
 `;
 
   // Escape the script for shell execution
-  const escapedScript = psScript
-    .trim()
-    .replace(/"/g, '\\"')
-    .replace(/\r?\n/g, ' ');
+  const escapedScript = psScript.trim().replace(/"/g, '\\"').replace(/\r?\n/g, ' ');
 
   try {
-    await execAsync(
-      `powershell.exe -NoProfile -Command "${escapedScript}"`,
-    );
+    await execAsync(`powershell.exe -NoProfile -Command "${escapedScript}"`);
     return {
       success: true,
       message: `Focused Windows Terminal (${session.projectName})`,
@@ -269,9 +257,7 @@ exit 1
  * @param session - The session to focus
  * @returns FocusResult with success status and message
  */
-export async function focusTerminalWindow(
-  session: Session
-): Promise<FocusResult> {
+export async function focusTerminalWindow(session: Session): Promise<FocusResult> {
   const platform = detectPlatform();
 
   switch (platform) {

@@ -78,7 +78,7 @@ const cli = meow(
         default: false,
       },
     },
-  }
+  },
 );
 
 // Route based on first positional argument
@@ -153,7 +153,7 @@ const layout = await createHudLayout(config.hudPosition, config.hudHeight);
 const { rows } = process.stdout;
 if (rows && rows < 10) {
   console.error(
-    `Warning: Terminal height (${rows} rows) is very small. HUD may not display correctly.`
+    `Warning: Terminal height (${rows} rows) is very small. HUD may not display correctly.`,
   );
 }
 
@@ -162,10 +162,9 @@ let ctrlCPressed = false;
 let ctrlCTimeout: NodeJS.Timeout | null = null;
 
 // Render the app with Ctrl+C handling disabled (we handle it manually)
-const { unmount, waitUntilExit } = render(
-  <App refreshInterval={refreshInterval} />,
-  { exitOnCtrlC: false }
-);
+const { unmount, waitUntilExit } = render(<App refreshInterval={refreshInterval} />, {
+  exitOnCtrlC: false,
+});
 
 // Graceful shutdown function
 const shutdown = () => {

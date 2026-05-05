@@ -45,8 +45,7 @@ export function getTmuxEnvironment(): TmuxEnvironment {
 
   // We're inside tmux - get the current session name
   const result = spawnSync('tmux', ['display-message', '-p', '#{session_name}']);
-  const sessionName =
-    result.status === 0 ? result.stdout.toString().trim() : undefined;
+  const sessionName = result.status === 0 ? result.stdout.toString().trim() : undefined;
 
   return { inTmux: true, sessionName };
 }
@@ -87,22 +86,14 @@ Install with:
   }
 
   // 4. Check if vibe-term session already exists
-  const hasSessionResult = spawnSync('tmux', [
-    'has-session',
-    '-t',
-    TMUX_SESSION_NAME,
-  ]);
+  const hasSessionResult = spawnSync('tmux', ['has-session', '-t', TMUX_SESSION_NAME]);
   const sessionExists = hasSessionResult.status === 0;
 
   // 5. Handle case: inside tmux but in a different session
   if (tmuxEnv.inTmux) {
     if (sessionExists) {
       // Switch to existing vibe-term session
-      const switchResult = spawnSync('tmux', [
-        'switch-client',
-        '-t',
-        TMUX_SESSION_NAME,
-      ]);
+      const switchResult = spawnSync('tmux', ['switch-client', '-t', TMUX_SESSION_NAME]);
       if (switchResult.status !== 0) {
         return {
           success: false,
@@ -112,12 +103,7 @@ Install with:
       }
     } else {
       // Create detached session, then switch to it
-      const createResult = spawnSync('tmux', [
-        'new-session',
-        '-d',
-        '-s',
-        TMUX_SESSION_NAME,
-      ]);
+      const createResult = spawnSync('tmux', ['new-session', '-d', '-s', TMUX_SESSION_NAME]);
       if (createResult.status !== 0) {
         return {
           success: false,
@@ -126,11 +112,7 @@ Install with:
         };
       }
 
-      const switchResult = spawnSync('tmux', [
-        'switch-client',
-        '-t',
-        TMUX_SESSION_NAME,
-      ]);
+      const switchResult = spawnSync('tmux', ['switch-client', '-t', TMUX_SESSION_NAME]);
       if (switchResult.status !== 0) {
         return {
           success: false,
@@ -185,9 +167,9 @@ Install with:
         'split-window',
         '-t',
         `${TMUX_SESSION_NAME}:0`,
-        '-b',  // Before (above)
+        '-b', // Before (above)
         '-l',
-        '3',   // 3 lines for compact HUD
+        '3', // 3 lines for compact HUD
         fullCommand,
       ]);
     }

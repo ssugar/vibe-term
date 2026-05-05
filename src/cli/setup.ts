@@ -32,10 +32,7 @@ import {
   settingsFileExists,
   getSettingsPath,
 } from '../services/settingsService.js';
-import {
-  installHookScript,
-  getVibeTermPath,
-} from '../services/vibeTermDirService.js';
+import { installHookScript, getVibeTermPath } from '../services/vibeTermDirService.js';
 import { isVibeTermInstalled, mergeHooks } from '../services/hookMerger.js';
 
 /**
@@ -69,7 +66,10 @@ interface SetupOptions {
 async function confirm(message: string, options: SetupOptions): Promise<boolean> {
   // JSON mode without --yes is an error (non-interactive)
   if (options.json && !options.yes) {
-    collectError('Confirmation required but --json mode is non-interactive. Use --yes to skip confirmation.', 'CONFIRMATION');
+    collectError(
+      'Confirmation required but --json mode is non-interactive. Use --yes to skip confirmation.',
+      'CONFIRMATION',
+    );
     return false;
   }
 
@@ -96,11 +96,7 @@ async function confirm(message: string, options: SetupOptions): Promise<boolean>
 /**
  * Output JSON result and return exit code.
  */
-function outputJsonResult(
-  result: SetupResult,
-  exitCode: number,
-  startTime: bigint
-): number {
+function outputJsonResult(result: SetupResult, exitCode: number, startTime: bigint): number {
   const suggestion = getSetupSuggestion(result);
   const suggestions = suggestion ? [suggestion] : [];
   const output = createJsonOutput('setup', result, {

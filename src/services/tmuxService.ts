@@ -30,7 +30,7 @@ export async function getTmuxPanes(): Promise<TmuxPane[]> {
     // tmux list-panes -a: list all panes across all sessions
     // Format: "session:window.pane pane_pid pane_id"
     const { stdout } = await execAsync(
-      'tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_pid} #{pane_id}"'
+      'tmux list-panes -a -F "#{session_name}:#{window_index}.#{pane_index} #{pane_pid} #{pane_id}"',
     );
 
     return stdout
@@ -103,10 +103,7 @@ export function isProcessInTmux(ppid: number, panes: TmuxPane[]): TmuxInfo {
  * @param panes - Pre-fetched list of tmux panes
  * @returns tmux target string ("session:window.pane") or undefined
  */
-export function getTmuxTarget(
-  ppid: number,
-  panes: TmuxPane[]
-): string | undefined {
+export function getTmuxTarget(ppid: number, panes: TmuxPane[]): string | undefined {
   const info = isProcessInTmux(ppid, panes);
   return info.tmuxTarget;
 }
@@ -119,10 +116,7 @@ export function getTmuxTarget(
  * @param sessionName - The tmux session name
  * @param cliPath - Absolute path to the CLI script (for attach hook)
  */
-export async function configureSession(
-  sessionName: string,
-  cliPath?: string
-): Promise<void> {
+export async function configureSession(sessionName: string, cliPath?: string): Promise<void> {
   const options = [
     // Disable status bar - HUD replaces it
     `set-option -t ${sessionName} status off`,
@@ -197,17 +191,13 @@ export interface HudLayout {
  */
 export async function createHudLayout(
   position: 'top' | 'bottom',
-  height: number
+  height: number,
 ): Promise<HudLayout> {
   // Get current pane ID (this is where HUD is running - it will stay here)
-  const { stdout: hudPane } = await execAsync(
-    `tmux display-message -p '#{pane_id}'`
-  );
+  const { stdout: hudPane } = await execAsync(`tmux display-message -p '#{pane_id}'`);
 
   // Check how many panes exist in current window
-  const { stdout: paneList } = await execAsync(
-    `tmux list-panes -F '#{pane_id}'`
-  );
+  const { stdout: paneList } = await execAsync(`tmux list-panes -F '#{pane_id}'`);
   const panes = paneList.trim().split('\n').filter(Boolean);
 
   let mainPane: string;
@@ -230,7 +220,7 @@ export async function createHudLayout(
     const splitArgs = position === 'top' ? '-v' : '-v -b';
 
     const { stdout: newPane } = await execAsync(
-      `tmux split-window ${splitArgs} -P -F '#{pane_id}'`
+      `tmux split-window ${splitArgs} -P -F '#{pane_id}'`,
     );
     mainPane = newPane.trim();
 
@@ -240,23 +230,15 @@ export async function createHudLayout(
   }
 
   // Store pane IDs in tmux environment for keybindings and session management
-  await execAsync(
-    `tmux set-environment CLAUDE_TERMINAL_HUD_PANE ${hudPane.trim()}`
-  );
-  await execAsync(
-    `tmux set-environment CLAUDE_TERMINAL_MAIN_PANE ${mainPane.trim()}`
-  );
+  await execAsync(`tmux set-environment CLAUDE_TERMINAL_HUD_PANE ${hudPane.trim()}`);
+  await execAsync(`tmux set-environment CLAUDE_TERMINAL_MAIN_PANE ${mainPane.trim()}`);
 
   // Add keybindings to focus HUD pane
   // Ctrl+g: legacy "go to HUD" binding
   // Ctrl+h: new "H for HUD" mnemonic (easier to remember)
   // Both work from any pane (-n = no prefix needed)
-  await execAsync(
-    `tmux bind-key -n C-g select-pane -t ${hudPane.trim()}`
-  );
-  await execAsync(
-    `tmux bind-key -n C-h select-pane -t ${hudPane.trim()}`
-  );
+  await execAsync(`tmux bind-key -n C-g select-pane -t ${hudPane.trim()}`);
+  await execAsync(`tmux bind-key -n C-h select-pane -t ${hudPane.trim()}`);
 
   // Alt+1-9: Quick jump to session N from any pane (including HUD)
   // Sends number key + Enter to HUD, which triggers selection + switch
@@ -264,7 +246,7 @@ export async function createHudLayout(
   // Uses M- (Meta) prefix for Alt key, run-shell to chain commands
   for (let i = 1; i <= 9; i++) {
     await execAsync(
-      `tmux bind-key -n M-${i} run-shell "tmux send-keys -t ${hudPane.trim()} ${i} && tmux send-keys -t ${hudPane.trim()} Enter"`
+      `tmux bind-key -n M-${i} run-shell "tmux send-keys -t ${hudPane.trim()} ${i} && tmux send-keys -t ${hudPane.trim()} Enter"`,
     );
   }
 
@@ -304,9 +286,7 @@ read -s`;
     // Send welcome script to main pane
     // Use bash -c to run the multi-line script
     const escapedScript = welcomeScript.replace(/'/g, "'\\''");
-    await execAsync(
-      `tmux send-keys -t ${mainPane} 'bash -c '"'"'${escapedScript}'"'"'' Enter`
-    );
+    await execAsync(`tmux send-keys -t ${mainPane} 'bash -c '"'"'${escapedScript}'"'"'' Enter`);
   }
 
   // Select the HUD pane so user starts with focus on navigation

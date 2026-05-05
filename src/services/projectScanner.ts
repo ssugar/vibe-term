@@ -6,9 +6,9 @@ import micromatch from 'micromatch';
 const CLAUDE_PROJECTS_DIR = join(homedir(), '.claude', 'projects');
 
 export interface DiscoveredProject {
-  encodedName: string;        // Directory name in ~/.claude/projects/
-  originalPath: string;       // Actual project path from sessions-index.json
-  settingsPath: string | null;      // Path to .claude/settings.json if exists
+  encodedName: string; // Directory name in ~/.claude/projects/
+  originalPath: string; // Actual project path from sessions-index.json
+  settingsPath: string | null; // Path to .claude/settings.json if exists
   localSettingsPath: string | null; // Path to .claude/settings.local.json if exists
 }
 
@@ -47,8 +47,8 @@ export async function discoverProjects(): Promise<DiscoveredProject[]> {
         projects.push({
           encodedName: entry.name,
           originalPath: index.originalPath,
-          settingsPath: await fileExists(projectSettingsPath) ? projectSettingsPath : null,
-          localSettingsPath: await fileExists(localSettingsPath) ? localSettingsPath : null,
+          settingsPath: (await fileExists(projectSettingsPath)) ? projectSettingsPath : null,
+          localSettingsPath: (await fileExists(localSettingsPath)) ? localSettingsPath : null,
         });
       }
     } catch {
@@ -66,13 +66,13 @@ export async function discoverProjects(): Promise<DiscoveredProject[]> {
  */
 export function filterByPattern(
   projects: DiscoveredProject[],
-  pattern?: string
+  pattern?: string,
 ): DiscoveredProject[] {
   if (!pattern) return projects;
 
   // Match against originalPath
-  const paths = projects.map(p => p.originalPath);
+  const paths = projects.map((p) => p.originalPath);
   const matches = micromatch(paths, pattern);
 
-  return projects.filter(p => matches.includes(p.originalPath));
+  return projects.filter((p) => matches.includes(p.originalPath));
 }

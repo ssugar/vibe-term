@@ -115,7 +115,13 @@ export function getHookBasedStatus(cwd: string): {
 
   if (!state) {
     // No hook data yet - default to idle/sonnet/0
-    return { status: 'idle', model: 'sonnet', subagentCount: 0, notification: null, transcriptPath: null };
+    return {
+      status: 'idle',
+      model: 'sonnet',
+      subagentCount: 0,
+      notification: null,
+      transcriptPath: null,
+    };
   }
 
   // No staleness timeout - trust the hook state. Sessions clean up via SessionEnd hook,
@@ -126,7 +132,7 @@ export function getHookBasedStatus(cwd: string): {
     model: state.model || 'sonnet',
     subagentCount: state.subagentCount || 0,
     notification: state.notification || null,
-    transcriptPath: state.transcriptPath || null
+    transcriptPath: state.transcriptPath || null,
   };
 }
 

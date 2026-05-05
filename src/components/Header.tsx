@@ -18,16 +18,27 @@ export function Header(): React.ReactElement {
 
   return (
     <Box borderStyle="round" borderColor="blue" paddingX={1}>
-      <Text bold color="cyan">vibe-term</Text>
+      <Text bold color="cyan">
+        vibe-term
+      </Text>
       <Text> - </Text>
       {hasAny ? (
         <>
-          {blocked > 0 && <Text color="red" bold>{blocked} blocked</Text>}
+          {blocked > 0 && (
+            <Text color="red" bold>
+              {blocked} blocked
+            </Text>
+          )}
           {blocked > 0 && active > 0 && <Text>, </Text>}
           {active > 0 && (
             <>
               <Text color="yellow">{active} working</Text>
-              {tool > 0 && <Text color="yellow" dimColor> ({tool} tool)</Text>}
+              {tool > 0 && (
+                <Text color="yellow" dimColor>
+                  {' '}
+                  ({tool} tool)
+                </Text>
+              )}
             </>
           )}
           {(blocked > 0 || active > 0) && idle > 0 && <Text>, </Text>}

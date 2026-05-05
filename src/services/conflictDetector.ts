@@ -4,9 +4,9 @@ import type { ClaudeSettings } from './settingsService.js';
 export type ConflictStatus = 'pass' | 'warn' | 'fail';
 
 export interface ProjectAuditResult {
-  path: string;           // originalPath
+  path: string; // originalPath
   status: ConflictStatus;
-  issues: string[];       // List of specific issues found
+  issues: string[]; // List of specific issues found
 }
 
 /**
@@ -20,7 +20,7 @@ export interface ProjectAuditResult {
 export async function classifyProject(
   projectPath: string,
   settingsPath: string | null,
-  localSettingsPath: string | null
+  localSettingsPath: string | null,
 ): Promise<ProjectAuditResult> {
   const issues: string[] = [];
 
@@ -43,7 +43,7 @@ export async function classifyProject(
         return {
           path: projectPath,
           status: 'fail',
-          issues: ['Malformed .claude/settings.json']
+          issues: ['Malformed .claude/settings.json'],
         };
       }
       // Other errors (like file not found during read) - skip
@@ -64,7 +64,7 @@ export async function classifyProject(
         return {
           path: projectPath,
           status: 'fail',
-          issues: ['Malformed .claude/settings.local.json']
+          issues: ['Malformed .claude/settings.local.json'],
         };
       }
       // Other errors - skip

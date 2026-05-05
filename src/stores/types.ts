@@ -1,20 +1,20 @@
 // Session represents an AI coding assistant instance
 export interface Session {
-  id: string;                    // `claude-${pid}` for stability
-  pid: number;                   // Process ID for detection
-  projectPath: string;           // Full path to project
-  projectName: string;           // Display name (folder or parent/folder)
-  status: 'working' | 'idle' | 'blocked' | 'tool' | 'ended';  // 'tool' for active tool execution
-  contextUsage: number;          // 0-100 percentage (Phase 4)
+  id: string; // `claude-${pid}` for stability
+  pid: number; // Process ID for detection
+  projectPath: string; // Full path to project
+  projectName: string; // Display name (folder or parent/folder)
+  status: 'working' | 'idle' | 'blocked' | 'tool' | 'ended'; // 'tool' for active tool execution
+  contextUsage: number; // 0-100 percentage (Phase 4)
   model: 'sonnet' | 'opus' | 'haiku';
-  subagentCount: number;         // Number of active subagents
-  notification: string | null;   // Active notification from Claude (cleared on next prompt)
+  subagentCount: number; // Number of active subagents
+  notification: string | null; // Active notification from Claude (cleared on next prompt)
   startedAt: Date;
   lastActivity: Date;
-  inTmux: boolean;               // Whether running in tmux
-  tmuxTarget?: string;           // e.g., "session:1.2" for navigation
-  paneId?: string;               // Stable pane ID like "%10" for swapping
-  isExternal: boolean;           // true if running in non-vibe-term tmux session
+  inTmux: boolean; // Whether running in tmux
+  tmuxTarget?: string; // e.g., "session:1.2" for navigation
+  paneId?: string; // Stable pane ID like "%10" for swapping
+  isExternal: boolean; // true if running in non-vibe-term tmux session
 }
 
 // Application state
@@ -23,7 +23,7 @@ export interface AppState {
   isConfirmingExit: boolean;
   showHelp: boolean;
   selectedIndex: number;
-  activeSessionId: string | null;  // Session currently displayed in main pane
+  activeSessionId: string | null; // Session currently displayed in main pane
   error: string | null;
   hudFocused: boolean;
 

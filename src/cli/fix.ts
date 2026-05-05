@@ -25,15 +25,9 @@ import {
 } from './output.js';
 import { createJsonOutput, outputJson } from './json.js';
 import { getFixSuggestion, type FixResult as SuggestionFixResult } from './suggestions.js';
-import {
-  readClaudeSettings,
-  settingsFileExists,
-} from '../services/settingsService.js';
+import { readClaudeSettings, settingsFileExists } from '../services/settingsService.js';
 import { isVibeTermInstalled } from '../services/hookMerger.js';
-import {
-  discoverProjects,
-  filterByPattern,
-} from '../services/projectScanner.js';
+import { discoverProjects, filterByPattern } from '../services/projectScanner.js';
 import { classifyProject } from '../services/conflictDetector.js';
 import {
   generateFixPreview,
@@ -113,10 +107,7 @@ function displayBeforeAfter(preview: FixPreview): void {
 
   // BEFORE section
   console.log(dim('  BEFORE:'));
-  if (
-    preview.beforeHooks === undefined ||
-    Object.keys(preview.beforeHooks).length === 0
-  ) {
+  if (preview.beforeHooks === undefined || Object.keys(preview.beforeHooks).length === 0) {
     console.log(dim('    (no hooks)'));
   } else {
     const beforeJson = JSON.stringify(preview.beforeHooks, null, 2);
@@ -142,10 +133,7 @@ function displayBeforeAfter(preview: FixPreview): void {
  * Prompt user to confirm fixing a specific project.
  * Returns true if confirmed, false if declined.
  */
-async function confirmProject(
-  projectPath: string,
-  preview: FixPreview
-): Promise<boolean> {
+async function confirmProject(projectPath: string, preview: FixPreview): Promise<boolean> {
   // Auto-proceed in CI/non-TTY environments
   if (!stdin.isTTY) {
     return true;
@@ -158,8 +146,8 @@ async function confirmProject(
     console.log(`${figures.pointer} ${filePath(projectPath)}`);
     console.log(
       dim(
-        `  Mode: ${preview.mode === 'merge' ? 'Add vibe-term hooks to existing' : 'Remove hooks (use global only)'}`
-      )
+        `  Mode: ${preview.mode === 'merge' ? 'Add vibe-term hooks to existing' : 'Remove hooks (use global only)'}`,
+      ),
     );
 
     const answer = await rl.question('  Apply fix? [y/N] ');
@@ -177,7 +165,7 @@ function outputJsonResult(
   result: SuggestionFixResult,
   exitCode: number,
   startTime: bigint,
-  dryRun: boolean
+  dryRun: boolean,
 ): number {
   const suggestion = getFixSuggestion(result, dryRun);
   const suggestions = suggestion ? [suggestion] : [];
@@ -215,7 +203,7 @@ export async function runFix(options: FixOptions): Promise<number> {
   if (json && apply && !yes) {
     collectError(
       'Confirmation required but --json mode is non-interactive. Use --yes to skip confirmation.',
-      'CONFIRMATION'
+      'CONFIRMATION',
     );
     return outputJsonResult(resultData, EXIT_CODES.ERROR, startTime, !apply);
   }
@@ -284,7 +272,7 @@ export async function runFix(options: FixOptions): Promise<number> {
     const result = await classifyProject(
       project.originalPath,
       project.settingsPath,
-      project.localSettingsPath
+      project.localSettingsPath,
     );
 
     // Only fix projects with 'warn' status (have hooks that can be merged)
@@ -311,7 +299,7 @@ export async function runFix(options: FixOptions): Promise<number> {
     const preview = await generateFixPreview(
       project.originalPath,
       project.settingsPath,
-      'merge' // Default mode per CONTEXT.md
+      'merge', // Default mode per CONTEXT.md
     );
     previews.push(preview);
   }
@@ -384,11 +372,7 @@ export async function runFix(options: FixOptions): Promise<number> {
     }
 
     // Apply the fix
-    const result = await applyFix(
-      preview.settingsPath,
-      preview.projectPath,
-      preview.mode
-    );
+    const result = await applyFix(preview.settingsPath, preview.projectPath, preview.mode);
     results.push(result);
 
     if (result.success) {
@@ -426,7 +410,7 @@ export async function runFix(options: FixOptions): Promise<number> {
       resultData,
       resultData.failed > 0 ? EXIT_CODES.PARTIAL_FAILURE : EXIT_CODES.SUCCESS,
       startTime,
-      false
+      false,
     );
   }
 

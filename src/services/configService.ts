@@ -69,7 +69,7 @@ export function loadConfig(): Config {
     } else if (parsed.hudPosition !== undefined) {
       // Invalid value - log warning
       console.error(
-        `Warning: Invalid hudPosition "${parsed.hudPosition}" in config. Using default "${DEFAULT_CONFIG.hudPosition}".`
+        `Warning: Invalid hudPosition "${parsed.hudPosition}" in config. Using default "${DEFAULT_CONFIG.hudPosition}".`,
       );
     }
 
@@ -79,16 +79,14 @@ export function loadConfig(): Config {
     } else if (parsed.hudHeight !== undefined) {
       // Invalid value - log warning
       console.error(
-        `Warning: Invalid hudHeight "${parsed.hudHeight}" in config. Using default "${DEFAULT_CONFIG.hudHeight}".`
+        `Warning: Invalid hudHeight "${parsed.hudHeight}" in config. Using default "${DEFAULT_CONFIG.hudHeight}".`,
       );
     }
 
     return merged;
   } catch (error) {
     // Parse error or read error - log warning and return defaults
-    console.error(
-      `Warning: Failed to parse config at ${CONFIG_PATH}. Using defaults.`
-    );
+    console.error(`Warning: Failed to parse config at ${CONFIG_PATH}. Using defaults.`);
     return DEFAULT_CONFIG;
   }
 }

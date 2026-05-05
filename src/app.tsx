@@ -137,11 +137,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         // Execute kill
         if (killTargetSession) {
           // 1. Kill tmux pane
-          killSessionPane(
-            killTargetSession.id,
-            killTargetSession.paneId,
-            killTargetSession.pid,
-          )
+          killSessionPane(killTargetSession.id, killTargetSession.paneId, killTargetSession.pid)
             .then(() => {
               // 2. Delete session state file
               deleteSessionState(killTargetSession.projectPath);
@@ -184,31 +180,37 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
             .then(({ stdout }) => {
               const newPaneId = stdout.trim();
               // Apply tiled layout to maximize pane capacity in scratch
-              return execAsync(`tmux select-layout -t ${scratchWindow} tiled`).then(() => newPaneId);
+              return execAsync(`tmux select-layout -t ${scratchWindow} tiled`).then(
+                () => newPaneId,
+              );
             })
             .then((newPaneId) => {
               // cd to directory and start Claude (explicit cd is more reliable than -c flag)
-              return execAsync(`tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`)
-                .then(() => {
-                  // Get main pane ID
-                  return execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE')
-                    .then(({ stdout: hudEnv }) => {
-                      const hudPaneId = hudEnv.split('=')[1]?.trim();
-                      return execAsync(`tmux list-panes -F '#{pane_id}'`)
-                        .then(({ stdout: paneList }) => {
-                          const panes = paneList.trim().split('\n');
-                          const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
-                          // Swap new pane into main position
-                          // After swap: newPaneId (with Claude) is now in main window,
-                          // mainPaneId (with previous content) is now in scratch window.
-                          // IMPORTANT: Don't kill mainPaneId here! If there was an existing
-                          // session, it's still alive in scratch and we want to keep it.
-                          // Dead sessions are cleaned up by useSessions.ts separately.
-                          return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`)
-                            .then(() => execAsync(`tmux select-pane -t ${newPaneId}`));
-                        });
-                    });
-                });
+              return execAsync(
+                `tmux send-keys -t ${newPaneId} 'cd "${directory}" && claude' Enter`,
+              ).then(() => {
+                // Get main pane ID
+                return execAsync('tmux show-environment CLAUDE_TERMINAL_HUD_PANE').then(
+                  ({ stdout: hudEnv }) => {
+                    const hudPaneId = hudEnv.split('=')[1]?.trim();
+                    return execAsync(`tmux list-panes -F '#{pane_id}'`).then(
+                      ({ stdout: paneList }) => {
+                        const panes = paneList.trim().split('\n');
+                        const mainPaneId = panes.find((p) => p !== hudPaneId) || panes[1];
+                        // Swap new pane into main position
+                        // After swap: newPaneId (with Claude) is now in main window,
+                        // mainPaneId (with previous content) is now in scratch window.
+                        // IMPORTANT: Don't kill mainPaneId here! If there was an existing
+                        // session, it's still alive in scratch and we want to keep it.
+                        // Dead sessions are cleaned up by useSessions.ts separately.
+                        return execAsync(`tmux swap-pane -s ${newPaneId} -t ${mainPaneId}`).then(
+                          () => execAsync(`tmux select-pane -t ${newPaneId}`),
+                        );
+                      },
+                    );
+                  },
+                );
+              });
             });
         })
         .catch((err) => {
@@ -227,7 +229,11 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
           createDirectory(mkdirPath);
           executeSpawn(mkdirPath);
         } catch (err) {
-          useAppStore.getState().setError(`Failed to create directory: ${err instanceof Error ? err.message : String(err)}`);
+          useAppStore
+            .getState()
+            .setError(
+              `Failed to create directory: ${err instanceof Error ? err.message : String(err)}`,
+            );
           setTimeout(() => {
             useAppStore.getState().setError(null);
           }, 5000);
@@ -278,7 +284,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
       // Backspace to delete
       if (key.backspace || key.delete) {
-        setSpawnInput(prev => prev.slice(0, -1));
+        setSpawnInput((prev) => prev.slice(0, -1));
         // Reset completions when input changes
         setCompletions([]);
         setCompletionIndex(0);
@@ -306,7 +312,7 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
 
       // Regular character input
       if (input && !key.ctrl && !key.meta) {
-        setSpawnInput(prev => prev + input);
+        setSpawnInput((prev) => prev + input);
         // Reset completions when input changes
         setCompletions([]);
         setCompletionIndex(0);
@@ -318,29 +324,21 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
     if (sessions.length > 0) {
       // j/k and arrow key navigation
       if (input === 'j' || key.downArrow) {
-        useAppStore.getState().setSelectedIndex(
-          Math.min(selectedIndex + 1, sessions.length - 1)
-        );
+        useAppStore.getState().setSelectedIndex(Math.min(selectedIndex + 1, sessions.length - 1));
         return;
       }
       if (input === 'k' || key.upArrow) {
-        useAppStore.getState().setSelectedIndex(
-          Math.max(selectedIndex - 1, 0)
-        );
+        useAppStore.getState().setSelectedIndex(Math.max(selectedIndex - 1, 0));
         return;
       }
 
       // Left/right arrow navigation for horizontal tab strip
       if (key.leftArrow) {
-        useAppStore.getState().setSelectedIndex(
-          Math.max(selectedIndex - 1, 0)
-        );
+        useAppStore.getState().setSelectedIndex(Math.max(selectedIndex - 1, 0));
         return;
       }
       if (key.rightArrow) {
-        useAppStore.getState().setSelectedIndex(
-          Math.min(selectedIndex + 1, sessions.length - 1)
-        );
+        useAppStore.getState().setSelectedIndex(Math.min(selectedIndex + 1, sessions.length - 1));
         return;
       }
 
@@ -380,20 +378,20 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
               .then(({ stdout }) => {
                 const hudPaneId = stdout.split('=')[1]?.trim();
                 // Get all panes in current window and find the main one (not HUD)
-                return execAsync(`tmux list-panes -F '#{pane_id}'`)
-                  .then(({ stdout: paneList }) => {
-                    const panes = paneList.trim().split('\n');
-                    const mainPaneId = panes.find(p => p !== hudPaneId) || panes[1];
+                return execAsync(`tmux list-panes -F '#{pane_id}'`).then(({ stdout: paneList }) => {
+                  const panes = paneList.trim().split('\n');
+                  const mainPaneId = panes.find((p) => p !== hudPaneId) || panes[1];
 
-                    // If session is already in main pane, just focus it
-                    if (session.paneId === mainPaneId) {
-                      return execAsync(`tmux select-pane -t ${mainPaneId}`);
-                    }
+                  // If session is already in main pane, just focus it
+                  if (session.paneId === mainPaneId) {
+                    return execAsync(`tmux select-pane -t ${mainPaneId}`);
+                  }
 
-                    // Swap session's pane into main position
-                    return execAsync(`tmux swap-pane -s ${session.paneId} -t ${mainPaneId}`)
-                      .then(() => execAsync(`tmux select-pane -t ${mainPaneId}`));
-                  });
+                  // Swap session's pane into main position
+                  return execAsync(`tmux swap-pane -s ${session.paneId} -t ${mainPaneId}`).then(
+                    () => execAsync(`tmux select-pane -t ${mainPaneId}`),
+                  );
+                });
               })
               .then(() => {
                 useAppStore.getState().setActiveSessionId(session.id);

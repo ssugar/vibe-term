@@ -52,7 +52,7 @@ export interface FixResult {
 export async function generateFixPreview(
   projectPath: string,
   settingsPath: string,
-  mode: FixMode
+  mode: FixMode,
 ): Promise<FixPreview> {
   // Read and parse settings
   const content = await readFile(settingsPath, 'utf-8');
@@ -111,7 +111,7 @@ export async function generateFixPreview(
 export async function applyFix(
   settingsPath: string,
   projectPath: string,
-  mode: FixMode
+  mode: FixMode,
 ): Promise<FixResult> {
   let backupPath: string | undefined;
 

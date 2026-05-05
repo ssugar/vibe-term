@@ -12,9 +12,9 @@ const MEDIUM_NAME_WIDTH = 8;
 
 // Responsive breakpoints (terminal width thresholds)
 const BREAKPOINTS = {
-  WIDE: 80,    // Full format: [1:project-name ✅ 45%]
-  MEDIUM: 50,  // Compact: [1:proj ✅ 45%]
-  NARROW: 40,  // No name: [1 ✅ 45%]
+  WIDE: 80, // Full format: [1:project-name ✅ 45%]
+  MEDIUM: 50, // Compact: [1:proj ✅ 45%]
+  NARROW: 40, // No name: [1 ✅ 45%]
   // Below 40: minimal format 1✅45
 };
 
@@ -40,7 +40,12 @@ function getDisplayMode(terminalWidth: number): DisplayMode {
  * - narrow: [1 ✅ 45%] + separator
  * - minimal: 1✅45 + separator
  */
-function calculateTabWidth(session: Session, index: number, displayMode: DisplayMode, isExternal = false): number {
+function calculateTabWidth(
+  session: Session,
+  index: number,
+  displayMode: DisplayMode,
+  isExternal = false,
+): number {
   // Index display width: external shows "~E" (2 chars), internal shows number (1-2 chars)
   const indexDisplayWidth = isExternal ? 2 : String(index).length;
 
@@ -48,9 +53,10 @@ function calculateTabWidth(session: Session, index: number, displayMode: Display
   const separator = displayMode === 'minimal' ? 1 : 2;
 
   // Context percentage width varies: minimal has no %, others have padded "XX%"
-  const contextWidth = displayMode === 'minimal'
-    ? String(Math.round(session.contextUsage)).length // Just the number
-    : 4; // Padded " 0%" to "100%"
+  const contextWidth =
+    displayMode === 'minimal'
+      ? String(Math.round(session.contextUsage)).length // Just the number
+      : 4; // Padded " 0%" to "100%"
 
   // Emoji is typically 2 chars wide in terminal
   const emojiWidth = 2;
@@ -70,7 +76,9 @@ function calculateTabWidth(session: Session, index: number, displayMode: Display
       const projectName = session.projectPath.split('/').pop() || session.projectPath;
       const nameLen = Math.min(projectName.length, MEDIUM_NAME_WIDTH);
       // [ + index + : + name + space + emoji + space + pct + ]
-      return 1 + indexDisplayWidth + 1 + nameLen + 1 + emojiWidth + 1 + contextWidth + 1 + separator;
+      return (
+        1 + indexDisplayWidth + 1 + nameLen + 1 + emojiWidth + 1 + contextWidth + 1 + separator
+      );
     }
 
     case 'wide':
@@ -79,7 +87,9 @@ function calculateTabWidth(session: Session, index: number, displayMode: Display
       const projectName = session.projectPath.split('/').pop() || session.projectPath;
       const nameLen = Math.min(projectName.length, MAX_NAME_WIDTH);
       // [ + index + : + name + space + emoji + space + pct + ]
-      return 1 + indexDisplayWidth + 1 + nameLen + 1 + emojiWidth + 1 + contextWidth + 1 + separator;
+      return (
+        1 + indexDisplayWidth + 1 + nameLen + 1 + emojiWidth + 1 + contextWidth + 1 + separator
+      );
     }
   }
 }
@@ -139,15 +149,14 @@ export function TabStrip(): React.ReactElement {
 
     // Calculate width used by external tabs (pinned right)
     const externalWidth = externalWithIndices.reduce(
-      (total, { session, originalIndex }) => total + calculateTabWidth(session, originalIndex, displayMode, true),
-      0
+      (total, { session, originalIndex }) =>
+        total + calculateTabWidth(session, originalIndex, displayMode, true),
+      0,
     );
 
     // Divider width (3 chars: " | ") - only if external sessions exist
     // At minimal mode, use shorter divider (1 char)
-    const dividerWidth = externalWithIndices.length > 0
-      ? (displayMode === 'minimal' ? 1 : 3)
-      : 0;
+    const dividerWidth = externalWithIndices.length > 0 ? (displayMode === 'minimal' ? 1 : 3) : 0;
 
     // Arrow indicators width - smaller at narrow widths
     const arrowWidth = displayMode === 'minimal' ? 1 : 3;
@@ -155,7 +164,8 @@ export function TabStrip(): React.ReactElement {
     const rightArrowWidth = arrowWidth;
 
     // Calculate available width for managed tabs
-    const availableWidth = terminalWidth - externalWidth - dividerWidth - leftArrowWidth - rightArrowWidth;
+    const availableWidth =
+      terminalWidth - externalWidth - dividerWidth - leftArrowWidth - rightArrowWidth;
 
     // Calculate how many managed tabs fit
     let visibleManagedCount = 0;
@@ -178,7 +188,14 @@ export function TabStrip(): React.ReactElement {
     }
 
     return { externalWidth, dividerWidth, availableWidth, visibleManagedCount };
-  }, [sessions.length, managedWithIndices, externalWithIndices, terminalWidth, scrollOffset, displayMode]);
+  }, [
+    sessions.length,
+    managedWithIndices,
+    externalWithIndices,
+    terminalWidth,
+    scrollOffset,
+    displayMode,
+  ]);
 
   const { visibleManagedCount } = layoutMetrics;
 
@@ -198,7 +215,7 @@ export function TabStrip(): React.ReactElement {
 
     // Find position in managed sessions
     const managedPosition = managedWithIndices.findIndex(
-      ({ session }) => session.id === selectedSession.id
+      ({ session }) => session.id === selectedSession.id,
     );
 
     if (managedPosition === -1) return;
@@ -231,13 +248,18 @@ export function TabStrip(): React.ReactElement {
   if (terminalWidth < MIN_TERMINAL_WIDTH) {
     return (
       <Box>
-        <Text color="yellow">Too narrow ({terminalWidth}). Need {MIN_TERMINAL_WIDTH}+</Text>
+        <Text color="yellow">
+          Too narrow ({terminalWidth}). Need {MIN_TERMINAL_WIDTH}+
+        </Text>
       </Box>
     );
   }
 
   // Visible managed sessions (scrollable middle section)
-  const visibleManagedSessions = managedWithIndices.slice(scrollOffset, scrollOffset + visibleManagedCount);
+  const visibleManagedSessions = managedWithIndices.slice(
+    scrollOffset,
+    scrollOffset + visibleManagedCount,
+  );
 
   // Arrow indicators (only for managed sessions scrolling)
   const showLeftArrow = scrollOffset > 0;
@@ -250,7 +272,12 @@ export function TabStrip(): React.ReactElement {
   return (
     <Box flexDirection="row">
       {/* Left arrow indicator */}
-      {showLeftArrow && <Text dimColor>{figures.arrowLeft}{arrowSpacing}</Text>}
+      {showLeftArrow && (
+        <Text dimColor>
+          {figures.arrowLeft}
+          {arrowSpacing}
+        </Text>
+      )}
       {!showLeftArrow && <Text>{arrowPlaceholder}</Text>}
 
       {/* Managed sessions (scrollable, includes all internal sessions in order) */}
@@ -268,7 +295,12 @@ export function TabStrip(): React.ReactElement {
       ))}
 
       {/* Right arrow indicator */}
-      {showRightArrow && <Text dimColor>{arrowSpacing}{figures.arrowRight}</Text>}
+      {showRightArrow && (
+        <Text dimColor>
+          {arrowSpacing}
+          {figures.arrowRight}
+        </Text>
+      )}
 
       {/* Divider between managed and external sessions */}
       {externalWithIndices.length > 0 && (

@@ -51,7 +51,7 @@ export interface WriteFileOptions {
 export async function writeVibeTermFile(
   filename: string,
   content: string,
-  options?: WriteFileOptions
+  options?: WriteFileOptions,
 ): Promise<string> {
   await ensureVibeTermDir();
   const filepath = getVibeTermPath(filename);

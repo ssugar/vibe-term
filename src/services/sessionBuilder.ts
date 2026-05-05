@@ -14,10 +14,7 @@ import { TMUX_SESSION_NAME } from '../startup.js';
  * @param allPaths - All project paths for duplicate detection
  * @returns Display name (folder or parent/folder)
  */
-export function extractProjectName(
-  projectPath: string,
-  allPaths: string[]
-): string {
+export function extractProjectName(projectPath: string, allPaths: string[]): string {
   // Extract folder name (last segment)
   const segments = projectPath.split('/').filter(Boolean);
   const folderName = segments[segments.length - 1] || projectPath;
@@ -46,10 +43,7 @@ export function extractProjectName(
  * @param previousOrder - Array of session IDs from previous cycle
  * @returns Sorted sessions array
  */
-export function sortSessions(
-  sessions: Session[],
-  previousOrder: string[]
-): Session[] {
+export function sortSessions(sessions: Session[], previousOrder: string[]): Session[] {
   const previousOrderSet = new Set(previousOrder);
 
   // Separate into existing (in previous order) and new sessions
@@ -72,9 +66,7 @@ export function sortSessions(
   });
 
   // Sort new sessions by startedAt (oldest first)
-  newSessions.sort(
-    (a, b) => a.startedAt.getTime() - b.startedAt.getTime()
-  );
+  newSessions.sort((a, b) => a.startedAt.getTime() - b.startedAt.getTime());
 
   return [...existing, ...newSessions];
 }
@@ -88,10 +80,7 @@ export function sortSessions(
  * @param previousOrder - Array of session IDs from previous cycle
  * @returns Sorted sessions array with blocked at top
  */
-export function sortSessionsWithBlocked(
-  sessions: Session[],
-  previousOrder: string[]
-): Session[] {
+export function sortSessionsWithBlocked(sessions: Session[], previousOrder: string[]): Session[] {
   // Separate into blocked and non-blocked
   const blocked: Session[] = [];
   const nonBlocked: Session[] = [];
@@ -125,24 +114,24 @@ export function sortSessionsWithBlocked(
 export async function buildSessions(
   processes: ClaudeProcess[],
   panes: TmuxPane[],
-  previousOrder: string[]
+  previousOrder: string[],
 ): Promise<Session[]> {
   // Filter out subagent processes (whose parent is another Claude process)
   // Subagents are managed by their parent session and should not appear as separate sessions
-  const claudePids = new Set(processes.map(p => p.pid));
-  const topLevelProcesses = processes.filter(p => !claudePids.has(p.ppid));
+  const claudePids = new Set(processes.map((p) => p.pid));
+  const topLevelProcesses = processes.filter((p) => !claudePids.has(p.ppid));
 
   // Get CWDs for all processes in parallel
   const cwdResults = await Promise.all(
     topLevelProcesses.map(async (proc) => ({
       process: proc,
       cwd: await getProcessCwd(proc.pid),
-    }))
+    })),
   );
 
   // Filter out processes where CWD couldn't be determined
   const validResults = cwdResults.filter(
-    (r): r is { process: ClaudeProcess; cwd: string } => r.cwd !== null
+    (r): r is { process: ClaudeProcess; cwd: string } => r.cwd !== null,
   );
 
   // Collect all paths for duplicate detection
@@ -160,8 +149,8 @@ export async function buildSessions(
     // A session is external if:
     // - It's NOT in tmux at all (standalone terminal), OR
     // - It IS in tmux but in a different session (not "vibe-term:")
-    const isExternal = !tmuxInfo.inTmux ||
-      !tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
+    const isExternal =
+      !tmuxInfo.inTmux || !tmuxInfo.tmuxTarget?.startsWith(`${TMUX_SESSION_NAME}:`);
 
     // Get status, model, subagent count, notification, and transcript path from hook state files
     const { status, model, subagentCount, notification, transcriptPath } = getHookBasedStatus(cwd);
@@ -176,7 +165,7 @@ export async function buildSessions(
       projectName: extractProjectName(cwd, allPaths),
       status,
       contextUsage,
-      model: model ?? 'sonnet',        // Default to sonnet if unknown
+      model: model ?? 'sonnet', // Default to sonnet if unknown
       subagentCount,
       notification,
       startedAt,

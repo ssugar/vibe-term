@@ -52,20 +52,44 @@ export function HudStrip({
   const showMkdir = showMkdirPrompt;
   const showSpawnPrompt = !showMkdir && spawnMode;
   const showKillPrompt = !showMkdir && !showSpawnPrompt && killMode === 'confirming';
-  const showQuitPrompt = !showMkdir && !showSpawnPrompt && !showKillPrompt && quitMode === 'confirming';
-  const showExitConfirm = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && isConfirmingExit;
-  const showHelpText = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && showHelp;
-  const showError = !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && error;
+  const showQuitPrompt =
+    !showMkdir && !showSpawnPrompt && !showKillPrompt && quitMode === 'confirming';
+  const showExitConfirm =
+    !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && isConfirmingExit;
+  const showHelpText =
+    !showMkdir &&
+    !showSpawnPrompt &&
+    !showKillPrompt &&
+    !showQuitPrompt &&
+    !showExitConfirm &&
+    showHelp;
+  const showError =
+    !showMkdir &&
+    !showSpawnPrompt &&
+    !showKillPrompt &&
+    !showQuitPrompt &&
+    !showExitConfirm &&
+    !showHelpText &&
+    error;
 
   // Show keybinding hints when focused, no modal state active, AND sessions exist
   // (EmptyState already includes spawn hint when no sessions)
-  const showHints = hudFocused && hasSessions && !showMkdir && !showSpawnPrompt && !showKillPrompt && !showQuitPrompt && !showExitConfirm && !showHelpText && !showError;
+  const showHints =
+    hudFocused &&
+    hasSessions &&
+    !showMkdir &&
+    !showSpawnPrompt &&
+    !showKillPrompt &&
+    !showQuitPrompt &&
+    !showExitConfirm &&
+    !showHelpText &&
+    !showError;
 
   return (
     <Box
       flexDirection="column"
-      borderStyle={hudFocused ? "round" : undefined}
-      borderColor={hudFocused ? "cyan" : undefined}
+      borderStyle={hudFocused ? 'round' : undefined}
+      borderColor={hudFocused ? 'cyan' : undefined}
     >
       <TabStrip />
 
@@ -75,9 +99,13 @@ export function HudStrip({
           <Text color="yellow">Directory doesn't exist: </Text>
           <Text>{mkdirPath}</Text>
           <Text> Create? </Text>
-          <Text bold color="green">[y]</Text>
+          <Text bold color="green">
+            [y]
+          </Text>
           <Text>es / </Text>
-          <Text bold color="red">[n]</Text>
+          <Text bold color="red">
+            [n]
+          </Text>
           <Text>o</Text>
         </Text>
       )}
@@ -88,7 +116,11 @@ export function HudStrip({
           <Text color="cyan">Directory: </Text>
           <Text>{spawnInput || ''}</Text>
           <Text backgroundColor="white"> </Text>
-          <Text dimColor> (Tab: complete{completionCount > 0 ? ` [${completionCount}]` : ''} | Enter: spawn | Esc: cancel)</Text>
+          <Text dimColor>
+            {' '}
+            (Tab: complete{completionCount > 0 ? ` [${completionCount}]` : ''} | Enter: spawn | Esc:
+            cancel)
+          </Text>
         </Text>
       )}
 
@@ -98,9 +130,13 @@ export function HudStrip({
           <Text color="red">Kill </Text>
           <Text bold>{killTargetSession?.projectName || 'session'}</Text>
           <Text color="red">? </Text>
-          <Text bold color="green">[y]</Text>
+          <Text bold color="green">
+            [y]
+          </Text>
           <Text>es / </Text>
-          <Text bold color="red">[n]</Text>
+          <Text bold color="red">
+            [n]
+          </Text>
           <Text>o</Text>
         </Text>
       )}
@@ -109,11 +145,15 @@ export function HudStrip({
       {showQuitPrompt && (
         <Text>
           <Text color="yellow">Quit: </Text>
-          <Text color="yellow" bold>[d]</Text>
+          <Text color="yellow" bold>
+            [d]
+          </Text>
           <Text>etach </Text>
           <Text dimColor>(sessions stay) </Text>
           <Text dimColor>| </Text>
-          <Text color="red" bold>[k]</Text>
+          <Text color="red" bold>
+            [k]
+          </Text>
           <Text>ill </Text>
           <Text dimColor>(ends all sessions) </Text>
           <Text dimColor>| </Text>
@@ -125,16 +165,21 @@ export function HudStrip({
       {showExitConfirm && (
         <Text>
           <Text color="yellow">Quit HUD? </Text>
-          <Text bold color="green">y</Text>
+          <Text bold color="green">
+            y
+          </Text>
           <Text>/</Text>
-          <Text bold color="red">n</Text>
+          <Text bold color="red">
+            n
+          </Text>
         </Text>
       )}
 
       {/* Help text */}
       {showHelpText && (
         <Text dimColor>
-          ←/→/j/k: nav | Enter: switch | 1-9: jump | n: new | q: quit | Ctrl+h: focus HUD | Ctrl+0: recover layout
+          ←/→/j/k: nav | Enter: switch | 1-9: jump | n: new | q: quit | Ctrl+h: focus HUD | Ctrl+0:
+          recover layout
         </Text>
       )}
 
@@ -148,9 +193,7 @@ export function HudStrip({
 
       {/* Keybinding hints - only when focused and no modal state */}
       {showHints && (
-        <Text dimColor>
-          ←/→: nav | Enter: switch | n: new | x: kill | q: quit | ?: help
-        </Text>
+        <Text dimColor>←/→: nav | Enter: switch | n: new | x: kill | q: quit | ?: help</Text>
       )}
     </Box>
   );

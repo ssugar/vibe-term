@@ -33,9 +33,7 @@ const execPromise = promisify(exec);
  * Execute a shell command asynchronously with 5MB buffer.
  * This prevents buffer overflow for commands with large output.
  */
-export async function execAsync(
-  command: string
-): Promise<{ stdout: string; stderr: string }> {
+export async function execAsync(command: string): Promise<{ stdout: string; stderr: string }> {
   return execPromise(command, { maxBuffer: 5 * 1024 * 1024 });
 }
 
@@ -55,9 +53,7 @@ export async function getProcessCwd(pid: number): Promise<string | null> {
       return stdout.trim() || null;
     } else {
       // macOS uses lsof
-      const { stdout } = await execAsync(
-        `lsof -p ${pid} | awk '/cwd/{ print $9 }'`
-      );
+      const { stdout } = await execAsync(`lsof -p ${pid} | awk '/cwd/{ print $9 }'`);
       return stdout.trim() || null;
     }
   } catch {
