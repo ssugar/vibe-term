@@ -16,6 +16,8 @@
     "typecheck": "tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
     "prepublishOnly": "npm run build",
     "release": "standard-version",
     "release:patch": "standard-version --release-as patch",
@@ -56,13 +58,20 @@
     "zustand": "^5.0.10"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/micromatch": "^4.0.10",
     "@types/node": "^25.0.10",
     "@types/react": "^19.2.9",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.6.0",
     "prettier": "^3.8.3",
     "standard-version": "^9.5.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.59.2"
   }
 }
