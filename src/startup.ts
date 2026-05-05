@@ -140,6 +140,10 @@ Install with:
       }
     }
 
+    // After switch-client, force-select window 0 so we never inherit a stale
+    // active window (e.g., scratch) from a prior detach.
+    spawnSync('tmux', ['select-window', '-t', `${TMUX_SESSION_NAME}:0`]);
+
     // After switch-client, we continue execution in the new session
     return { success: true, shouldRenderInk: true };
   }
@@ -187,6 +191,10 @@ Install with:
         fullCommand,
       ]);
     }
+
+    // Force-select window 0 before attaching so we don't land in scratch if
+    // it was the last-active window.
+    spawnSync('tmux', ['select-window', '-t', `${TMUX_SESSION_NAME}:0`]);
 
     // Attach to session (HUD is now running or was already running)
     spawnSync('tmux', ['attach', '-t', TMUX_SESSION_NAME], {

@@ -147,6 +147,9 @@ export async function configureSession(
   const bindings = [
     // Ctrl+\\ to detach (keep session alive)
     `bind-key -n C-\\\\ detach-client`,
+    // Ctrl+0 panic recovery: jump back to window 0 (HUD + main) from anywhere.
+    // Used when user accidentally lands in scratch and sees panes "spread out".
+    `bind-key -n C-0 select-window -t ${sessionName}:0`,
   ];
 
   for (const bind of bindings) {

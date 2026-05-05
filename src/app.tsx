@@ -137,7 +137,11 @@ export default function App({ refreshInterval }: AppProps): React.ReactElement {
         // Execute kill
         if (killTargetSession) {
           // 1. Kill tmux pane
-          killSessionPane(killTargetSession.id)
+          killSessionPane(
+            killTargetSession.id,
+            killTargetSession.paneId,
+            killTargetSession.pid,
+          )
             .then(() => {
               // 2. Delete session state file
               deleteSessionState(killTargetSession.projectPath);

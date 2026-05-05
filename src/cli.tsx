@@ -9,6 +9,7 @@ import { useAppStore } from './stores/appStore.js';
 import { ensureTmuxEnvironment, TMUX_SESSION_NAME } from './startup.js';
 import { loadConfig } from './services/configService.js';
 import { configureSession, createHudLayout } from './services/tmuxService.js';
+import { execAsync } from './services/platform.js';
 
 // Get absolute path to this CLI script (for tmux hooks)
 const __filename = fileURLToPath(import.meta.url);
@@ -142,6 +143,10 @@ const config = loadConfig();
 await configureSession(TMUX_SESSION_NAME, cliPath);
 
 // Step 4: Create HUD layout
+// Ensure we're on window 0 before creating layout — otherwise createHudLayout
+// would split whatever window is current (e.g., scratch), embedding the HUD
+// alongside parked session panes.
+await execAsync(`tmux select-window -t ${TMUX_SESSION_NAME}:0`).catch(() => {});
 const layout = await createHudLayout(config.hudPosition, config.hudHeight);
 
 // Step 5: Check terminal size and warn if too small

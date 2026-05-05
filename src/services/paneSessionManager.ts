@@ -225,17 +225,23 @@ export async function cleanupSessionPane(sessionId: string): Promise<void> {
  *
  * @param sessionId - The session ID whose pane should be killed
  */
-export async function killSessionPane(sessionId: string): Promise<void> {
+export async function killSessionPane(
+  sessionId: string,
+  paneId?: string,
+  pid?: number,
+): Promise<void> {
+  const targetPaneId = paneId ?? (await getSessionPane(sessionId));
   try {
-    const paneId = await getSessionPane(sessionId);
-    if (!paneId) return;
-
-    // Kill the pane completely (removes it from tmux)
-    await execAsync(`tmux kill-pane -t ${paneId}`);
+    if (targetPaneId) {
+      await execAsync(`tmux kill-pane -t ${targetPaneId}`);
+    } else if (pid) {
+      // Last-resort: pane lookup failed, signal the process directly so the
+      // next poll cycle drops the session.
+      process.kill(pid, 'SIGTERM');
+    }
   } catch {
-    // Pane may already be gone - that's fine
+    // Pane / process may already be gone
   } finally {
-    // Always clear the environment variable
     const envKey = sanitizeEnvKey(sessionId);
     await execAsync(`tmux set-environment -u CLAUDE_PANE_${envKey}`).catch(() => {});
   }
