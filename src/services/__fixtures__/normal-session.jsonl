@@ -1,0 +1,4 @@
+{"type":"user","message":{"role":"user","content":"hello"}}
+{"type":"assistant","requestId":"req_1","isSidechain":false,"message":{"id":"msg_1","role":"assistant","content":[{"type":"text","text":"hi"}],"usage":{"input_tokens":1000,"cache_creation_input_tokens":500,"cache_read_input_tokens":2000,"output_tokens":50}}}
+{"type":"user","message":{"role":"user","content":"do something"}}
+{"type":"assistant","requestId":"req_2","isSidechain":false,"message":{"id":"msg_2","role":"assistant","content":[{"type":"text","text":"ok"}],"usage":{"input_tokens":2000,"cache_creation_input_tokens":1000,"cache_read_input_tokens":17000,"output_tokens":75}}}

@@ -1,0 +1,2 @@
+{"type":"user","message":{"role":"user","content":"hello"}}
+{"type":"assistant","requestId":"req_sub_1","isSidechain":true,"message":{"id":"msg_sub_1","role":"assistant","content":[{"type":"text","text":"sub"}],"usage":{"input_tokens":500,"cache_creation_input_tokens":0,"cache_read_input_tokens":0,"output_tokens":10}}}
