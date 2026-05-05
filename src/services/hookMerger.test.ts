@@ -33,7 +33,6 @@ describe('isVibeTermInstalled', () => {
     };
     expect(isVibeTermInstalled(settings)).toBe(true);
   });
-
 });
 
 describe('mergeHooks', () => {

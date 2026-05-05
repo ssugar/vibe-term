@@ -30,16 +30,12 @@ describe('createJsonOutput', () => {
 
   it('passes through errors and suggestions arrays', () => {
     const start = process.hrtime.bigint();
-    const out = createJsonOutput(
-      'fix',
-      null,
-      {
-        success: false,
-        startTime: start,
-        errors: [{ category: 'parse', message: 'bad json' }],
-        suggestions: [{ action: 'retry', command: 'vibe-term audit', reason: 'rerun' }],
-      },
-    );
+    const out = createJsonOutput('fix', null, {
+      success: false,
+      startTime: start,
+      errors: [{ category: 'parse', message: 'bad json' }],
+      suggestions: [{ action: 'retry', command: 'vibe-term audit', reason: 'rerun' }],
+    });
 
     expect(out.success).toBe(false);
     expect(out.errors).toEqual([{ category: 'parse', message: 'bad json' }]);

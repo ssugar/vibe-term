@@ -98,9 +98,7 @@ describe('getDirectoryCompletions', () => {
 
   it('returns all directories when path ends with /', () => {
     const results = getDirectoryCompletions(`${dir}/`);
-    expect(results).toEqual(
-      [join(dir, 'apple'), join(dir, 'avocado'), join(dir, 'banana')].sort(),
-    );
+    expect(results).toEqual([join(dir, 'apple'), join(dir, 'avocado'), join(dir, 'banana')].sort());
   });
 
   it('filters by basename prefix', () => {
